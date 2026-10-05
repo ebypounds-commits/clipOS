@@ -1,5 +1,10 @@
-"""Typed health contract for the local Compose infrastructure."""
+"""Typed infrastructure health contracts for the ClipOS dev stack.
 
+Parses `docker compose ps --format json` (NDJSON, one object per line).
+Observed real shape (docker compose v5.3.1): `Health` is a STRING
+("healthy"/"unhealthy"/"starting") or absent; older engines may ship it as
+a dict with a `Status` key. Both are accepted.
+"""
 from __future__ import annotations
 
 import json
@@ -8,76 +13,88 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-HealthStatus = Literal["healthy", "unhealthy", "starting", "absent"]
+ServiceStatus = Literal["healthy", "unhealthy", "starting", "absent"]
+OverallStatus = Literal["healthy", "degraded"]
 
 
 class ServiceHealth(BaseModel):
-    """Health for one infrastructure service."""
-
     name: str
-    status: HealthStatus
+    status: ServiceStatus
     detail: str | None = None
-    checked_at: datetime
+    checked_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC)
+    )
 
 
 class InfrastructureHealth(BaseModel):
-    """Aggregated infrastructure health."""
+    services: list[ServiceHealth]
+    overall: OverallStatus
 
-    services: list[ServiceHealth] = Field(default_factory=list)
-    overall: Literal["healthy", "degraded"] = "degraded"
+    @classmethod
+    def from_services(cls, services: list[ServiceHealth]) -> InfrastructureHealth:
+        healthy = bool(services) and all(s.status == "healthy" for s in services)
+        return cls(services=services, overall="healthy" if healthy else "degraded")
 
     @classmethod
     def model_validate_services(cls, services: list[ServiceHealth]) -> InfrastructureHealth:
-        """Build an instance and compute its overall status."""
-        overall: Literal["healthy", "degraded"] = (
-            "healthy" if services and all(service.status == "healthy" for service in services) else "degraded"
-        )
-        return cls(services=services, overall=overall)
+        """Contract constructor: validate a service list and compute `overall`."""
+        return cls.from_services(list(services))
 
 
-def _parse_timestamp(value: object) -> datetime:
-    if not isinstance(value, str) or not value:
-        raise ValueError("missing or invalid timestamp")
-    parsed = datetime.fromisoformat(value)
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
+def _normalize_health(entry: dict) -> ServiceStatus:
+    raw_health = entry.get("Health")
+    if isinstance(raw_health, dict):
+        state = raw_health.get("Status")
+    elif isinstance(raw_health, str):
+        state = raw_health or None
+    else:
+        state = None
 
+    if state in ("healthy", "unhealthy", "starting"):
+        return state  # type: ignore[return-value]
 
-def _status_from_compose(entry: dict[str, object]) -> HealthStatus:
-    if "Health" in entry:
-        health = entry["Health"]
-        if not isinstance(health, dict):
+    if state is None:
+        engine_state = entry.get("State")
+        if engine_state in (None, "") and entry.get("Service") is None:
+            return "absent"
+        if engine_state == "running":
             return "starting"
-        state = health.get("Status")
-        if state == "healthy":
-            return "healthy"
-        if state == "unhealthy":
-            return "unhealthy"
-        if state == "starting":
-            return "starting"
-        return "starting"
-    if "State" not in entry:
-        return "absent"
-    return "starting" if entry["State"] == "running" else "unhealthy"
+        if engine_state in (None, ""):
+            return "absent"
+        return "unhealthy"
+    return "unhealthy"
 
 
 def parse_compose_json(raw: str) -> InfrastructureHealth:
-    """Parse newline-delimited ``docker compose ps --format json`` output."""
-    checked = datetime.now(UTC)
+    """Parse NDJSON (or a JSON array) from `docker compose ps --format json`."""
     services: list[ServiceHealth] = []
-    for line in raw.splitlines():
-        if not line.strip():
-            continue
-        entry = json.loads(line)
-        if not isinstance(entry, dict) or not entry.get("Service"):
-            raise ValueError("invalid compose ps record")
-        try:
-            service = ServiceHealth(
-                name=str(entry["Service"]),
-                status=_status_from_compose(entry),
-                detail=str(entry["Status"]) if entry.get("Status") is not None else None,
-                checked_at=_parse_timestamp(entry["CreatedAt"]) if entry.get("CreatedAt") else checked,
+    text = (raw or "").strip()
+    if not text:
+        return InfrastructureHealth.from_services([])
+
+    entries: list[dict] = []
+    if text.startswith("["):
+        loaded = json.loads(text)
+        entries = [json.loads(x) if isinstance(x, str) else x for x in loaded]
+    else:
+        for line in text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            entry = json.loads(line)
+            if isinstance(entry, str):
+                entry = json.loads(entry)
+            entries.append(entry)
+
+    for entry in entries:
+        if entry.get("Service") is None and entry.get("Name") is None:
+            raise ValueError(f"compose record missing Service/Name: {entry!r}")
+        status = _normalize_health(entry)
+        services.append(
+            ServiceHealth(
+                name=str(entry.get("Service") or entry.get("Name") or "unknown"),
+                status=status,
+                detail=entry.get("Status"),
             )
-        except (KeyError, TypeError, ValueError) as exc:
-            raise ValueError(f"invalid compose ps record for {entry.get('Service')!r}") from exc
-        services.append(service)
-    return InfrastructureHealth.model_validate_services(services)
+        )
+    return InfrastructureHealth.from_services(services)

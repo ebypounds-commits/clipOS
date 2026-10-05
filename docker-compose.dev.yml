@@ -31,9 +31,9 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio
+    image: bitnamilegacy/minio:latest  # upstream minio/minio removed from public registries (2026); bitnamilegacy = last published public image
     restart: "no"
-    command: server /data --console-address ":9001"
+    command: server /bitnami/minio/data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: clipos_dev
       MINIO_ROOT_PASSWORD: clipos_dev_local_only
@@ -41,7 +41,7 @@ services:
       - "9002:9000"
       - "9003:9001"
     volumes:
-      - minio_data:/data
+      - minio_data:/bitnami/minio/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s

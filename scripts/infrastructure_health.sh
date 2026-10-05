@@ -4,51 +4,53 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
 # Read-only: report current Compose state; never start, stop, or mutate containers.
-compose_json="$(docker compose -f docker-compose.dev.yml ps --format json)"
+compose_json="$(docker compose -f docker-compose.dev.yml ps --format json || true)"
 
-python_bin="$(command -v python3)"
-summary="$("$python_bin" - "$compose_json" <<'PY'
-import importlib
+summary="$(PYTHONPATH="$repo_root/services/api${PYTHONPATH:+:$PYTHONPATH}" python3 - "$compose_json" <<'PY'
 import json
 import sys
 
 raw = sys.argv[1] if len(sys.argv) > 1 else ""
-try:
-    module = importlib.import_module("clipos_api.infrastructure")
-except Exception:
-    module = None
 
-if module is None:
-    # Standard-library fallback keeps the command observable if the API package
-    # is unavailable. It preserves the same output keys.
+try:
+    from clipos_api.infrastructure import parse_compose_json
+    print(parse_compose_json(raw).model_dump_json())
+except Exception:
+    # stdlib fallback with identical semantics (Health as str OR dict)
     services = []
     statuses = []
     for line in raw.splitlines():
-        if not line.strip():
+        line = line.strip()
+        if not line:
             continue
         entry = json.loads(line)
-        health = entry.get("Health") or {}
-        state = health.get("Status")
-        if state is None:
-            state = "starting" if entry.get("State") == "running" else "unhealthy"
-        if entry.get("State") is None and entry.get("Health") is None:
-            state = "absent"
+        health = entry.get("Health")
+        if isinstance(health, dict):
+            state = health.get("Status")
+        else:
+            state = health
+        if state not in ("healthy", "unhealthy", "starting"):
+            engine_state = entry.get("State")
+            if engine_state == "running":
+                state = "starting"
+            elif not engine_state:
+                state = "absent"
+            else:
+                state = "unhealthy"
         statuses.append(state)
         services.append({
-            "name": entry.get("Service", ""),
+            "name": entry.get("Service") or entry.get("Name") or "unknown",
             "status": state,
             "detail": entry.get("Status"),
             "checked_at": entry.get("CreatedAt"),
         })
     overall = "healthy" if services and all(s == "healthy" for s in statuses) else "degraded"
     print(json.dumps({"services": services, "overall": overall}))
-else:
-    print(module.parse_compose_json(raw).model_dump_json())
 PY
 )"
 
 printf '%s\n' "$summary"
-"$python_bin" - "$summary" <<'PY'
+python3 - "$summary" <<'PY'
 import json
 import sys
 health = json.loads(sys.argv[1])
