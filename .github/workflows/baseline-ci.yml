@@ -32,8 +32,35 @@ jobs:
       - name: Scan tracked files for secrets
         run: bash scripts/secret_scan.sh
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install API dependencies
+        run: pip install -e "services/api[dev]"
+      - name: Lint API
+        run: ruff check services/api
+      - name: Run API tests
+        run: pytest -q services/api
+      - name: Validate development compose
+        run: docker compose -f docker-compose.dev.yml config -q
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Web typecheck
+        working-directory: apps/web
+        run: |
+          npm install --no-audit --no-fund --loglevel=error
+          npx tsc --noEmit
+
   report:
-    needs: validate
+    needs: [validate, test]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -48,7 +75,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
-          if [ "${{ needs.validate.result }}" = "success" ]; then
+          if [ "${{ needs.validate.result }}" = "success" ] && [ "${{ needs.test.result }}" = "success" ]; then
             result=success
           else
             result=failure
