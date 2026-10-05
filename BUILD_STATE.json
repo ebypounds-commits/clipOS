@@ -1,0 +1,29 @@
+{
+  "project": "ClipOS",
+  "spec_version": "2.0-hermes-vps",
+  "current_milestone": "M-1",
+  "current_ticket": "CLIP-P001",
+  "status": "READY_FOR_HERMES_PREFLIGHT",
+  "autonomous_build": true,
+  "operating_mode": "DRAFT",
+  "auto_merge": false,
+  "production_deploy": false,
+  "public_publishing": false,
+  "completed_milestones": [],
+  "completed_tickets": [],
+  "blocked": [],
+  "human_gates": {
+    "production_secrets": false,
+    "youtube_real_account": false,
+    "tiktok_real_account": false,
+    "meta_real_account": false,
+    "first_public_post": false
+  },
+  "last_evidence": null,
+  "next_action": "Start Hermes in the VPS canonical repo and execute HERMES_START_PROMPT.md; begin CLIP-P001.",
+  "orchestrator": "Hermes Agent",
+  "coding_engine": "Codex on VPS",
+  "repository_mode": "GitHub canonical repo + VPS worktrees",
+  "single_orchestrator": true,
+  "codex_subagents_default": false
+}

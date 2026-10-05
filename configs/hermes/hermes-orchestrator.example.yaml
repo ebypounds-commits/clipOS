@@ -1,0 +1,25 @@
+# Illustrative ClipOS Hermes profile. Reconcile keys with the installed Hermes version.
+# Do not place real tokens here.
+profile: clipos-orchestrator
+project_root: /srv/clipos/repo
+orchestration:
+  single_orchestrator: true
+  max_parallel_tickets: 2
+  codex_subagents: false
+  worktree_root: /srv/clipos/worktrees
+  ticket_source: 10_TICKETS.yaml
+  build_state: BUILD_STATE.json
+  lease_dir: .agent/locks
+  completion_reports: docs/reports
+policy:
+  protected_branch: main
+  require_clean_worktree: true
+  require_ci: true
+  auto_merge: false
+  public_deploy: false
+  secrets_in_prompts: forbidden
+codex:
+  mode: vps
+  prompt_contract: MASTER_CODEX_PROMPT.md
+  timeout_minutes: 90
+  retries: 2

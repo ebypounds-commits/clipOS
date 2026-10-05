@@ -1,0 +1,44 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+dist/
+coverage/
+
+# local agent/runtime state
+.agent/locks/*.json
+.agent/locks/*.lock
+.runtime/
+.cache/
+logs/
+
+# media/runtime data
+data/
+tmp/
+*.mp4
+*.mov
+*.mkv
+*.wav
+
+# IDE/OS
+.vscode/settings.local.json
+.idea/
+.DS_Store
+Thumbs.db

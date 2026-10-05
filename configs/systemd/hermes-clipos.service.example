@@ -1,0 +1,19 @@
+# Example only. Adapt ExecStart/User/paths to the installed Hermes deployment.
+[Unit]
+Description=ClipOS Hermes Build Orchestrator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clipos
+WorkingDirectory=/srv/clipos/repo
+Environment=CLIPOS_REPO=/srv/clipos/repo
+ExecStart=/usr/bin/env hermes
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

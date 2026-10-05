@@ -1,0 +1,2010 @@
+project: ClipOS
+version: 2.0-hermes-vps
+execution_policy:
+  select: first TODO ticket whose dependencies are DONE and whose human gate is satisfied
+  on_failure: diagnose, repair, rerun gates; do not skip or weaken tests
+  parallelism: only independent tickets in separate git worktrees; integration review
+    required
+  completion: ticket marked DONE only with evidence
+  orchestrator: Hermes Agent is single orchestrator; Codex implements leased tickets
+tickets:
+- id: CLIP-P001
+  milestone: M-1
+  title: Qualify Git/GitHub canonical repository and protected-main strategy
+  status: TODO
+  priority: CRITICAL
+  depends_on: []
+  scope:
+  - Record canonical repo, remote, baseline commit, branch policy and least-privilege
+    build identity.
+  - Verify clean baseline and safe push/PR path without embedding credentials.
+  acceptance:
+  - Repository/remote facts captured in M-1 report.
+  - No secrets are committed.
+  - Baseline branch strategy is usable from the VPS.
+  human_gate: false
+- id: CLIP-P002
+  milestone: M-1
+  title: Qualify VPS runtime, Docker, resources and filesystem layout
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P001
+  scope:
+  - Run and extend scripts/preflight.sh as needed.
+  - Capture OS/runtime/Docker/Compose/resource facts and create repo/worktree/runtime
+    separation.
+  acceptance:
+  - Docker Engine and Compose execute successfully.
+  - VPS capacity facts and known constraints are recorded.
+  - Build user does not require routine root execution.
+  human_gate: false
+- id: CLIP-P003
+  milestone: M-1
+  title: Qualify Hermes single-orchestrator control and ticket leases
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P002
+  scope:
+  - Configure Hermes for the ClipOS repo using installed-version-supported settings.
+  - Implement/verify ticket lease and worktree ownership convention.
+  acceptance:
+  - Hermes can select the first eligible leased ticket without double assignment.
+  - A stale/active lease rule is documented and testable.
+  - Repository remains source of truth over Hermes memory.
+  human_gate: false
+- id: CLIP-P004
+  milestone: M-1
+  title: Qualify Hermes to Codex dispatch in isolated Git worktree
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P003
+  scope:
+  - Create a harmless dry-run worktree/branch and dispatch Codex with a bounded task.
+  - Verify Codex observes MASTER_CODEX_PROMPT and returns structured evidence.
+  acceptance:
+  - Codex changes only assigned scope.
+  - Worktree/branch ownership is correct and clean after completion.
+  - Hermes regains control after Codex completion.
+  human_gate: false
+- id: CLIP-P005
+  milestone: M-1
+  title: Bootstrap CI and secrets-hygiene preflight
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P004
+  scope:
+  - Create minimum CI validation lane needed before M0 implementation.
+  - Add secret scanning/tracked-secret checks appropriate to the baseline repo.
+  acceptance:
+  - Baseline CI executes successfully.
+  - Secret scan/preflight passes.
+  - Failure prevents qualification rather than being silently ignored.
+  human_gate: false
+- id: CLIP-P006
+  milestone: M-1
+  title: Publish M-1 evidence and hand off automatically to M0
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P005
+  scope:
+  - Create docs/reports/M-1_COMPLETION.md.
+  - Update build state to M0/CLIP-001 only after all M-1 gates pass.
+  acceptance:
+  - M-1 report contains exact evidence and known limits.
+  - BUILD_STATE points to CLIP-001.
+  - Hermes can immediately select CLIP-001 without operator confirmation.
+  human_gate: false
+- id: CLIP-001
+  milestone: M0
+  title: Bootstrap monorepo and developer toolchain
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-P006
+  scope:
+  - Implement bootstrap monorepo and developer toolchain according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-002
+  milestone: M0
+  title: Create Docker local infrastructure and health checks
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-001
+  scope:
+  - Implement create docker local infrastructure and health checks according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-003
+  milestone: M0
+  title: Establish CI quality gates and dependency/security scans
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-002
+  scope:
+  - Implement establish ci quality gates and dependency/security scans according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-004
+  milestone: M0
+  title: Create architecture/ADR/build-state governance
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-003
+  scope:
+  - Implement create architecture/adr/build-state governance according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-005
+  milestone: M0
+  title: Create autonomous ticket runner conventions
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-004
+  scope:
+  - Implement create autonomous ticket runner conventions according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-006
+  milestone: M1
+  title: Implement identity/session foundation
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-005
+  scope:
+  - Implement implement identity/session foundation according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-007
+  milestone: M1
+  title: Implement organization tenancy and memberships
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-006
+  scope:
+  - Implement implement organization tenancy and memberships according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-008
+  milestone: M1
+  title: Implement RBAC/capability authorization
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-007
+  scope:
+  - Implement implement rbac/capability authorization according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-009
+  milestone: M1
+  title: Implement service identities and immutable audit trail
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-008
+  scope:
+  - Implement implement service identities and immutable audit trail according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-010
+  milestone: M2
+  title: Implement PostgreSQL migrations and repository base
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-009
+  scope:
+  - Implement implement postgresql migrations and repository base according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-011
+  milestone: M2
+  title: Implement S3-compatible storage and signed URLs
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-010
+  scope:
+  - Implement implement s3-compatible storage and signed urls according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-012
+  milestone: M2
+  title: Implement Redis caching/rate-limit primitives
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-011
+  scope:
+  - Implement implement redis caching/rate-limit primitives according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-013
+  milestone: M2
+  title: Implement OpenTelemetry metrics/logging/tracing and backup primitives
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-012
+  scope:
+  - Implement implement opentelemetry metrics/logging/tracing and backup primitives
+    according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-014
+  milestone: M3
+  title: Deploy Temporal dev/self-host config
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-013
+  scope:
+  - Implement deploy temporal dev/self-host config according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-015
+  milestone: M3
+  title: Implement workflow/activity framework and conventions
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-014
+  scope:
+  - Implement implement workflow/activity framework and conventions according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-016
+  milestone: M3
+  title: Implement idempotency/outbox/business keys
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-015
+  scope:
+  - Implement implement idempotency/outbox/business keys according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-017
+  milestone: M3
+  title: Implement replay/failure-injection tests and operator visibility
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-016
+  scope:
+  - Implement implement replay/failure-injection tests and operator visibility according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-018
+  milestone: M4
+  title: Implement Agent Registry schema/API
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-017
+  scope:
+  - Implement implement agent registry schema/api according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-019
+  milestone: M4
+  title: Implement agent versioning/policies/budget configuration
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-018
+  scope:
+  - Implement implement agent versioning/policies/budget configuration according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-020
+  milestone: M4
+  title: Implement agent UI and activation lifecycle
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-019
+  scope:
+  - Implement implement agent ui and activation lifecycle according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-021
+  milestone: M4
+  title: Implement agent evaluation hooks and execution audit
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-020
+  scope:
+  - Implement implement agent evaluation hooks and execution audit according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-022
+  milestone: M5
+  title: Implement Model Registry schema/API
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-021
+  scope:
+  - Implement implement model registry schema/api according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-023
+  milestone: M5
+  title: Implement provider-neutral AI client and logical aliases
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-022
+  scope:
+  - Implement implement provider-neutral ai client and logical aliases according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-024
+  milestone: M5
+  title: Implement routing/fallback/health/cost tracking
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-023
+  scope:
+  - Implement implement routing/fallback/health/cost tracking according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-025
+  milestone: M5
+  title: Implement local-provider adapter and model registry UI
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-024
+  scope:
+  - Implement implement local-provider adapter and model registry ui according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-026
+  milestone: M6
+  title: Implement Tool Registry and capability permissions
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-025
+  scope:
+  - Implement implement tool registry and capability permissions according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-027
+  milestone: M6
+  title: Implement plugin/connector registry
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-026
+  scope:
+  - Implement implement plugin/connector registry according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-028
+  milestone: M6
+  title: Implement MCP client/server integration boundary
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-027
+  scope:
+  - Implement implement mcp client/server integration boundary according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-029
+  milestone: M6
+  title: Implement tool sandbox/audit/rate-limit policies
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-028
+  scope:
+  - Implement implement tool sandbox/audit/rate-limit policies according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-030
+  milestone: M7
+  title: Implement creators/sources/source-items
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-029
+  scope:
+  - Implement implement creators/sources/source-items according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-031
+  milestone: M7
+  title: Implement rights ledger/license evidence
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-030
+  scope:
+  - Implement implement rights ledger/license evidence according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-032
+  milestone: M7
+  title: Implement provenance manifests/fingerprints
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-031
+  scope:
+  - Implement implement provenance manifests/fingerprints according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-033
+  milestone: M7
+  title: Enforce deterministic rights publication gate
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-032
+  scope:
+  - Implement enforce deterministic rights publication gate according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-034
+  milestone: M8
+  title: Implement signal source/observation framework
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-033
+  scope:
+  - Implement implement signal source/observation framework according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-035
+  milestone: M8
+  title: Implement topic normalization/clustering
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-034
+  scope:
+  - Implement implement topic normalization/clustering according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-036
+  milestone: M8
+  title: Implement opportunity scoring and policy
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-035
+  scope:
+  - Implement implement opportunity scoring and policy according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-037
+  milestone: M8
+  title: Implement watchlist/dashboard and scheduled Trend workflow
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-036
+  scope:
+  - Implement implement watchlist/dashboard and scheduled trend workflow according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-038
+  milestone: M9
+  title: Implement authorized media ingestion
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-037
+  scope:
+  - Implement implement authorized media ingestion according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-039
+  milestone: M9
+  title: Implement ffprobe validation/quarantine
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-038
+  scope:
+  - Implement implement ffprobe validation/quarantine according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-040
+  milestone: M9
+  title: Implement transcription adapters and transcript storage
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-039
+  scope:
+  - Implement implement transcription adapters and transcript storage according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-041
+  milestone: M9
+  title: Implement semantic segmentation/embedding pipeline
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-040
+  scope:
+  - Implement implement semantic segmentation/embedding pipeline according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-042
+  milestone: M10
+  title: Implement clip candidate extraction
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-041
+  scope:
+  - Implement implement clip candidate extraction according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-043
+  milestone: M10
+  title: Implement multi-factor clip scoring
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-042
+  scope:
+  - Implement implement multi-factor clip scoring according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-044
+  milestone: M10
+  title: Implement duplicate/content fingerprint checks
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-043
+  scope:
+  - Implement implement duplicate/content fingerprint checks according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-045
+  milestone: M10
+  title: Implement review UI and benchmark eval set
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-044
+  scope:
+  - Implement implement review ui and benchmark eval set according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-046
+  milestone: M11
+  title: Implement research packet and claim/source model
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-045
+  scope:
+  - Implement implement research packet and claim/source model according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-047
+  milestone: M11
+  title: Implement brief/content-plan engine
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-046
+  scope:
+  - Implement implement brief/content-plan engine according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-048
+  milestone: M11
+  title: Implement hooks/scripts/versioning
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-047
+  scope:
+  - Implement implement hooks/scripts/versioning according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-049
+  milestone: M11
+  title: Implement factuality/transformation evaluations
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-048
+  scope:
+  - Implement implement factuality/transformation evaluations according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-050
+  milestone: M12
+  title: Implement render project DSL
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-049
+  scope:
+  - Implement implement render project dsl according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-051
+  milestone: M12
+  title: Implement FFmpeg worker/render pipeline
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-050
+  scope:
+  - Implement implement ffmpeg worker/render pipeline according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-052
+  milestone: M12
+  title: Implement captions/audio normalization/branding
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-051
+  scope:
+  - Implement implement captions/audio normalization/branding according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-053
+  milestone: M12
+  title: Implement platform aspect variants/QC/render manifests
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-052
+  scope:
+  - Implement implement platform aspect variants/qc/render manifests according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-054
+  milestone: M13
+  title: Implement TTS provider adapter
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-053
+  scope:
+  - Implement implement tts provider adapter according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-055
+  milestone: M13
+  title: Implement image/video generation adapters
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-054
+  scope:
+  - Implement implement image/video generation adapters according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-056
+  milestone: M13
+  title: Implement licensed stock/b-roll adapter interface
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-055
+  scope:
+  - Implement implement licensed stock/b-roll adapter interface according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-057
+  milestone: M13
+  title: Implement generated-media provenance/AI-label metadata
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-056
+  scope:
+  - Implement implement generated-media provenance/ai-label metadata according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-058
+  milestone: M14
+  title: Implement publishing adapter contract/private-test policy
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-057
+  scope:
+  - Implement implement publishing adapter contract/private-test policy according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-059
+  milestone: M14
+  title: Implement YouTube publishing/status adapter
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-058
+  scope:
+  - Implement implement youtube publishing/status adapter according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  - Adapter is fully buildable/testable with mocks and private/test semantics; unavailable
+    real credentials do not block implementation.
+  human_gate: false
+- id: CLIP-060
+  milestone: M14
+  title: Implement TikTok publishing/status adapter
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-059
+  scope:
+  - Implement implement tiktok publishing/status adapter according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  - Adapter is fully buildable/testable with mocks and private/test semantics; unavailable
+    real credentials do not block implementation.
+  human_gate: false
+- id: CLIP-061
+  milestone: M14
+  title: Implement Meta publishing adapter after current-doc verification
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-060
+  scope:
+  - Implement implement meta publishing adapter after current-doc verification according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  - Adapter is fully buildable/testable with mocks and private/test semantics; unavailable
+    real credentials do not block implementation.
+  human_gate: false
+- id: CLIP-062
+  milestone: M15
+  title: Implement analytics provider contract
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-061
+  scope:
+  - Implement implement analytics provider contract according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-063
+  milestone: M15
+  title: Implement native metric ingestion/reconciliation
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-062
+  scope:
+  - Implement implement native metric ingestion/reconciliation according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-064
+  milestone: M15
+  title: Implement normalized performance snapshots
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-063
+  scope:
+  - Implement implement normalized performance snapshots according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-065
+  milestone: M15
+  title: Implement analytics dashboards and scheduled collection
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-064
+  scope:
+  - Implement implement analytics dashboards and scheduled collection according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-066
+  milestone: M16
+  title: Implement experiment/hypothesis data model
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-065
+  scope:
+  - Implement implement experiment/hypothesis data model according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-067
+  milestone: M16
+  title: Implement deterministic assignment/variant orchestration
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-066
+  scope:
+  - Implement implement deterministic assignment/variant orchestration according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-068
+  milestone: M16
+  title: Implement result evaluation/business significance
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-067
+  scope:
+  - Implement implement result evaluation/business significance according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-069
+  milestone: M16
+  title: Implement strategy-rule canary/promotion/rollback
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-068
+  scope:
+  - Implement implement strategy-rule canary/promotion/rollback according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-070
+  milestone: M17
+  title: Implement revenue-source/ledger adapters
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-069
+  scope:
+  - Implement implement revenue-source/ledger adapters according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-071
+  milestone: M17
+  title: Implement affiliate link/click/conversion attribution
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-070
+  scope:
+  - Implement implement affiliate link/click/conversion attribution according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-072
+  milestone: M17
+  title: Implement sponsorship campaign attribution
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-071
+  scope:
+  - Implement implement sponsorship campaign attribution according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-073
+  milestone: M17
+  title: Implement revenue dashboards/reconciliation workflows
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-072
+  scope:
+  - Implement implement revenue dashboards/reconciliation workflows according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-074
+  milestone: M18
+  title: Implement cost ledger and provider cost ingestion
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-073
+  scope:
+  - Implement implement cost ledger and provider cost ingestion according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-075
+  milestone: M18
+  title: Implement budgets/spend authorization
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-074
+  scope:
+  - Implement implement budgets/spend authorization according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-076
+  milestone: M18
+  title: Implement profitability/reinvestment calculations
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-075
+  scope:
+  - Implement implement profitability/reinvestment calculations according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-077
+  milestone: M18
+  title: Implement anomaly detection and finance approval gates
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-076
+  scope:
+  - Implement implement anomaly detection and finance approval gates according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-078
+  milestone: M19
+  title: Implement brand/channel templates
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-077
+  scope:
+  - Implement implement brand/channel templates according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-079
+  milestone: M19
+  title: Implement channel incubation/launch experiments
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-078
+  scope:
+  - Implement implement channel incubation/launch experiments according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-080
+  milestone: M19
+  title: Implement portfolio allocation/quota engine
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-079
+  scope:
+  - Implement implement portfolio allocation/quota engine according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-081
+  milestone: M19
+  title: Implement brand lifecycle and shutdown/archive policies
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-080
+  scope:
+  - Implement implement brand lifecycle and shutdown/archive policies according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-082
+  milestone: M20
+  title: Implement improvement proposal evidence model
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-081
+  scope:
+  - Implement implement improvement proposal evidence model according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-083
+  milestone: M20
+  title: Implement Agent Architect proposal generator
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-082
+  scope:
+  - Implement implement agent architect proposal generator according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-084
+  milestone: M20
+  title: Implement eval sandbox and safe promotion
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-083
+  scope:
+  - Implement implement eval sandbox and safe promotion according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-085
+  milestone: M20
+  title: Implement Codex engineering-ticket generation/export
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-084
+  scope:
+  - Implement implement codex engineering-ticket generation/export according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-086
+  milestone: M21
+  title: Implement health supervisor signals
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-085
+  scope:
+  - Implement implement health supervisor signals according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-087
+  milestone: M21
+  title: Implement incident lifecycle and runbooks
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-086
+  scope:
+  - Implement implement incident lifecycle and runbooks according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-088
+  milestone: M21
+  title: Implement safe auto-remediation actions
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-087
+  scope:
+  - Implement implement safe auto-remediation actions according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-089
+  milestone: M21
+  title: Implement credential/quota/disk/provider health monitors
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-088
+  scope:
+  - Implement implement credential/quota/disk/provider health monitors according to
+    repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-090
+  milestone: M22
+  title: Create threat model and abuse cases
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-089
+  scope:
+  - Implement create threat model and abuse cases according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-091
+  milestone: M22
+  title: Harden prompt injection/tool authorization
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-090
+  scope:
+  - Implement harden prompt injection/tool authorization according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-092
+  milestone: M22
+  title: Implement security/tenant/fuzz/dependency tests
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-091
+  scope:
+  - Implement implement security/tenant/fuzz/dependency tests according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-093
+  milestone: M22
+  title: Run production security qualification and remediate findings
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-092
+  scope:
+  - Implement run production security qualification and remediate findings according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-094
+  milestone: M23
+  title: Create hardened production Compose/staging topology
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-093
+  scope:
+  - Implement create hardened production compose/staging topology according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-095
+  milestone: M23
+  title: Implement CI/CD canary and rollback
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-094
+  scope:
+  - Implement implement ci/cd canary and rollback according to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-096
+  milestone: M23
+  title: Implement encrypted backup/restore verification
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-095
+  scope:
+  - Implement implement encrypted backup/restore verification according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-097
+  milestone: M23
+  title: Create production bootstrap/secrets/TLS/runbook
+  status: TODO
+  priority: CRITICAL
+  depends_on:
+  - CLIP-096
+  scope:
+  - Implement create production bootstrap/secrets/tls/runbook according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  - Production bootstrap can be validated with placeholder secret references; real
+    secret injection is an execution-time human gate, not a code-completion gate.
+  human_gate: false
+- id: CLIP-098
+  milestone: M24
+  title: Run end-to-end qualification in private mode
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-097
+  scope:
+  - Implement run end-to-end qualification in private mode according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-099
+  milestone: M24
+  title: Qualify guarded public publishing with owner gate
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-098
+  scope:
+  - Implement qualify guarded public publishing with owner gate according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: true
+  human_gate_reason: Owner approval required before first public posting.
+- id: CLIP-100
+  milestone: M24
+  title: Validate SLOs/cost caps/kill switches and incident drills
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-099
+  scope:
+  - Implement validate slos/cost caps/kill switches and incident drills according
+    to repository specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-101
+  milestone: M24
+  title: Produce autonomy evidence and operations manual
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-100
+  scope:
+  - Implement produce autonomy evidence and operations manual according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
+- id: CLIP-102
+  milestone: M24
+  title: Freeze v1 release and create post-launch backlog
+  status: TODO
+  priority: HIGH
+  depends_on:
+  - CLIP-101
+  scope:
+  - Implement freeze v1 release and create post-launch backlog according to repository
+    specifications.
+  - Add/modify typed contracts and persistence only as required.
+  - Add operator-visible audit/observability for material state changes.
+  acceptance:
+  - All behavior is covered by appropriate automated tests.
+  - No provider/model identifier is hard-coded where a registry alias is required.
+  - External side effects are idempotent and failure-safe where applicable.
+  - Documentation and BUILD_STATE evidence are updated.
+  - CI is green.
+  human_gate: false
