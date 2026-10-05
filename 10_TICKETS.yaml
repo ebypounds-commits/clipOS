@@ -115,7 +115,7 @@ tickets:
 - id: CLIP-001
   milestone: M0
   title: Bootstrap monorepo and developer toolchain
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P006
@@ -130,6 +130,10 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-05T22:35:58+00:00'
+  evidence: commit 40e10c8; CI run 37383281375 status=success (validate+test+ruff+pytest8+compose+tsc);
+    worker GLM-5.3-Flash (report BLOCKED on sandbox network — gates re-run by orchestrator); docs/development.md
+    + Makefile; .agent/dryrun/CLIP-001_completion_report.json
 - id: CLIP-002
   milestone: M0
   title: Create Docker local infrastructure and health checks

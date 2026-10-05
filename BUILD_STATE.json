@@ -2,8 +2,8 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M-1",
-  "current_ticket": "CLIP-001",
-  "status": "M0_READY",
+  "current_ticket": "CLIP-002",
+  "status": "M0_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -16,7 +16,8 @@
     "CLIP-P003",
     "CLIP-P004",
     "CLIP-P005",
-    "CLIP-P006"
+    "CLIP-P006",
+    "CLIP-001"
   ],
   "blocked": [],
   "human_gates": {
@@ -27,12 +28,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-P006",
-    "at": "2026-10-05T22:20:09+00:00",
-    "report": "docs/reports/M-1_COMPLETION.md",
-    "facts": "M-1 qualified; evidence index P001-P006 complete; CI green 37381579523; spend {'before_usage_usd': 0.194221717, 'after_usage_usd': 0.194221717, 'delta_usd': 0.0, 'limit_remaining_usd': 4.805778283}"
+    "ticket": "CLIP-001",
+    "at": "2026-10-05T22:35:58+00:00",
+    "facts": "M0 foundation bootstrap landed (40e10c8); CI green 37383281375; pytest 8 passed; ruff clean; tsc clean; compose valid; spend {'usage_usd': 0.217246296, 'limit_remaining_usd': 4.782753704}"
   },
-  "next_action": "Execute CLIP-001 (Bootstrap monorepo and developer toolchain) per specs; human_gate=false.",
+  "next_action": "Execute CLIP-002 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
