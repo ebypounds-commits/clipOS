@@ -96,3 +96,30 @@ RESULT: 11 passed, 0 failed
 - [x] Hermes runs are bound to one repo lease — `docs/M-1_ORCHESTRATOR_OPERATIONS.md` §1; run id `hermes-clipos-m1-001`.
 - [x] Worktree/ticket ownership prevents conflicting agents — atomic lease + owner-checked release/renew (tests 3, 6, 9).
 - [x] Restart/overlap behavior is documented in repo — ops doc §3–§4; stale takeover requires explicit `--steal-reason` (tests 7, 8).
+
+## CLIP-P004 — Configure Codex CLI, OpenRouter project routing, model profile and smoke-test worker
+Status: **DONE** — 2026-10-05T21:20:51+00:00
+
+### What was configured
+| Item | Value |
+|---|---|
+| Codex CLI | 0.160.0 at `/usr/local/bin/codex` (+ `codex-code-mode-host`), runs as user `clipos` |
+| Profile | `--profile glm` → `z-ai/glm-5.3-flash` via OpenRouter (`wire_api = responses`) |
+| Production OpenAI routing | **DISABLED** — no `openai` refs in config, `model_provider = "openrouter"` only, no ChatGPT login |
+| Task packet | `.agent/task_packet_CLIP-P004.md` (schema `schemas/codex_completion_report.schema.json`) |
+| Model/token spend | before=0.024337499 USD, after=0.126868903 USD, delta=0.102531 USD; report line: 384 tokens |
+
+### Dry-run result
+- Dispatch: `codex exec --profile glm --enable unified_exec --sandbox workspace-write` as `clipos` in worktree `agent/CLIP-P004`
+- Verification: `p004_verify.py` (see gate results in dispatch log / verify output below)
+
+### Tooling pitfalls found & fixed (worker qualification evidence)
+1. `model_catalog_json` pointed at `/root/...` → EACCES for clipos → moved to `/home/clipos/.codex/`
+2. `codex-code-mode-host` missing next to copied binary → installed
+3. **GLM tool routing**: `code_mode_host` feature is unreliable (0/4 fab-proof probes) and GLM habitually calls `functions.exec`; working config = `--enable unified_exec` + prompt nudge to use `exec` + retry on router rejection (fab-proof probes F3/F4/F6: REAL nonce success)
+4. Probe methodology lesson: model can fabricate expected output — success only counts with unguessable nonces or session-log tool evidence
+
+### Acceptance
+- [x] Bounded Codex dry-run task completes — artifacts in `.agent/dryrun/` (probe, report, commit)
+- [x] Outputs and token spend captured — this section + `/root/p004_codex_output.log`
+- [x] Production OpenAI routing remains disabled unless explicitly switched — config evidence above

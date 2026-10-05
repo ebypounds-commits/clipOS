@@ -62,7 +62,7 @@ tickets:
 - id: CLIP-P004
   milestone: M-1
   title: Qualify Hermes to Codex dispatch in isolated Git worktree
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P003
@@ -74,6 +74,9 @@ tickets:
   - Worktree/branch ownership is correct and clean after completion.
   - Hermes regains control after Codex completion.
   human_gate: false
+  completed_at: '2026-10-05T21:20:51+00:00'
+  evidence: docs/reports/M-1_COMPLETION.md#clip-p004; dry-run COMPLETE; spend delta 0.102531 USD; commits
+    ff5e3a1,63d8660
 - id: CLIP-P005
   milestone: M-1
   title: Bootstrap CI and secrets-hygiene preflight
