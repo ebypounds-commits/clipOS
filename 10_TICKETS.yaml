@@ -26,7 +26,7 @@ tickets:
 - id: CLIP-P002
   milestone: M-1
   title: Qualify VPS runtime, Docker, resources and filesystem layout
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P001
@@ -38,6 +38,9 @@ tickets:
   - VPS capacity facts and known constraints are recorded.
   - Build user does not require routine root execution.
   human_gate: false
+  completed_at: '2026-10-05T19:48:41+00:00'
+  evidence: docs/reports/M-1_COMPLETION.md#clip-p002; docker+compose real runs non-root; worktree probe
+    OK; capacity snapshot recorded
 - id: CLIP-P003
   milestone: M-1
   title: Qualify Hermes single-orchestrator control and ticket leases

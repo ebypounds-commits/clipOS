@@ -24,3 +24,41 @@ Acceptance:
 - [x] Baseline branch strategy is usable from the VPS.
 
 Known limits: GitHub branch-protection rules could not be enumerated (no API token; local gh token expired). Direct-push write path proven instead. Protection audit deferred to CLIP-P005 (CI bootstrap may introduce token).
+
+## CLIP-P002 — Qualify VPS runtime, Docker, resources and filesystem layout
+Status: **DONE** — 2026-10-05T19:48:41+00:00
+
+### Capacity snapshot
+| Fact | Value |
+|---|---|
+| OS / kernel | Ubuntu 26.04 LTS / Linux 7.0.0-14-generic |
+| Host | vmi3413440 (Contabo), uptime 13w+4d |
+| CPU / RAM | 6 vCPU, 11 GiB (6.6 GiB avail), 8 GiB swap (2.4 GiB used) |
+| Disk | 193 G total, 99 G avail (50% used) |
+| Clock / TZ | NTP synced, Europe/Berlin |
+| Outbound HTTPS | 200 (github.com) |
+
+### Toolchain
+git 2.53.0 · Docker 29.6.2 · Compose v5.3.1 · Node v22.23.1 / npm 10.9.8 · Python 3.14.4 · ffmpeg 8.0.1
+
+### Filesystem separation (repo / worktrees / runtime)
+- Canonical repo: `/srv/clipos/clipOS` (moved from `/root/clipOS` only after clean-tree + remote-HEAD equality check; remote=676d39c)
+- Worktrees: `/srv/clipos/worktrees/<ticket-id>`
+- Runtime data: `/srv/clipos/runtime`
+
+### Non-root build user
+- User `clipos` created, member of `docker` group
+- Deploy key `clipos_deploy` installed (same key reused — GitHub allows one deploy key per repo)
+- Verified as `clipos`: git status/log, worktree add/remove (`WORKTREE_OK`), `docker run --rm busybox` (`DOCKER_NONROOT_OK`), `docker compose run` (`COMPOSE_OK`)
+- Acceptance "Build user does not require routine root execution": **PASS**
+
+### Known constraints (capacity planning)
+- **Occupied ports (operator services — never bind):** 22, 53, 80, 443, 3000, 3080, 3100, **5432 (PostgreSQL already running)**, 6001, 6002, 8000, 8080, 8090, 8642, 8776, 8888, 9119, 9377, 11235, 18080
+- Docker group membership is root-equivalent (standard tradeoff; documented)
+- No GPU (media workers = CPU ffmpeg only)
+- pip3/sqlite3/redis-server/nginx CLIs absent (Docker images may provide these later)
+
+Acceptance:
+- [x] Docker Engine and Compose execute successfully (real containers, non-root).
+- [x] VPS capacity facts and known constraints are recorded.
+- [x] Build user does not require routine root execution.
