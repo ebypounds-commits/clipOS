@@ -44,7 +44,7 @@ tickets:
 - id: CLIP-P003
   milestone: M-1
   title: Qualify Hermes single-orchestrator control and ticket leases
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P002
@@ -56,6 +56,9 @@ tickets:
   - A stale/active lease rule is documented and testable.
   - Repository remains source of truth over Hermes memory.
   human_gate: false
+  completed_at: '2026-10-05T19:57:02+00:00'
+  evidence: docs/reports/M-1_COMPLETION.md#clip-p003; lease tooling + 11-case test suite passed; ops doc
+    in repo
 - id: CLIP-P004
   milestone: M-1
   title: Qualify Hermes to Codex dispatch in isolated Git worktree

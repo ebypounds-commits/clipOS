@@ -62,3 +62,37 @@ Acceptance:
 - [x] Docker Engine and Compose execute successfully (real containers, non-root).
 - [x] VPS capacity facts and known constraints are recorded.
 - [x] Build user does not require routine root execution.
+
+## CLIP-P003 — Qualify Hermes single-orchestrator control and ticket leases
+Status: **DONE** — 2026-10-05T19:57:02+00:00
+
+### Deliverables
+| Artifact | Purpose |
+|---|---|
+| `scripts/agent_lease.py` | Lease acquire/renew/release/status with atomic create, owner checks, audited takeover |
+| `scripts/test_agent_lease.py` | 11-case test suite (conflict, expiry policy, ownership, schema, traversal) |
+| `docs/M-1_ORCHESTRATOR_OPERATIONS.md` | Hermes binding, overlap behavior, restart/crash behavior, state-transition rule |
+| `.gitignore` += `.agent/leases/` | Lease files are machine runtime state, never committed |
+
+### Test evidence
+```
+PASS: fresh acquire returns ok
+PASS: lease file has required fields
+PASS: conflicting acquire refused
+PASS: owner re-acquire idempotent
+PASS: release by owner
+PASS: release by non-owner refused
+PASS: stale takeover refused without explicit reason
+PASS: explicit takeover succeeds + audited
+PASS: renew by wrong owner refused
+PASS: status lists lease
+PASS: path traversal ticket id rejected
+
+RESULT: 11 passed, 0 failed
+```
+RESULT: 11 passed, 0 failed
+
+### Acceptance
+- [x] Hermes runs are bound to one repo lease — `docs/M-1_ORCHESTRATOR_OPERATIONS.md` §1; run id `hermes-clipos-m1-001`.
+- [x] Worktree/ticket ownership prevents conflicting agents — atomic lease + owner-checked release/renew (tests 3, 6, 9).
+- [x] Restart/overlap behavior is documented in repo — ops doc §3–§4; stale takeover requires explicit `--steal-reason` (tests 7, 8).

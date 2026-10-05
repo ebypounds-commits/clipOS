@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M-1",
-  "current_ticket": "CLIP-P003",
+  "current_ticket": "CLIP-P004",
   "status": "M-1_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -12,7 +12,8 @@
   "completed_milestones": [],
   "completed_tickets": [
     "CLIP-P001",
-    "CLIP-P002"
+    "CLIP-P002",
+    "CLIP-P003"
   ],
   "blocked": [],
   "human_gates": {
@@ -23,12 +24,12 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-P002",
-    "at": "2026-10-05T19:48:41+00:00",
+    "ticket": "CLIP-P003",
+    "at": "2026-10-05T19:57:02+00:00",
     "report": "docs/reports/M-1_COMPLETION.md",
-    "facts": "docker+compose OK non-root; /srv/clipos layout; user clipos; capacity snapshot"
+    "facts": "lease tooling + tests 11/11; ops doc; gitignore leases"
   },
-  "next_action": "Execute CLIP-P003: qualify Hermes single-orchestrator control and ticket leases.",
+  "next_action": "Execute CLIP-P004: Codex dry-run via OpenRouter GLM-5.3-Flash bounded task.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
