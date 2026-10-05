@@ -1,0 +1,38 @@
+{
+  "ticket_id": "CLIP-P004",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-P004",
+  "worktree": "/srv/clipos/worktrees/CLIP-P004",
+  "summary": "Bounded dry-run: created and executed scripts/dryrun_probe.sh, captured DRYRUN_OK evidence, passed handoff validation and agent lease test gates, and committed on agent/CLIP-P004.",
+  "files_changed": [
+    "scripts/dryrun_probe.sh",
+    ".agent/dryrun/probe_output.txt",
+    ".agent/dryrun/completion_report.json"
+  ],
+  "tests": [
+    {
+      "name": "dryrun_probe",
+      "command": "sh scripts/dryrun_probe.sh",
+      "result": "PASS",
+      "evidence": ".agent/dryrun/probe_output.txt"
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-P004; spec=2.0-hermes-vps"
+    },
+    {
+      "name": "test_agent_lease",
+      "command": "python3 scripts/test_agent_lease.py",
+      "result": "PASS",
+      "evidence": "RESULT: 11 passed, 0 failed"
+    }
+  ],
+  "security_rights_budget_impact": "none",
+  "commit_shas": [
+    "f9c83543caa852f1ba796cc4d2d527e062f4e8a9"
+  ],
+  "working_tree_clean": true,
+  "blockers": []
+}

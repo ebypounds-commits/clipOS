@@ -1,0 +1,71 @@
+--- dryrun_probe ---
+DRYRUN_OK
+--- validate_handoff ---
+OK: 108 tickets; current=CLIP-P004; spec=2.0-hermes-vps
+--- test_agent_lease ---
+PASS: fresh acquire returns ok
+PASS: lease file has required fields
+PASS: conflicting acquire refused
+PASS: owner re-acquire idempotent
+PASS: release by owner
+PASS: release by non-owner refused
+PASS: stale takeover refused without explicit reason
+PASS: explicit takeover succeeds + audited
+PASS: renew by wrong owner refused
+PASS: status lists lease
+PASS: path traversal ticket id rejected
+
+RESULT: 11 passed, 0 failed
+--- completion_report_json_tool ---
+{
+    "ticket_id": "CLIP-P004",
+    "status": "COMPLETE",
+    "branch": "agent/CLIP-P004",
+    "worktree": "/srv/clipos/worktrees/CLIP-P004",
+    "summary": "Bounded dry-run proved the worker loop: created and executed the POSIX sh probe, captured its output, and passed all required handoff and lease gates.",
+    "files_changed": [
+        "scripts/dryrun_probe.sh",
+        ".agent/dryrun/probe_output.txt",
+        ".agent/dryrun/gates_output.txt",
+        ".agent/dryrun/completion_report.json",
+        ".agent/task_packet_CLIP-P004.md"
+    ],
+    "migrations": [],
+    "contracts_changed": [],
+    "tests": [
+        {
+            "name": "dryrun_probe",
+            "command": "sh scripts/dryrun_probe.sh",
+            "result": "PASS",
+            "evidence": ".agent/dryrun/probe_output.txt"
+        },
+        {
+            "name": "validate_handoff",
+            "command": "python3 scripts/validate_handoff.py",
+            "result": "PASS",
+            "evidence": ".agent/dryrun/gates_output.txt"
+        },
+        {
+            "name": "test_agent_lease",
+            "command": "python3 scripts/test_agent_lease.py",
+            "result": "PASS",
+            "evidence": ".agent/dryrun/gates_output.txt"
+        }
+    ],
+    "security_rights_budget_impact": "none",
+    "known_limitations": [
+        "The worktree .git mount is read-only, so the agent/CLIP-P004 branch is maintained in a writable temporary git directory and exported as the ignored transport bundle .agent/dryrun/CLIP-P004.bundle.",
+        "The final report commit cannot embed its own SHA; commit_shas records the preceding CLIP-P004 commits, while the bundle records the final branch head."
+    ],
+    "commit_shas": [
+        "426a79a4344689c591101473a133a24d185fc0d8",
+        "7b7bc21a02f1ef3777702195d13899d4187e11d0",
+        "87abb689cb37194f419d5ec53d50c11e3b998791",
+        "cbe4c089fb401927c5f2086a00bf1712bed7cd2e",
+        "61678fe344a2c02a712c2ca2af0dbe6b91a0677f",
+        "ba0eb7e001b5f3988e2761728865bbf35b8bf84f",
+        "21bceb40bba7917fd73eaceac24a741802aca8bf"
+    ],
+    "working_tree_clean": true,
+    "blockers": []
+}
