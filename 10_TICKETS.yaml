@@ -137,7 +137,7 @@ tickets:
 - id: CLIP-002
   milestone: M0
   title: Create Docker local infrastructure and health checks
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-001
@@ -152,6 +152,11 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-05T23:15:57+00:00'
+  evidence: 'commit dad771b; CI run 37387137619 status=success (incl. compose up/health/down integration);
+    live VPS double cycle green (all3 healthy in5s, down-probe rc=1); 14 tests; port-safe compose 5433/6380/9002/9003;
+    bitnamilegacy/minio (upstream removed 2026); worker GLM-5.3-Flash; orchestrator repairs: Health str/dict
+    parser + bitnami data path'
 - id: CLIP-003
   milestone: M0
   title: Establish CI quality gates and dependency/security scans
