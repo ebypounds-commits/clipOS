@@ -52,3 +52,6 @@ Tool: `scripts/agent_lease.py` (lease file: `.agent/leases/<ticket>.lock`, git-i
 ## 6. Provenance
 
 Implemented and verified under ticket **CLIP-P003** (M-1). Test evidence: `scripts/test_agent_lease.py` output archived in `docs/reports/M-1_COMPLETION.md`.
+
+### CI gate (added CLIP-P005)
+- `BUILD_STATE.json` must never advance past a red `baseline-ci` run on the pushed SHA. Status is read from the `ci-results` branch write-back (`last_run.txt`), which must match the pushed sha. Green is a precondition for M0 qualification (CLIP-P006).

@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M-1",
-  "current_ticket": "CLIP-P005",
+  "current_ticket": "CLIP-P006",
   "status": "M-1_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -14,7 +14,8 @@
     "CLIP-P001",
     "CLIP-P002",
     "CLIP-P003",
-    "CLIP-P004"
+    "CLIP-P004",
+    "CLIP-P005"
   ],
   "blocked": [],
   "human_gates": {
@@ -25,12 +26,12 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-P004",
-    "at": "2026-10-05T21:20:51+00:00",
+    "ticket": "CLIP-P005",
+    "at": "2026-10-05T21:40:38+00:00",
     "report": "docs/reports/M-1_COMPLETION.md",
-    "facts": "dry-run COMPLETE on agent/CLIP-P004; spend delta 0.102531 USD; unified_exec toolchain"
+    "facts": "CI run 37377292963 status=success sha=52af013; secret_scan clean; spend delta 0.067353"
   },
-  "next_action": "Execute CLIP-P005: establish repository baseline CI.",
+  "next_action": "Execute CLIP-P006: publish M-1 environment qualification evidence and gate M0 start.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

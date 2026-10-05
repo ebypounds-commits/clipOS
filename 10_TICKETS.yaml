@@ -80,7 +80,7 @@ tickets:
 - id: CLIP-P005
   milestone: M-1
   title: Bootstrap CI and secrets-hygiene preflight
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P004
@@ -92,6 +92,9 @@ tickets:
   - Secret scan/preflight passes.
   - Failure prevents qualification rather than being silently ignored.
   human_gate: false
+  completed_at: '2026-10-05T21:40:38+00:00'
+  evidence: docs/reports/M-1_COMPLETION.md#clip-p005; CI run 37377292963 status=success sha=52af013; secret_scan
+    clean
 - id: CLIP-P006
   milestone: M-1
   title: Publish M-1 evidence and hand off automatically to M0
