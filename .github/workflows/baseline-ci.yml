@@ -47,7 +47,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           if [ "${{ needs.validate.result }}" = "success" ]; then
             result=success
           else
@@ -58,10 +58,8 @@ jobs:
             printf 'run=%s\n' '${{ github.run_id }}'
             printf 'sha=%s\n' '${{ github.sha }}'
           } > last_run.txt
-          git switch ci-results || git switch -c ci-results
           git add last_run.txt
-          git -c user.name=ci-bot -c user.email=ci-bot@clipos.local commit -m "ci: record last run"
-          git remote set-url origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git diff --cached --quiet || git -c user.name=ci-bot -c user.email=ci-bot@clipos.local commit -m "ci: record last run"
           git_repo_url="${{ github.server_url }}/${{ github.repository }}.git"
           auth_url="$(printf '%s' "$git_repo_url" | sed "s|https://|https://x-access-token:${GITHUB_TOKEN}@|")"
-          git push "$auth_url" HEAD:ci-results
+          git push --force "$auth_url" HEAD:ci-results
