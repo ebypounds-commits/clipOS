@@ -23,10 +23,12 @@ The Python suite covers the health contract, provider alias rejection, absence o
 ## Local infrastructure
 
 ```bash
-make devstack
+make infra-up
 ```
 
-This starts PostgreSQL with pgvector, Redis, and MinIO using clearly non-production local credentials. Optional API and web containers are grouped behind the Compose `app` profile and are not started by the M0 skeleton.
+This starts PostgreSQL with pgvector, Redis, and MinIO using clearly non-production local credentials, waits for their Compose health checks, and runs the infrastructure health gate. Use `make infra-down` to stop the stack and `make infra-health` to re-check it without changing container state; the script is read-only and repeatable. Optional API and web containers are grouped behind the Compose `app` profile and are not started by the M0 skeleton.
+
+The Compose project name is fixed to `clipos-dev`, so repeated commands address the same stack regardless of the shell directory. Host ports are intentionally non-colliding: PostgreSQL uses 5433, Redis 6380, and MinIO 9002/9003. Host port 5432 is reserved by the operator's live PostgreSQL service and must never be bound by development infrastructure.
 
 ## M0 evidence map
 

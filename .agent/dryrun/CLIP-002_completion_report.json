@@ -1,0 +1,114 @@
+{
+  "ticket_id": "CLIP-002",
+  "status": "PASS",
+  "branch": "agent/CLIP-002",
+  "worktree": "/srv/clipos/worktrees/CLIP-002",
+  "summary": "Added a non-colliding clipos-dev Compose stack with host ports 5433/6380/9002/9003, a Pydantic infrastructure health contract and Compose JSON parser, six parser regression tests, an idempotent read-only infrastructure_health.sh gate, Make targets, CI startup/poll/cleanup coverage, and developer documentation. All executable quality gates passed in this environment; the live container lifecycle gate was blocked by Docker socket permissions and the shared Git worktree index remains read-only, so the changes are staged in the working tree but not committed.",
+  "files_changed": [
+    ".github/workflows/baseline-ci.yml",
+    "Makefile",
+    "docker-compose.dev.yml",
+    "docs/development.md",
+    "scripts/infrastructure_health.sh",
+    "services/api/clipos_api/infrastructure.py",
+    "services/api/tests/test_infrastructure.py"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "InfrastructureHealth aggregate health contract",
+    "ServiceHealth typed service status contract",
+    "docker compose ps JSON -> InfrastructureHealth parser contract"
+  ],
+  "tests": [
+    {
+      "name": "Infrastructure parser unit tests",
+      "command": "pytest -q services/api/tests/test_infrastructure.py",
+      "result": "PASS",
+      "evidence": "6 passed in 0.12s using CLIP-001's Python 3.14 virtualenv (pytest 9.1.1, pydantic 2.13.5) because this worktree has no local .venv and network/package installation is unavailable."
+    },
+    {
+      "name": "Existing API unit tests except /health",
+      "command": "pytest -q services/api/tests/test_audit.py services/api/tests/test_modules.py services/api/tests/test_registry.py",
+      "result": "PASS",
+      "evidence": "7 passed (2 audit + 1 modules + 4 registry), no failures."
+    },
+    {
+      "name": "Existing API /health TestClient test",
+      "command": "pytest -q services/api/tests/test_health.py",
+      "result": "SKIP",
+      "evidence": "The inherited CLIP-001 virtualenv TestClient/httpx/anyio stack hangs on Python 3.14 when invoking the unchanged GET /health endpoint; faulthandler showed the request blocked in anyio run_sync. This test is unchanged and was green on the CLIP-001 CI environment (GitHub Actions run 37383281375). It should be rerun in the orchestrator Python 3.12 environment."
+    },
+    {
+      "name": "Python compile",
+      "command": "python3 -m compileall -q services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Exit 0."
+    },
+    {
+      "name": "API lint",
+      "command": "ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed! using CLIP-001's available ruff 0.16.10; 3 initial import-order/annotation findings were auto-fixed and rechecked."
+    },
+    {
+      "name": "Development Compose validation",
+      "command": "docker compose -f docker-compose.dev.yml config -q",
+      "result": "PASS",
+      "evidence": "Exit 0 with Docker Compose v5.3.1."
+    },
+    {
+      "name": "Operator port collision grep gate",
+      "command": "! rg '\"?(5432|6379):' docker-compose.dev.yml",
+      "result": "PASS",
+      "evidence": "No host-side 5432 or 6379 mapping remains; mappings are 5433:5432, 6380:6379, 9002:9000, and 9003:9001."
+    },
+    {
+      "name": "Live infrastructure stack health",
+      "command": "docker compose -f docker-compose.dev.yml up -d --wait && bash scripts/infrastructure_health.sh",
+      "result": "SKIP",
+      "evidence": "Docker CLI responds for config parsing but container API access is denied: \"permission denied while trying to connect to the Docker API at unix:///var/run/docker.sock\". No containers were started; orchestrator must execute the two-cycle up/health/down acceptance."
+    },
+    {
+      "name": "Health script syntax and stdlib fallback",
+      "command": "bash -n scripts/infrastructure_health.sh",
+      "result": "PASS",
+      "evidence": "Exit 0. The script is read-only, timeout behavior is delegated to Docker, and it exits 1 on degraded/empty output with the same JSON contract."
+    },
+    {
+      "name": "Repository handoff validation",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-002; spec=2.0-hermes-vps"
+    },
+    {
+      "name": "Secret scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean"
+    },
+    {
+      "name": "CI workflow YAML parse",
+      "command": "python3 yaml.safe_load(.github/workflows/baseline-ci.yml)",
+      "result": "PASS",
+      "evidence": "Parsed successfully; test job now starts the stack, polls infrastructure_health.sh up to 90 seconds, and always cleans up with down -v. Report still combines validate and test."
+    },
+    {
+      "name": "Web typecheck",
+      "command": "npx tsc --noEmit -p apps/web",
+      "result": "SKIP",
+      "evidence": "Node/npm/npx are unavailable in this sandbox; apps/web was untouched."
+    }
+  ],
+  "security_rights_budget_impact": "No secrets, external side effects, rights actions, publishing paths, tenant data, privileged operations, or spend are introduced. Existing dev-only credentials remain explicitly local-only. The health command is read-only and CI cleanup runs on always().",
+  "known_limitations": [
+    "The Docker socket rejects container operations for this sandbox user, so live two-cycle stack health evidence must be produced by the orchestrator.",
+    "Git commit is unavailable because /srv/clipos/clipOS/.git/worktrees/CLIP-002/index.lock is on a read-only filesystem; changes remain visible as working-tree modifications on agent/CLIP-002.",
+    "GET /health TestClient execution is an inherited Python 3.14/httpx compatibility issue in the borrowed virtualenv, not a code change; CI Python 3.12 remains the authoritative environment."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [
+    "Docker container API access is denied (permission denied on unix:///var/run/docker.sock).",
+    "Git commit is blocked by a read-only shared .git worktree index."
+  ]
+}

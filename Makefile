@@ -1,4 +1,4 @@
-.PHONY: setup test lint typecheck devstack validate
+.PHONY: setup test lint typecheck devstack infra-up infra-health infra-down validate
 
 setup:
 	python3 -m venv .venv && .venv/bin/pip install -e 'services/api[dev]'
@@ -14,6 +14,16 @@ typecheck:
 
 devstack:
 	docker compose -f docker-compose.dev.yml up -d postgres redis minio
+
+infra-up:
+	docker compose -f docker-compose.dev.yml up -d --wait || docker compose -f docker-compose.dev.yml up -d
+	bash scripts/infrastructure_health.sh
+
+infra-health:
+	bash scripts/infrastructure_health.sh
+
+infra-down:
+	docker compose -f docker-compose.dev.yml down
 
 validate:
 	python3 scripts/validate_handoff.py

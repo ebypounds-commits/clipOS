@@ -49,6 +49,28 @@ jobs:
         run: pytest -q services/api
       - name: Validate development compose
         run: docker compose -f docker-compose.dev.yml config -q
+      - name: Start development infrastructure
+        run: docker compose -f docker-compose.dev.yml up -d
+      - name: Wait for infrastructure health
+        run: |
+          set -euo pipefail
+          ok=0
+          for attempt in $(seq 1 18); do
+            if bash scripts/infrastructure_health.sh; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ok" -ne 1 ]; then
+            docker compose -f docker-compose.dev.yml ps || true
+            exit 1
+          fi
+      - name: Confirm infrastructure health
+        run: bash scripts/infrastructure_health.sh
+      - name: Stop development infrastructure
+        if: always()
+        run: docker compose -f docker-compose.dev.yml down -v
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
