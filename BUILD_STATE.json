@@ -2,15 +2,17 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M-1",
-  "current_ticket": "CLIP-P001",
-  "status": "READY_FOR_HERMES_PREFLIGHT",
+  "current_ticket": "CLIP-P002",
+  "status": "M-1_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
   "production_deploy": false,
   "public_publishing": false,
   "completed_milestones": [],
-  "completed_tickets": [],
+  "completed_tickets": [
+    "CLIP-P001"
+  ],
   "blocked": [],
   "human_gates": {
     "production_secrets": false,
@@ -19,8 +21,15 @@
     "meta_real_account": false,
     "first_public_post": false
   },
-  "last_evidence": null,
-  "next_action": "Start Hermes in the VPS canonical repo and execute HERMES_START_PROMPT.md; begin CLIP-P001.",
+  "last_evidence": {
+    "ticket": "CLIP-P001",
+    "at": "2026-10-05T19:40:23+00:00",
+    "commit": "7235511413bcad54161fa2fedbc738050230f9f7",
+    "remote_head": "7235511413bcad54161fa2fedbc738050230f9f7",
+    "report": "docs/reports/M-1_COMPLETION.md",
+    "validators": "validate_handoff.py OK; preflight.sh exit 0"
+  },
+  "next_action": "Execute CLIP-P002: qualify VPS runtime, Docker, resources and filesystem layout.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
