@@ -1,0 +1,67 @@
+name: baseline-ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validate repository handoff
+        run: python3 scripts/validate_handoff.py
+      - name: Run M-1 preflight
+        run: bash scripts/preflight.sh
+      - name: Test agent lease behavior
+        run: python3 scripts/test_agent_lease.py
+      - name: Scan tracked files for secrets
+        run: bash scripts/secret_scan.sh
+
+  report:
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Write and publish CI result
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.validate.result }}" = "success" ]; then
+            result=success
+          else
+            result=failure
+          fi
+          {
+            printf 'status=%s\n' "$result"
+            printf 'run=%s\n' '${{ github.run_id }}'
+            printf 'sha=%s\n' '${{ github.sha }}'
+          } > last_run.txt
+          git switch ci-results || git switch -c ci-results
+          git add last_run.txt
+          git -c user.name=ci-bot -c user.email=ci-bot@clipos.local commit -m "ci: record last run"
+          git remote set-url origin "${{ github.server_url }}/${{ github.repository }}.git"
+          git_repo_url="${{ github.server_url }}/${{ github.repository }}.git"
+          auth_url="$(printf '%s' "$git_repo_url" | sed "s|https://|https://x-access-token:${GITHUB_TOKEN}@|")"
+          git push "$auth_url" HEAD:ci-results

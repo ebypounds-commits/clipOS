@@ -1,0 +1,65 @@
+{
+  "ticket_id": "CLIP-P005",
+  "status": "FAILED_RETRYABLE",
+  "branch": "agent/CLIP-P005",
+  "worktree": "/srv/clipos/worktrees/CLIP-P005",
+  "summary": "Baseline CI lane and secrets-hygiene preflight are implemented and all required worktree gates pass, including negative scanner checks. A complete commit object was built with deterministic identity, but worktree Git metadata is read-only, so the commit cannot be written to agent/CLIP-P005 from this sandbox.",
+  "files_changed": [
+    ".github/workflows/baseline-ci.yml",
+    "scripts/secret_scan.sh",
+    ".agent/plans/CLIP-P005.md",
+    ".agent/task_packet_CLIP-P005.md",
+    ".agent/dryrun/p005_completion_report.json"
+  ],
+  "migrations": [],
+  "contracts_changed": [],
+  "tests": [
+    {
+      "name": "workflow YAML parse and structure",
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/baseline-ci.yml'))\" plus structure assertions",
+      "result": "PASS",
+      "evidence": "safe_load succeeded; triggers, validate steps, and report job match packet"
+    },
+    {
+      "name": "secret scanner clean baseline",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean; exit 0"
+    },
+    {
+      "name": "secret scanner rejection checks",
+      "command": "disposable /tmp git repositories",
+      "result": "PASS",
+      "evidence": "tracked .env.local and fake AWS key each produced exit 1"
+    },
+    {
+      "name": "repository handoff validation",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-P005; spec=2.0-hermes-vps"
+    },
+    {
+      "name": "agent lease regression tests",
+      "command": "python3 scripts/test_agent_lease.py",
+      "result": "PASS",
+      "evidence": "RESULT: 11 passed, 0 failed"
+    },
+    {
+      "name": "commit connectivity/content check",
+      "command": "git diff-tree -r <base> <pending commit> and git fsck",
+      "result": "PASS",
+      "evidence": "five intended paths added; no unintended changes or missing objects"
+    }
+  ],
+  "security_rights_budget_impact": "Adds fail-closed checks for tracked secret-like paths and common credential/private-key signatures; no credentials introduced and no external side effects.",
+  "known_limitations": [
+    "Pattern scan is heuristic and does not replace periodic secret auditing or provider-side key checks.",
+    "ci-results reporting uses the repository GITHUB_TOKEN until an API token exists.",
+    "Read-only worktree Git metadata prevents branch-head update from this worktree; pending commit object is ready for orchestrator application."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [
+    "git metadata /srv/clipos/clipOS/.git and worktree gitdir are read-only; index writes, ref writes, and HEAD update fail with EROFS"
+  ]
+}
