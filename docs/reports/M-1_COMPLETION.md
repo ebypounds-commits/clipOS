@@ -123,3 +123,31 @@ Status: **DONE** — 2026-10-05T21:20:51+00:00
 - [x] Bounded Codex dry-run task completes — artifacts in `.agent/dryrun/` (probe, report, commit)
 - [x] Outputs and token spend captured — this section + `/root/p004_codex_output.log`
 - [x] Production OpenAI routing remains disabled unless explicitly switched — config evidence above
+
+## CLIP-P006 — Publish M-1 evidence and hand off automatically to M0
+Status: **DONE** — 2026-10-05T22:20:09+00:00
+
+### M-1 evidence index (all six tickets)
+| Ticket | Evidence | Push |
+|---|---|---|
+| CLIP-P001 | preflight green, secret scan clean, repo push auth proven | 676d39c |
+| CLIP-P002 | non-root Docker worktree readiness (real containers), repo relocated to /srv/clipos/clipOS | d2c5559 |
+| CLIP-P003 | scripts/agent_lease.py (11/11 tests), M-1_ORCHESTRATOR_OPERATIONS.md | 6917334 |
+| CLIP-P004 | GLM-5.3-Flash dry-run: probe DRYRUN_OK, gates, completion report; bundles 1344c83/ff5e3a1 | 03e37a9 |
+| CLIP-P005 | baseline-ci.yml + scripts/secret_scan.sh; CI run 37377292963 status=success sha=52af013 | cd305f1 |
+| CLIP-P006 | this report; BUILD_STATE -> M0/CLIP-001 | (this commit) |
+
+### Known limits (exact, carried forward)
+1. **No API token**: CI status observed only via the `ci-results` git write-back; run LOGS are unreachable without a fine-grained PAT (human-gate candidate: grant `repo:read` PAT or accept git-only observability).
+2. **CI write-back v1 failed silently for intermediate pushes** (runs after the first never reported; the report job's branch-switch/push path had no failure visibility). Fixed by design (branch-switch-free commit + `git push --force`, `set -uo pipefail`); live-verified: run 37381579523 -> status=success sha=74dc989. Exact v1 failure cause is unobservable without run logs (see limit 1).
+3. Branch protection rules cannot be configured with a deploy key (unchanged).
+4. Repo carries one binary artifact `.agent/dryrun/CLIP-P004.bundle` (249KB) kept as provenance; `secret_scan.sh` skips binaries via `grep -I`.
+5. GitHub Actions minute consumption: ~1 min/run on the private-repo free allowance.
+6. GLM-5.3-Flash is a fabricator without ground-truth probes — every worker claim was verified via session logs, nonces, gates, or bundle contents (workflow documented in skills/clipos-orchestrator).
+
+### M-1 qualification decision
+All M-1 gates pass: preflight.sh exit 0, validate_handoff OK (108 tickets), lease suite 11/11, baseline CI green on the current lineage, secrets clean, workers non-root, lease discipline proven. **M-1 QUALIFIED — BUILD_STATE now points at CLIP-001 (M0) with no operator confirmation required per ticket human_gate=false.**
+
+### Token spend (OpenRouter, z-ai/glm-5.3-flash + probes)
+- P004 run: $0.1025 | P005 run: $0.0674 | P006 accounting: $0.0
+- Cumulative usage: $0.194221717 USD; limit remaining: $4.805778283

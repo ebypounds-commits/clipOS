@@ -98,7 +98,7 @@ tickets:
 - id: CLIP-P006
   milestone: M-1
   title: Publish M-1 evidence and hand off automatically to M0
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-P005
@@ -110,6 +110,8 @@ tickets:
   - BUILD_STATE points to CLIP-001.
   - Hermes can immediately select CLIP-001 without operator confirmation.
   human_gate: false
+  completed_at: '2026-10-05T22:20:09+00:00'
+  evidence: docs/reports/M-1_COMPLETION.md#clip-p006; M-1 evidence index complete; BUILD_STATE -> CLIP-001
 - id: CLIP-001
   milestone: M0
   title: Bootstrap monorepo and developer toolchain
