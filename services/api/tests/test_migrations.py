@@ -22,6 +22,8 @@ _EXPECTED_TABLES = {
     "sessions",
     "service_identities",
     "audit_events",
+    "outbox_events",
+    "idempotency_records",
 }
 
 
@@ -41,6 +43,7 @@ def test_offline_sql_renders_create_only_schema() -> None:
         assert re.search(rf"CREATE TABLE {table}\b", sql, re.IGNORECASE), f"missing {table}"
     assert "CREATE UNIQUE INDEX ix_organizations_slug" in sql
     assert "CREATE UNIQUE INDEX uq_memberships_org_user" in sql
+    assert "CREATE UNIQUE INDEX ix_idempotency_records_business_key" in sql
 
 
 @pytest.mark.skipif(

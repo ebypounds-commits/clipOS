@@ -1,0 +1,52 @@
+{
+  "ticket_id": "CLIP-016",
+  "branch": "agent/CLIP-016",
+  "worktree": "/srv/clipos/worktrees/CLIP-016",
+  "status": "IMPLEMENTATION_COMPLETE_SANDBOX",
+  "at": "2026-10-06T10:20:21.041316+00:00",
+  "sandbox_limits": [
+    "no docker / no DATABASE_URL: PostgreSQL migration, partial unique, SKIP LOCKED, and rollback tests SKIP honestly in-sandbox and are wired to CI lane 5 / orchestrator compose lane",
+    "no network: no external integration attempted"
+  ],
+  "gates": {
+    "pytest": "220 passed, 9 skipped after orchestrator fix round (DATABASE_URL-gated pg tests SKIP honestly in-sandbox; real-PG failures fixed)",
+    "ruff_format": "clean (ruff format --check services/api)",
+    "ruff_check": "clean (one required SIM117 noqa on nested savepoint rollback context)",
+    "mypy": "Success: no issues found in 24 source files (services/api/clipos_api)",
+    "compileall": "python3 -m compileall services/api scripts: exit 0",
+    "alembic_offline": "cd services/api && ../../.venv/bin/alembic -c alembic.ini upgrade head --sql: renders 0001 -> 0002; CREATE TABLE outbox_events and CREATE TABLE idempotency_records both present; indexes ix_outbox_status_available, ix_outbox_business_key, ix_idempotency_records_state_locked, and unique ix_idempotency_records_business_key present",
+    "validate_handoff": "OK: 108 tickets; current=CLIP-016; spec=2.0-hermes-vps",
+    "validate_state": "state: valid (21 completed)",
+    "state_audit": "verify: 21/21 covered",
+    "architecture_guard": "all checks OK (adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state)",
+    "validate_packet": "packet: valid (.agent/task_packet_CLIP-016.md)",
+    "yaml_parse": "baseline-ci.yml: OK (yaml.safe_load); jobs validate/test/quality/build/report present; workflow untouched",
+    "secret_scan": "git add -A attempted but failed: shared .git worktree index is read-only; scripts/secret_scan.sh remains green over tracked files"
+  },
+  "coverage": {
+    "total_percent": 88.74,
+    "statements": 2273,
+    "missed": 256
+  },
+  "deliverables": [
+    "services/api/migrations/versions/0002_outbox_idempotency.py: CREATE-only 0002 after 0001; outbox_events and idempotency_records with required columns/indexes, PostgreSQL partial unique business-key index, and intentionally unimplemented downgrade in 0001 style",
+    "services/api/clipos_api/outbox.py: OutboxStatus/OutboxEvent models; caller-session enqueue with shared-commit transactional guarantee; enqueue_in_transaction; FOR UPDATE SKIP LOCKED claim_batch with atomic attempt increment and lease via available_at; mark_published; exponential-backoff/terminal mark_failed; stats; audit hooks with SHA-256 payload hash only",
+    "services/api/clipos_api/idempotency.py: IdempotencyRecord/ClaimResult models; PostgreSQL/sqlite dialect INSERT ON CONFLICT DO NOTHING claim with race-safe rowcount and reclaim semantics; atomic complete/fail; recover_stale; execute_idempotent replay without fn execution; IdempotencyInProgress; request-hash mismatch ValueError; audit hooks without response contents",
+    "services/api/tests/test_outbox.py: SQLite roundtrip, due-time/lease ordering, backoff and terminal max_attempts math, stats, invalid inputs, audit JSON and payload-content absence",
+    "services/api/tests/test_idempotency.py: claim/complete/replay (fn not called), hash mismatch, in-progress exception, failed re-claim attempts increment, stale lease recovery, scope/input validation, audit actions",
+    "services/api/tests/test_outbox_pg.py: DATABASE_URL-gated PostgreSQL migration idempotency, both tables, partial unique business-key enforcement with NULL allowance, two-thread disjoint SKIP LOCKED claim proof, and enqueue rollback transactional proof",
+    "services/api/tests/test_migrations.py: expected offline table set extended with both new tables and unique idempotency business-key index assertion; existing migration behavior preserved",
+    "docs/development.md: Outbox & idempotency section covering shared-commit semantics, lease/backoff/status model, execute_idempotent example, 02 \u00a79 consistency guarantees, workflow_framework business-key reuse, NATS roadmap, and publishing_idempotency deferral"
+  ],
+  "not_run_in_sandbox": [
+    "Postgres-gated migration/partial-unique/SKIP LOCKED/rollback tests require DATABASE_URL; CI lane 5 and orchestrator run them",
+    "git commit is outside Codex packet scope; orchestrator stages/commits/advances state"
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [],
+  "orchestrator_fixes": [
+    "OutboxStore.claim_batch_in_transaction(session, limit, lease_seconds, now): FOR UPDATE SKIP LOCKED claim now runs in the caller session/transaction so row locks remain held across a competing claim; claim_batch delegates to it via sessionmaker with unchanged behavior",
+    "test_outbox_pg.py partial-unique savepoint teardown: nested the IntegrityError context inside begin_nested so SQLAlchemy rolls back to the savepoint before psycopg3 RELEASE SAVEPOINT, preventing InFailedSqlTransaction"
+  ]
+}

@@ -251,6 +251,51 @@ activate when `DATABASE_URL` is set. Repositories currently available are the ge
 protocol-conformant `SQLOrganizationStore`/`SQLMembershipStore` in
 `services/api/clipos_api/repository.py`; in-memory stores remain the default for services.
 
+## Outbox & idempotency
+
+Database mutations and emitted domain events share one transaction: the application writes its
+business row and calls `OutboxStore.enqueue(session, event)` in the same SQLAlchemy session, then
+commits once. That shared commit is the transactional guarantee from `02_SYSTEM_ARCHITECTURE.md`
+§9 — an event can never exist after a rolled-back mutation, and a mutation cannot commit without
+its event. The `enqueue_in_transaction(event)` helper is for a standalone event transaction;
+the caller-owned `enqueue` form is the normal path. `available_at` doubles as the next delivery
+time and lease deadline: a worker claims due pending rows, increments `attempts`, and postpones
+the row for the lease interval. PostgreSQL claims use `SELECT ... FOR UPDATE SKIP LOCKED`, so
+concurrent workers receive disjoint batches; failed delivery schedules
+`available_at = now + retry_backoff_seconds * 2**(attempts - 1)` and becomes terminal `failed`
+at `max_attempts`. Statuses are `pending`, `published`, and `failed`; `stats()` exposes counts.
+Audit records (`outbox.enqueued`, `outbox.published`, `outbox.failed`) carry identifiers,
+attempt counts, and a SHA-256 payload hash — never payload contents.
+
+External writes use `idempotency_records`. `claim` uses `INSERT ... ON CONFLICT (key) DO NOTHING`
+and rowcount as the race-safe decision; a concurrent successful insert means the key is already
+owned. A succeeded record replays its stored response; an active lease reports `in_progress`;
+a failed or expired lease is reclaimable and increments `attempts`. Complete, fail, and recovery
+are single atomic updates, so a crash can leave only the owned state, never a half-created
+external write. `request_hash` mismatch on a succeeded key raises `ValueError` rather than
+replaying the wrong request. Business-key linkage reuses the exact formats produced by
+`clipos_api.workflow_framework.business_key`; this module never invents another format.
+`execute_idempotent` composes the lifecycle:
+
+```python
+response = execute_idempotent(
+    store=store,
+    key="publish:acct-1:variant-9:slot-42",
+    scope="publishing",
+    request_hash=request_digest(provider_request),
+    fn=lambda: provider.publish(provider_request),
+    lock_seconds=300,
+    business_key=workflow_framework.business_key(
+        "publish", account_id="acct-1", variant_id="variant-9", scheduled_slot="slot-42"
+    ),
+)
+```
+
+The generic tables are `outbox_events` and `idempotency_records` (migration `0002`). The
+publishing-specific `publishing_idempotency` row wiring lands with the publishing tickets.
+Delivery is currently database-backed; NATS JetStream remains a future substitution only when
+event throughput/decoupling justifies it, as specified by §Events.
+
 ## CI lane matrix
 
 The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current implementation:
