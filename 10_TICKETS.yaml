@@ -160,7 +160,7 @@ tickets:
 - id: CLIP-003
   milestone: M0
   title: Establish CI quality gates and dependency/security scans
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-002
@@ -175,6 +175,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T02:51:04+00:00'
+  evidence: 'commits 84e37eb+571a733+0033a6c; CI run 37405838258 status=success jobs=validate/test/quality/build
+    all success; gates: pytest14 cov64.57%>=60, mypy clean, ruff format+check clean, pip-audit 0 vulns
+    (scoped -r), npm audit 0 (next@16.3.8 fixed postcss HIGH), SBOM+OpenAPI artifacts, e2e smoke live,
+    integration smoke 3/3, docker builds ok; 16-lane matrix in docs/development.md (deferred lanes documented);
+    ci-results now reports per-job results'
 - id: CLIP-004
   milestone: M0
   title: Create architecture/ADR/build-state governance
