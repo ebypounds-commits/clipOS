@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clipos.local/schemas/build_state.schema.json",
+  "title": "ClipOS BUILD_STATE",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "current_ticket",
+    "status",
+    "completed_tickets",
+    "milestone",
+    "last_evidence",
+    "next_action"
+  ],
+  "properties": {
+    "current_ticket": {
+      "type": "string"
+    },
+    "status": {
+      "oneOf": [
+        {
+          "enum": [
+            "M-1_PREFLIGHT",
+            "M-1_IN_PROGRESS",
+            "M0_READY",
+            "M0_IN_PROGRESS"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^(M\\d+_|M-1_)"
+        }
+      ]
+    },
+    "completed_tickets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "milestone": {
+      "type": "string"
+    },
+    "last_evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "ticket",
+        "at",
+        "facts"
+      ],
+      "properties": {
+        "ticket": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        },
+        "facts": {
+          "type": "string"
+        }
+      }
+    },
+    "next_action": {
+      "type": "string"
+    }
+  }
+}

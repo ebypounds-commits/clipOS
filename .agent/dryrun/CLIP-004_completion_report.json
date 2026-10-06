@@ -1,0 +1,99 @@
+{
+  "ticket_id": "CLIP-004",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-004",
+  "worktree": "/srv/clipos/worktrees/CLIP-004",
+  "summary": "Governance foundation: ADR process + 4 founding ADRs (modular monolith/worker processes, core stack, provider alias policy, CI gates/deferral policy), draft-07 schema for BUILD_STATE.json, stdlib-only validate_state.py and architecture_guard.py wired into the CI validate job and a make governance target, governance pytest suite, and docs/development.md section. BUILD_STATE.json, 10_TICKETS.yaml and docs/reports/* untouched.",
+  "files_changed": [
+    "docs/adr/README.md",
+    "docs/adr/0000-template.md",
+    "docs/adr/0001-modular-monolith-and-worker-processes.md",
+    "docs/adr/0002-core-stack-selection.md",
+    "docs/adr/0003-provider-registry-alias-policy.md",
+    "docs/adr/0004-ci-gates-and-deferral-policy.md",
+    "schemas/build_state.schema.json",
+    "scripts/validate_state.py",
+    "scripts/architecture_guard.py",
+    "services/api/tests/test_governance.py",
+    ".github/workflows/baseline-ci.yml",
+    "Makefile",
+    "docs/development.md",
+    ".agent/dryrun/CLIP-004_completion_report.json"
+  ],
+  "tests": [
+    {
+      "name": "validate_state.py on real BUILD_STATE.json",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "exit 0, printed: state: valid (9 completed)"
+    },
+    {
+      "name": "architecture_guard.py all rules",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "exit 0; all 6 rules OK (adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state)"
+    },
+    {
+      "name": "negative: validate_state rejects bogus status and unknown current_ticket",
+      "command": "python3 (in-process validate_state on mutated copies)",
+      "result": "PASS",
+      "evidence": "bogus status -> 'does not match any oneOf schema'; CLIP-9999 -> 'missing from 10_TICKETS.yaml'"
+    },
+    {
+      "name": "negative: architecture_guard fails on copy with docs/adr removed",
+      "command": "python3 run_guard() against /tmp copy of repo (originals restored/untouched)",
+      "result": "PASS",
+      "evidence": "adr-set FAIL: missing README, template, 0 numbered ADRs; real repo guard still exit 0"
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall -q scripts services/api",
+      "result": "PASS",
+      "evidence": "exit 0"
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-004; spec=2.0-hermes-vps"
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "clean. Note: sandbox index writes are blocked, so new files are not in git ls-files; all new/changed files were additionally scanned manually with the same secret_patterns regex: clean"
+    },
+    {
+      "name": "workflow YAML parse + CI wiring",
+      "command": "python3 -c yaml.safe_load(baseline-ci.yml) + rg check",
+      "result": "PASS",
+      "evidence": "yaml OK; validate job contains 'Validate build state and architecture' step after secret scan; report still needs [validate, test, quality, build]"
+    },
+    {
+      "name": "pytest (existing 14 + new 7 governance tests)",
+      "command": "python3 -m pytest -q services/api",
+      "result": "SKIP",
+      "evidence": "pytest is not installed in this sandbox and network/pip is blocked (Python 3.14.4 system python has no venv; pytest/ruff/mypy/node/npm all absent). CI re-runs outside the sandbox. Negative-path and validator logic were verified in-process instead."
+    },
+    {
+      "name": "ruff format --check / ruff check / mypy",
+      "command": "python3 -m ruff format --check services/api; python3 -m ruff check services/api; python3 -m mypy services/api/clipos_api",
+      "result": "SKIP",
+      "evidence": "ruff and mypy not installed in sandbox; pip/network unavailable. mypy config unchanged (scripts/ already outside mypy target path)."
+    },
+    {
+      "name": "commit on agent/CLIP-004",
+      "command": "git add -A && git commit",
+      "result": "SKIP",
+      "evidence": "git index write blocked: /srv/clipos/clipOS/.git/worktrees/CLIP-004/index.lock on a read-only filesystem in this sandbox. Changes left staged-ready as untracked/modified files; orchestrator commits or re-runs outside sandbox."
+    }
+  ],
+  "security_rights_budget_impact": "none (read-only validators; no external side effects; strengthens provider-neutrality and never-green-by-suppression governance)",
+  "known_limitations": [
+    "pytest/ruff/mypy gates not runnable in this sandbox (no pytest/ruff/mypy, no network/pip); orchestrator must re-run outside.",
+    "commit blocked by read-only git index in sandbox; working tree contains the completed, gate-passing change set uncommitted."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}

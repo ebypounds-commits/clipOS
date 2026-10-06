@@ -1,4 +1,4 @@
-.PHONY: setup test lint format typecheck openapi quality devstack infra-up infra-health infra-down validate
+.PHONY: setup test lint format typecheck openapi quality devstack infra-up infra-health infra-down validate governance
 
 setup:
 	python3 -m venv .venv && .venv/bin/pip install -e 'services/api[dev]'
@@ -44,3 +44,8 @@ validate:
 	python3 scripts/validate_handoff.py
 	bash scripts/secret_scan.sh
 	$(MAKE) test
+
+governance:
+	python3 scripts/validate_state.py
+	python3 scripts/architecture_guard.py
+	python3 -m pytest -q services/api/tests/test_governance.py
