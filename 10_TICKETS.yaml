@@ -377,7 +377,7 @@ tickets:
 - id: CLIP-012
   milestone: M2
   title: Implement Redis caching/rate-limit primitives
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-011
@@ -392,6 +392,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T07:23:40+00:00'
+  evidence: commit ccad1b4; CI run 37428953113 status=success all4 jobs; KeyValueCache Protocol (RedisCache
+    env-redacted + InMemory clock-injected), RateLimiter fixed-window RedisRateLimiter (INCR+EXPIRE) +
+    in-memory twin with contract-tested identical behavior, RateLimitResult(allowed/remaining/retry_after/reset_at);
+    CACHE_REDIS_URL-gated integration verified against real Redis on VPS; 161 tests, 88.84% coverage;
+    ruff/mypy clean; no hardcoded redis URLs/passwords
 - id: CLIP-013
   milestone: M2
   title: Implement OpenTelemetry metrics/logging/tracing and backup primitives
