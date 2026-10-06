@@ -232,7 +232,7 @@ tickets:
 - id: CLIP-006
   milestone: M1
   title: Implement identity/session foundation
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-005
@@ -247,6 +247,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T03:48:54+00:00'
+  evidence: 'commit 5b74f47; CI run 37410226943 status=success all4 jobs; identity/session foundation:
+    frozen User/Session contracts, SessionStore Protocol + thread-safe in-memory impl, IdentityService
+    (idempotent create, rotation, revoke, injected-clock expiry, CSRF tokens, secure-cookie helpers, SHA-256
+    token hashes), audit read_events helper, test_identity.py with 8-thread concurrency case; 41 tests
+    total, ~79% coverage; ruff/mypy clean; SQL/routes/RBAC deferred per CLIP-007/008/010 boundaries'
 - id: CLIP-007
   milestone: M1
   title: Implement organization tenancy and memberships
