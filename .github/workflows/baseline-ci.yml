@@ -59,8 +59,6 @@ jobs:
         run: ruff check services/api
       - name: Static type check
         run: mypy services/api/clipos_api
-      - name: Run API tests with coverage
-        run: pytest -q services/api
       - name: Validate development compose
         run: docker compose -f docker-compose.dev.yml config -q
       - name: Start development infrastructure
@@ -82,6 +80,14 @@ jobs:
           fi
       - name: Confirm infrastructure health
         run: bash scripts/infrastructure_health.sh
+      - name: Run API migrations (lane 5)
+        env:
+          DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
+        run: alembic -c services/api/alembic.ini upgrade head
+      - name: Run API tests with coverage (lane 5 PostgreSQL DB tests)
+        env:
+          DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
+        run: pytest -q services/api
       - name: Integration smoke (PostgreSQL, Redis, MinIO)
         run: bash scripts/integration_smoke.sh
       - name: Stop development infrastructure

@@ -1,0 +1,132 @@
+{
+  "ticket_id": "CLIP-010",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-010",
+  "worktree": "/srv/clipos/worktrees/CLIP-010",
+  "summary": "Implemented the M2 PostgreSQL persistence foundation: SQLAlchemy 2.x models for users, organizations, memberships, sessions, service_identities, and audit_events; a single CREATE-only Alembic migration 0001 (no DROP/TRUNCATE/ALTER); DATABASE_URL-driven env.py; engine/session_scope/BaseRepository plus record-level OrganizationRepository/MembershipRepository and protocol-conformant SQLOrganizationStore/SQLMembershipStore behind the existing tenancy store Protocols; SQLite in-memory tests plus offline-SQL migration tests and DATABASE_URL-gated PostgreSQL tests; CI lane 5 wired to compose PostgreSQL; docs updated.",
+  "files_changed": [
+    "services/api/pyproject.toml",
+    "services/api/alembic.ini",
+    "services/api/migrations/env.py",
+    "services/api/migrations/script.py.mako",
+    "services/api/migrations/versions/0001_foundation.py",
+    "services/api/clipos_api/repository.py",
+    "services/api/tests/test_repository.py",
+    "services/api/tests/test_migrations.py",
+    ".github/workflows/baseline-ci.yml",
+    "docs/development.md"
+  ],
+  "migrations": [
+    "services/api/migrations/versions/0001_foundation.py (CREATE-only; downgrade intentionally not implemented per 07 no-destructive-ops policy)"
+  ],
+  "contracts_changed": [
+    "services/api/clipos_api/repository.py: Base, UserRecord, OrganizationRecord, MembershipRecord, SessionRecord, ServiceIdentityRecord, AuditEventRecord, get_engine, session_scope, BaseRepository, OrganizationRepository, MembershipRepository, SQLOrganizationStore, SQLMembershipStore"
+  ],
+  "tests": [
+    {
+      "name": "pytest",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "PASS",
+      "evidence": "136 passed, 1 skipped (PostgreSQL-gated migration test honestly skips without DATABASE_URL); coverage 88.81% vs 60% floor. Prior count 127; 9 tests + 1 PG-gated skip added."
+    },
+    {
+      "name": "alembic_offline_render",
+      "command": ".venv/bin/alembic -c services/api/alembic.ini upgrade head --sql",
+      "result": "PASS",
+      "evidence": "Exit 0; SQL saved to /tmp/clip010_upgrade.sql; renders CREATE TABLE for alembic_version plus users, organizations, memberships, sessions, service_identities, audit_events."
+    },
+    {
+      "name": "ruff_format",
+      "command": ".venv/bin/ruff format services/api",
+      "result": "PASS",
+      "evidence": "3 files reformatted during iteration; final run: 29 files left unchanged."
+    },
+    {
+      "name": "ruff_format_check",
+      "command": ".venv/bin/ruff format --check services/api",
+      "result": "PASS",
+      "evidence": "29 files already formatted."
+    },
+    {
+      "name": "ruff_check",
+      "command": ".venv/bin/ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed (3 import-order issues auto-fixed during iteration)."
+    },
+    {
+      "name": "mypy",
+      "command": ".venv/bin/mypy services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Success: no issues found in 13 source files."
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall services/api",
+      "result": "PASS",
+      "evidence": "Exit 0."
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-010; spec=2.0-hermes-vps; exit 0."
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "state: valid (15 completed); exit 0."
+    },
+    {
+      "name": "state_audit_verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "audit: 15/15 covered; exit 0."
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "adr-set/bounded-modules/provider-neutrality/registry-contract/ci-topology/build-state OK; exit 0."
+    },
+    {
+      "name": "validate_packet",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-010.md",
+      "result": "PASS",
+      "evidence": "packet: valid; exit 0."
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean; exit 0."
+    },
+    {
+      "name": "workflow_yaml",
+      "command": "python3 -c 'import yaml; yaml.safe_load(open(\".github/workflows/baseline-ci.yml\"))'",
+      "result": "PASS",
+      "evidence": "Parsed successfully (yaml ok)."
+    },
+    {
+      "name": "destructive_ops_check",
+      "command": "grep -ri 'drop table|truncate|alter table' services/api/migrations/versions/0001_foundation.py",
+      "result": "PASS",
+      "evidence": "No matches (grep exit 1)."
+    },
+    {
+      "name": "postgres_gated_tests",
+      "command": ".venv/bin/pytest services/api/tests/test_migrations.py::test_postgres_upgrade_head_is_idempotent",
+      "result": "SKIP",
+      "evidence": "Sandbox has no DATABASE_URL/Docker; the orchestrator must run CI lane 5 against compose PostgreSQL per packet."
+    }
+  ],
+  "security_rights_budget_impact": "none",
+  "known_limitations": [
+    "Migration 0001 is CREATE-only with a no-op downgrade because 07 requires policy/backup validation for destructive ops; fresh environments start from an empty database.",
+    "Full Protocol conformance currently covers organizations and memberships (existing session/service-identity/audit in-memory stores remain active; SQL row models and migration support those tables now, service switching comes later).",
+    "PG migration idempotence and fresh-Postgres table checks are orchestrator-gated (DATABASE_URL in CI)."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}

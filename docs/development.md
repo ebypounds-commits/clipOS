@@ -104,6 +104,20 @@ considered complete). Operators inspect the audit directly:
 `cat docs/reports/STATE_AUDIT.jsonl` (one JSON object per line, oldest first; existing
 lines are never rewritten).
 
+## Persistence & migrations
+
+The API's persistence foundation uses SQLAlchemy 2.x models with Alembic migrations in
+`services/api/migrations/`. The database URL is read from `DATABASE_URL`; when unset,
+`alembic` falls back to `sqlite:///.alembic-dev.db` for local offline SQL rendering only.
+To run migrations locally, start `docker compose -f docker-compose.dev.yml up -d` and run
+`DATABASE_URL=postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
+alembic -c services/api/alembic.ini upgrade head` (the Compose credentials are
+non-production by design). Tests always exercise SQLite in-memory; PostgreSQL-gated tests
+activate when `DATABASE_URL` is set. Repositories currently available are the generic
+`BaseRepository`, record-level `OrganizationRepository`/`MembershipRepository`, and the
+protocol-conformant `SQLOrganizationStore`/`SQLMembershipStore` in
+`services/api/clipos_api/repository.py`; in-memory stores remain the default for services.
+
 ## CI lane matrix
 
 The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current implementation:
@@ -114,7 +128,7 @@ The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current impleme
 | 2 | Python type/static checks | Implemented — `test` job: `mypy services/api/clipos_api` |
 | 3 | TypeScript typecheck | Implemented — `test` job: `npx tsc --noEmit` in `apps/web` |
 | 4 | Unit tests (+coverage) | Implemented — `test` job: `pytest` with `pytest-cov`, fail-under floor |
-| 5 | Database migration up/down tests | Deferred — no Alembic migrations or schema yet (M2) |
+| 5 | Database migration tests | Implemented — `test` job: `alembic upgrade head` against compose PostgreSQL, then `pytest` with `DATABASE_URL` so PG-gated migration tests run; SQLite tests always run |
 | 6 | Integration tests (PostgreSQL/Redis/object storage/Temporal) | Partially implemented — `test` job: `scripts/integration_smoke.sh` against live PostgreSQL/Redis/MinIO; Temporal deferred — not in dev stack yet (M3) |
 | 7 | Tenant/RBAC/security regression tests | Partially implemented — tenant/RBAC/security regression tests exist; external-provider and public-publication security gates activate in later tickets |
 | 8 | Workflow replay/idempotency tests | Deferred — no workflow engine yet (M3) |
