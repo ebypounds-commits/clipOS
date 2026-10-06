@@ -87,6 +87,10 @@ jobs:
       - name: Run API tests with coverage (lane 5 PostgreSQL DB tests)
         env:
           DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
+          STORAGE_ENDPOINT: http://localhost:9002
+          STORAGE_ACCESS_KEY: clipos_dev
+          STORAGE_SECRET_KEY: clipos_dev_local_only
+          STORAGE_BUCKET: clipos-test
         run: pytest -q services/api
       - name: Integration smoke (PostgreSQL, Redis, MinIO)
         run: bash scripts/integration_smoke.sh

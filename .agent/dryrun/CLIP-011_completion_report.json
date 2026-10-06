@@ -1,0 +1,120 @@
+{
+  "ticket_id": "CLIP-011",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-011",
+  "worktree": "/srv/clipos/worktrees/CLIP-011",
+  "summary": "Implemented the M2 S3-compatible object storage foundation: StorageConfig (env-driven, secret redacted via SecretStr), PutPolicy (content-type allowlist + 100 MB max, foundation level), ObjectStorage Protocol, and S3ObjectStorage (boto3, injectable client; idempotent put/get/delete/ensure_bucket; presigned GET/PUT with configurable TTL; audit events storage.object_put/storage.object_deleted without data or credentials; botocore ClientError never escapes the API surface). Added boto3>=1.34 to pyproject, 9 stub-based unit tests plus a STORAGE_ENDPOINT-gated MinIO integration test, CI test-job MinIO envs, and the Object storage docs section.",
+  "files_changed": [
+    "services/api/pyproject.toml",
+    "services/api/clipos_api/storage.py",
+    "services/api/tests/test_storage.py",
+    "services/api/tests/test_storage_integration.py",
+    ".github/workflows/baseline-ci.yml",
+    "docs/development.md"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "services/api/clipos_api/storage.py: StorageConfigurationError, ObjectNotFound, PolicyViolation, StorageClientError, StorageConfig, PutPolicy, ObjectStorage (Protocol), S3ObjectStorage, StorageSession"
+  ],
+  "tests": [
+    {
+      "name": "pytest",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "PASS",
+      "evidence": "146 passed, 2 skipped (both skips are STORAGE_ENDPOINT-gated MinIO integration tests, honestly skipped in the no-network/no-docker sandbox); coverage 88.09% vs 60% floor. Prior count 137; 10 tests added (9 unit + 1 gated integration)."
+    },
+    {
+      "name": "ruff_format",
+      "command": ".venv/bin/ruff format services/api",
+      "result": "PASS",
+      "evidence": "2 files reformatted during iteration; final run left 30 files unchanged."
+    },
+    {
+      "name": "ruff_format_check",
+      "command": ".venv/bin/ruff format --check services/api",
+      "result": "PASS",
+      "evidence": "32 files already formatted."
+    },
+    {
+      "name": "ruff_check",
+      "command": ".venv/bin/ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed."
+    },
+    {
+      "name": "mypy",
+      "command": ".venv/bin/mypy services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Success: no issues found in 14 source files (boto3/botocore imports carry import-untyped ignores; no stubs package installed)."
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall services/api",
+      "result": "PASS",
+      "evidence": "Exit 0."
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-011; spec=2.0-hermes-vps; exit 0."
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "state: valid (16 completed); exit 0."
+    },
+    {
+      "name": "state_audit_verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "audit: 16/16 covered; exit 0."
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "adr-set/bounded-modules/provider-neutrality/registry-contract/ci-topology/build-state OK; exit 0."
+    },
+    {
+      "name": "validate_packet",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-011.md",
+      "result": "PASS",
+      "evidence": "packet: valid (.agent/task_packet_CLIP-011.md); exit 0."
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean; exit 0. Module contains only env reads; compose dev credentials appear only in CI env matching docker-compose.dev.yml."
+    },
+    {
+      "name": "workflow_yaml",
+      "command": "python3 -c 'import yaml; yaml.safe_load(open(\".github/workflows/baseline-ci.yml\"))'",
+      "result": "PASS",
+      "evidence": "Parsed successfully (yaml ok)."
+    },
+    {
+      "name": "credential_literal_grep",
+      "command": "rg -n \"AKIA|asdf|supersecret\" services/api/clipos_api/storage.py",
+      "result": "PASS",
+      "evidence": "No matches; only STORAGE_SECRET_KEY env read and SecretStr redaction."
+    },
+    {
+      "name": "minio_gated_integration",
+      "command": ".venv/bin/pytest -q services/api/tests/test_storage_integration.py",
+      "result": "SKIP",
+      "evidence": "Sandbox has no network/Docker; the orchestrator must run the CI test job (STORAGE_ENDPOINT set against compose MinIO on localhost:9002, bucket clipos-test, ensure_bucket() creates it)."
+    }
+  ],
+  "security_rights_budget_impact": "none",
+  "known_limitations": [
+    "Foundation-level policy only: prefix/key-shape rules, MIME sniffing of actual bytes, and multipart/resumable uploads (Temporal) are explicitly out of scope for this ticket.",
+    "Presign TTL uses the client default (config default 3600s) when per-call ttl_seconds is omitted.",
+    "MinIO integration tests are orchestrator/CI-gated; they did not run in this sandbox."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}

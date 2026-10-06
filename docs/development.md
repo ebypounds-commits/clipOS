@@ -90,6 +90,40 @@ SQL-era work (CLIP-010+); service identity storage is CLIP-009. The module also 
 as GPU are never assumed, and each required capability must be explicitly granted. Denied
 WRITE-class authorization checks are audited as `authz.denied`; allows are not audited.
 
+## Object storage
+
+The API stores media and documents in S3-compatible object storage: MinIO locally
+(Compose service, host port 9002, console 9003) and S3, Cloudflare R2, or any
+compatible endpoint in production. Configuration is environment-driven only —
+credentials are never written to code or logs:
+
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `STORAGE_ENDPOINT` | yes | — | S3-compatible endpoint URL (e.g. `http://localhost:9002` for MinIO) |
+| `STORAGE_ACCESS_KEY` | yes | — | Access key reference |
+| `STORAGE_SECRET_KEY` | yes | — | Secret key reference (redacted in all repr/log output) |
+| `STORAGE_BUCKET` | yes | — | Target bucket |
+| `STORAGE_REGION` | no | `us-east-1` | Optional region |
+| `STORAGE_PRESIGN_TTL_SECONDS` | no | `3600` | Default TTL for signed URLs |
+
+`clipos_api.storage.S3ObjectStorage` implements the `ObjectStorage` protocol:
+idempotent `put`/`get`/`delete`/`ensure_bucket`, content-type/size upload policy
+(default allowlist: png/jpeg/webp, mp4/webm, pdf; 100 MB cap), and presigned
+GET/PUT URLs:
+
+```python
+storage = S3ObjectStorage(StorageConfig.from_env())
+storage.ensure_bucket()
+storage.put("media/clip.png", payload, "image/png")
+url = storage.presign_get("media/clip.png", ttl_seconds=300)
+```
+
+Missing objects raise `ObjectNotFound`; botocore errors never escape the module
+API. Unit tests use an injected fake client; MinIO integration tests activate
+when `STORAGE_ENDPOINT` is set (the CI test job sets it against the Compose
+MinIO service). Multipart/resumable uploads via Temporal and CDN delivery are
+future work.
+
 ## Autonomous runner
 
 Ticket execution follows the canonical conventions in
