@@ -428,7 +428,7 @@ tickets:
 - id: CLIP-014
   milestone: M3
   title: Deploy Temporal dev/self-host config
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-013
@@ -443,6 +443,13 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T08:57:41+00:00'
+  evidence: 'commit 3737c14; CI run 37438971901 status=success all4 jobs (temporal boots in CI); temporal
+    1.29.7 + temporal-ui 2.55.0 compose services (postgres12 backend, ports 7233/8233); gRPC health probes
+    via temporal CLI (server binds container IP — HTTP curl cannot serve 7233); infrastructure_health
+    temporal gate (CI 90s poll); TemporalConfig.from_env + probe_temporal live-verified SERVING on VPS;
+    UI HTTP 200; suite: TOTAL                                            1787    206    88% 192 passed,
+    6 skipped, 5 warnings in 4.15s'
 - id: CLIP-015
   milestone: M3
   title: Implement workflow/activity framework and conventions

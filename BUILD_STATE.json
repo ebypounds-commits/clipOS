@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M2",
-  "current_ticket": "CLIP-014",
-  "status": "M2_IN_PROGRESS",
+  "current_milestone": "M3",
+  "current_ticket": "CLIP-015",
+  "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -11,7 +11,8 @@
   "public_publishing": false,
   "completed_milestones": [
     "M0",
-    "M1"
+    "M1",
+    "M2"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -32,7 +33,8 @@
     "CLIP-010",
     "CLIP-011",
     "CLIP-012",
-    "CLIP-013"
+    "CLIP-013",
+    "CLIP-014"
   ],
   "blocked": [],
   "human_gates": {
@@ -43,15 +45,15 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-013",
-    "at": "2026-10-06T08:13:09+00:00",
-    "facts": "commits fa01e95+c35d3c0; CI 37434274173 green; TOTAL                                            1732    205    88% 178 passed, 5 skipped in 3.37s; spend {'usage_usd': 0.47990611, 'limit_remaining_usd': 4.52009389}"
+    "ticket": "CLIP-014",
+    "at": "2026-10-06T08:57:41+00:00",
+    "facts": "commit 3737c14; CI 37438971901 green all4; temporal live SERVING + UI 200; TOTAL                                            1787    206    88% 192 passed, 6 skipped, 5 warnings in 4.15s; spend {'usage_usd': 0.508939828, 'limit_remaining_usd': 4.491060172}"
   },
-  "next_action": "Execute CLIP-014 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-015 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M2"
+  "milestone": "M3"
 }
