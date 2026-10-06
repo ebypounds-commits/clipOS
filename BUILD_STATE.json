@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M-1",
-  "current_ticket": "CLIP-009",
+  "current_ticket": "CLIP-010",
   "status": "M0_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -24,7 +24,8 @@
     "CLIP-005",
     "CLIP-006",
     "CLIP-007",
-    "CLIP-008"
+    "CLIP-008",
+    "CLIP-009"
   ],
   "blocked": [],
   "human_gates": {
@@ -35,11 +36,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-008",
-    "at": "2026-10-06T04:39:15+00:00",
-    "facts": "RBAC landed; CI all4 green (37414450274); spend {'usage_usd': 0.354710115, 'limit_remaining_usd': 4.645289885}"
+    "ticket": "CLIP-009",
+    "at": "2026-10-06T04:58:32+00:00",
+    "facts": "service identities + audit trail landed; CI all4 green (37415932915); spend {'usage_usd': 0.376168723, 'limit_remaining_usd': 4.623831277}"
   },
-  "next_action": "Execute CLIP-009 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-010 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
