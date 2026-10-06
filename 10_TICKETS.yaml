@@ -329,7 +329,7 @@ tickets:
 - id: CLIP-010
   milestone: M2
   title: Implement PostgreSQL migrations and repository base
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-009
@@ -344,6 +344,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T05:24:02+00:00'
+  evidence: 'commit 7a42e8f; CI run 37418027882 status=success all4 jobs (lane5 database live: compose
+    pg + alembic upgrade + DATABASE_URL pytest); six foundation tables via CREATE-only alembic 0001 (offline
+    render 7 CREATE TABLE, idempotent re-run on real Postgres); engine/session factory + BaseRepository
+    + Organization/Membership SQL stores implementing tenancy Protocols; protocol-conformance tests parametrized
+    in-memory vs SQL; 137 tests, 88.81% coverage; ruff/mypy clean; no destructive migration ops'
 - id: CLIP-011
   milestone: M2
   title: Implement S3-compatible storage and signed URLs

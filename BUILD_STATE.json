@@ -1,15 +1,18 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M-1",
-  "current_ticket": "CLIP-010",
-  "status": "M0_IN_PROGRESS",
+  "current_milestone": "M2",
+  "current_ticket": "CLIP-011",
+  "status": "M2_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
   "production_deploy": false,
   "public_publishing": false,
-  "completed_milestones": [],
+  "completed_milestones": [
+    "M0",
+    "M1"
+  ],
   "completed_tickets": [
     "CLIP-P001",
     "CLIP-P002",
@@ -25,7 +28,8 @@
     "CLIP-006",
     "CLIP-007",
     "CLIP-008",
-    "CLIP-009"
+    "CLIP-009",
+    "CLIP-010"
   ],
   "blocked": [],
   "human_gates": {
@@ -36,15 +40,15 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-009",
-    "at": "2026-10-06T04:58:32+00:00",
-    "facts": "service identities + audit trail landed; CI all4 green (37415932915); spend {'usage_usd': 0.376168723, 'limit_remaining_usd': 4.623831277}"
+    "ticket": "CLIP-010",
+    "at": "2026-10-06T05:24:02+00:00",
+    "facts": "SQL foundation landed, M0+M1 closed; CI all4 green (37418027882); spend {'usage_usd': 0.406900058, 'limit_remaining_usd': 4.593099942}"
   },
-  "next_action": "Execute CLIP-010 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-011 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M0"
+  "milestone": "M2"
 }
