@@ -184,7 +184,7 @@ tickets:
 - id: CLIP-004
   milestone: M0
   title: Create architecture/ADR/build-state governance
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-003
@@ -199,6 +199,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T03:09:44+00:00'
+  evidence: 'commit 1c519e3; CI run 37407383713 status=success jobs all success; ADR process + 0000 template
+    + 4 founding ADRs (monolith/stack/provider-aliases/ci-gates) from specs; schemas/build_state.schema.json
+    + scripts/validate_state.py (stdlib subset checker + cross-checks); scripts/architecture_guard.py
+    6 rules green; 21 tests 64.57% cov; ruff+mypy clean; CI validate job wired; negative probes: bogus
+    status rejected, missing adr-set rejected'
 - id: CLIP-005
   milestone: M0
   title: Create autonomous ticket runner conventions
