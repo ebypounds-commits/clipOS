@@ -353,7 +353,7 @@ tickets:
 - id: CLIP-011
   milestone: M2
   title: Implement S3-compatible storage and signed URLs
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-010
@@ -368,6 +368,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T05:52:37+00:00'
+  evidence: commit d9f40a2; CI run 37420389667 status=success all4 jobs (MinIO integration live); ObjectStorage
+    Protocol + S3ObjectStorage (boto3 SigV4+path-style forced for MinIO/R2/S3, env config with secret
+    redaction, domain error mapping), presigned GET/PUT TTL, PutPolicy content-type/size enforcement,
+    idempotent put/delete, storage audit events; 9 fake-client tests + MinIO-gated roundtrip verified
+    against real MinIO on VPS; 147 tests, 88.24% coverage; ruff/mypy clean; no credential literals
 - id: CLIP-012
   milestone: M2
   title: Implement Redis caching/rate-limit primitives
