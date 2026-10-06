@@ -1,0 +1,109 @@
+{
+  "ticket_id": "CLIP-009",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-009",
+  "worktree": "/srv/clipos/worktrees/CLIP-009",
+  "summary": "Implemented service identities with credential references (vault-style refs, hash-once tokens, idempotent create/rotate/disable/enable) and an append-only hash-chained immutable audit trail (seq + prev_hash + sha256 of canonical payload, verify detects modification/deletion/reordering). Verified with the worktree virtualenv: 127 pytest tests pass (89.09% coverage, threshold 60%), ruff format/check pass, mypy passes with no issues in 12 source files.",
+  "files_changed": [
+    "services/api/clipos_api/service_identities.py",
+    "services/api/clipos_api/audit_trail.py",
+    "services/api/tests/test_service_identities.py",
+    "services/api/tests/test_audit_trail.py",
+    "docs/development.md"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "services/api/clipos_api/service_identities.py: ServiceIdentity, ServiceIdentityKind, ServiceIdentityState, ServiceIdentityStore, InMemoryServiceIdentityStore, ServiceIdentityService",
+    "services/api/clipos_api/audit_trail.py: AuditEvent, AuditTrailStore, InMemoryAuditTrailStore, AuditTrail, canonical_json, compute_event_hash"
+  ],
+  "tests": [
+    {
+      "name": "pytest",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "PASS",
+      "evidence": "127 passed in 1.25s; required coverage reached: 89.09% (threshold 60%). Prior count 98; 29 new tests added (16 service identities + 13 audit trail)."
+    },
+    {
+      "name": "ruff_format",
+      "command": ".venv/bin/ruff format services/api",
+      "result": "PASS",
+      "evidence": "1 file reformatted (initial), then 24 files already formatted on re-check."
+    },
+    {
+      "name": "ruff_format_check",
+      "command": ".venv/bin/ruff format --check services/api",
+      "result": "PASS",
+      "evidence": "24 files already formatted."
+    },
+    {
+      "name": "ruff_check",
+      "command": ".venv/bin/ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed."
+    },
+    {
+      "name": "mypy",
+      "command": ".venv/bin/mypy services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Success: no issues found in 12 source files."
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall services/api",
+      "result": "PASS",
+      "evidence": "exit 0, no syntax errors."
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-009; spec=2.0-hermes-vps."
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "state: valid (14 completed)."
+    },
+    {
+      "name": "state_audit_verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "audit: 14/14 covered."
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "All six architecture-guard checks OK (adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state)."
+    },
+    {
+      "name": "validate_packet",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-009.md",
+      "result": "PASS",
+      "evidence": "packet: valid (.agent/task_packet_CLIP-009.md)."
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean."
+    },
+    {
+      "name": "workflow_yaml",
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/baseline-ci.yml'))\"",
+      "result": "PASS",
+      "evidence": "yaml: OK (parses without error)."
+    }
+  ],
+  "security_rights_budget_impact": "Adds service identities with credential REFERENCES only (vault-style refs; raw secrets never stored), hash-once token pattern (raw token returned once, SHA-256 hash persisted), immediate rotation invalidation, idempotent disable/enable with audit events, and an append-only hash-chained audit ledger where tampering (modification, deletion, reordering) is detected by verify().",
+  "known_limitations": [
+    "PostgreSQL persistence for service_identities and audit_events tables is deferred to CLIP-010.",
+    "The InMemoryAuditTrailStore holds events in a private list; the public interface is append-only by design (no update/delete/reverse/pop/clear)."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [
+    "Git commit blocked: unable to create /srv/clipos/clipOS/.git/worktrees/CLIP-009/index.lock: Read-only file system. Change set is staged locally; orchestrator commit required."
+  ]
+}
