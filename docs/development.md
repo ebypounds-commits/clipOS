@@ -77,6 +77,19 @@ management only; RBAC/capabilities arrive with CLIP-008, and CLIP-010 will add t
 PostgreSQL-backed store implementations. Material changes are recorded through the
 shared `clipos_api.audit` module.
 
+## Authorization
+
+The M1 RBAC/capability foundation lives in `services/api/clipos_api/authorization.py`:
+validated `resource:action` permission strings, frozen BUILT-IN roles mapped to the 01
+personas (plus CLIP-007 membership roles), and a deny-by-default `AuthorizationService`.
+The service resolves the caller through `TenancyService.require_membership`, so only an
+ACTIVE membership in the requested organization can grant access; cross-tenant membership
+and suspended orgs always deny. Custom role editing and `role_permissions` persistence are
+SQL-era work (CLIP-010+); service identity storage is CLIP-009. The module also provides
+`CapabilityPolicy` for tool-call allowlists: the default set is empty, so capabilities such
+as GPU are never assumed, and each required capability must be explicitly granted. Denied
+WRITE-class authorization checks are audited as `authz.denied`; allows are not audited.
+
 ## Autonomous runner
 
 Ticket execution follows the canonical conventions in
@@ -103,7 +116,7 @@ The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current impleme
 | 4 | Unit tests (+coverage) | Implemented — `test` job: `pytest` with `pytest-cov`, fail-under floor |
 | 5 | Database migration up/down tests | Deferred — no Alembic migrations or schema yet (M2) |
 | 6 | Integration tests (PostgreSQL/Redis/object storage/Temporal) | Partially implemented — `test` job: `scripts/integration_smoke.sh` against live PostgreSQL/Redis/MinIO; Temporal deferred — not in dev stack yet (M3) |
-| 7 | Tenant/RBAC/security regression tests | Deferred — no auth, tenant, or RBAC code yet (M1) |
+| 7 | Tenant/RBAC/security regression tests | Partially implemented — tenant/RBAC/security regression tests exist; external-provider and public-publication security gates activate in later tickets |
 | 8 | Workflow replay/idempotency tests | Deferred — no workflow engine yet (M3) |
 | 9 | Agent schema/eval smoke tests | Deferred — agent/model registries arrive in M4/M5; registry unit tests exist but no eval harness yet |
 | 10 | Secret scan | Implemented — `validate` job: `scripts/secret_scan.sh` |
