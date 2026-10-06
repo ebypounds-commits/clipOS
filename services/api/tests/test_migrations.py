@@ -24,6 +24,9 @@ _EXPECTED_TABLES = {
     "audit_events",
     "outbox_events",
     "idempotency_records",
+    "agent_records",
+    "agent_versions",
+    "model_alias_targets",
 }
 
 
