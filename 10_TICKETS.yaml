@@ -208,7 +208,7 @@ tickets:
 - id: CLIP-005
   milestone: M0
   title: Create autonomous ticket runner conventions
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-004
@@ -223,6 +223,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T03:24:11+00:00'
+  evidence: commit a0f55d2; CI run 37408527034 status=success all4 jobs; .agent/RUNNER_CONVENTIONS.md
+    codifies lifecycle+ground-truth+escalation; scripts/validate_packet.py (template+packet pass, broken
+    fixture rc=1); scripts/state_audit.py append-only JSONL at docs/reports/STATE_AUDIT.jsonl (10/10 covered
+    after bootstrap, idempotent append); 7 convention tests (28 total, 64.57% cov); CI validate wiring;
+    ruff/mypy clean
 - id: CLIP-006
   milestone: M1
   title: Implement identity/session foundation
