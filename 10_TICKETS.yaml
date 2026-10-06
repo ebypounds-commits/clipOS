@@ -453,7 +453,7 @@ tickets:
 - id: CLIP-015
   milestone: M3
   title: Implement workflow/activity framework and conventions
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-014
@@ -468,6 +468,14 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T09:47:51+00:00'
+  evidence: 'commit 5312012; CI run 37444777985 status=success all4 jobs (live workflow integration executes
+    in CI); workflow_framework (WorkflowMetadata, business_key 06 formats, RetryCategory policies, durable_wait,
+    ApprovalRequest default-deny, audit hook), worker bootstrap, FrameworkSelfTestWorkflow reference;
+    orchestrator live-verified: outcome=approved first_run=True then False (idempotency); 2 orchestrator
+    fixes: worker double-start (async with + run -> Rust TaskLocals panic) and clipos-dev namespace (temporal-init
+    one-shot compose service + health gate); suite: TOTAL                                            1958    243    88%
+    209 passed, 7 skipped in 3.96s'
 - id: CLIP-016
   milestone: M3
   title: Implement idempotency/outbox/business keys
