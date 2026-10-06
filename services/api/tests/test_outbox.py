@@ -16,8 +16,8 @@ def now() -> datetime:
 
 
 @pytest.fixture()
-def store(monkeypatch: pytest.MonkeyPatch) -> outbox.OutboxStore:
-    audit.AUDIT_PATH = Path("/tmp/clipos-016-outbox-audit.log")
+def store(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> outbox.OutboxStore:
+    audit.AUDIT_PATH = tmp_path / "outbox-audit.log"
     audit.AUDIT_PATH.write_text("", encoding="utf-8")
     engine = create_engine("sqlite:///:memory:")
     outbox.OutboxEventRecord.metadata.create_all(engine)

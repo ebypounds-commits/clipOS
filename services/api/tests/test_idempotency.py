@@ -17,8 +17,8 @@ def now() -> datetime:
 
 
 @pytest.fixture()
-def store(monkeypatch: pytest.MonkeyPatch) -> idempotency.IdempotencyStore:
-    audit.AUDIT_PATH = Path("/tmp/clipos-016-idempotency-audit.log")
+def store(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> idempotency.IdempotencyStore:
+    audit.AUDIT_PATH = tmp_path / "idempotency-audit.log"
     audit.AUDIT_PATH.write_text("", encoding="utf-8")
     engine = create_engine("sqlite:///:memory:")
     idempotency.IdempotencyRecordRecord.metadata.create_all(engine)
