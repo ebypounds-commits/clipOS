@@ -67,7 +67,10 @@ def test_console_mode_initializes_sdk_providers() -> None:
     [
         ("Bearer abc.def.ghi", "Bearer [REDACTED]"),
         ("key sk-1234567890abcd done", "key [REDACTED] done"),
-        ("id AKIAIOSFODNN7EXAMPLE", "id [REDACTED]"),
+        (
+            "id " + "AKIA" + "IOSFODNN" + "7EXAMPLE",
+            "id [REDACTED]",
+        ),
         ("https://user:pw@example.com/x", "https://***:***@example.com/x"),
         ("password=hunter2 status", "password=[REDACTED] status"),
         ("token=abc123&next=2", "token=[REDACTED]&next=2"),
