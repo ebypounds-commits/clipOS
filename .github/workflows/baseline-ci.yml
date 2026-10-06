@@ -106,7 +106,9 @@ jobs:
       - name: Python dependency vulnerability audit
         run: bash scripts/dependency_audit.sh
       - name: Generate Python SBOM
-        run: cyclonedx-py env --output-reproducible -o sbom/api-python.cdx.json
+        run: |
+          mkdir -p sbom
+          cyclonedx-py env --output-reproducible -o sbom/api-python.cdx.json
       - name: Upload Python SBOM
         uses: actions/upload-artifact@v4
         with:
