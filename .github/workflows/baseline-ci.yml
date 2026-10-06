@@ -91,6 +91,7 @@ jobs:
           STORAGE_ACCESS_KEY: clipos_dev
           STORAGE_SECRET_KEY: clipos_dev_local_only
           STORAGE_BUCKET: clipos-test
+          CACHE_REDIS_URL: redis://localhost:6380/0
         run: pytest -q services/api
       - name: Integration smoke (PostgreSQL, Redis, MinIO)
         run: bash scripts/integration_smoke.sh

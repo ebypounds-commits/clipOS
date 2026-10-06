@@ -90,6 +90,20 @@ SQL-era work (CLIP-010+); service identity storage is CLIP-009. The module also 
 as GPU are never assumed, and each required capability must be explicitly granted. Denied
 WRITE-class authorization checks are audited as `authz.denied`; allows are not audited.
 
+## Cache & rate limiting
+
+The API uses Redis for cache and rate-limit primitives. Configuration is
+environment-driven:
+
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `CACHE_REDIS_URL` | yes | — | Redis URL (CI uses the Compose host mapping on port 6380) |
+| `CACHE_KEY_PREFIX` | no | `clipos:` | Namespace applied to every cache key |
+| `CACHE_DEFAULT_TTL_SECONDS` | no | `300` | Default cache TTL when `set` omits TTL |
+| `RATE_LIMIT_KEY_PREFIX` | no | `clipos:` | Prefix for fixed-window rate-limit keys |
+
+`clipos_api.cache` exposes `CacheConfig`, the `KeyValueCache` Protocol, RedisCache, and an in-memory fallback with an injected clock. `clipos_api.rate_limit` exposes a validated `RateLimitPolicy`, `RateLimitResult`, the `RateLimiter` Protocol, RedisRateLimiter, and an equivalent in-memory twin. Both rate limiters count by fixed epoch windows: after `limit` calls, `allow()` denies with a positive retry interval until the next window starts. Redis uses `INCR` plus `EXPIRE` on the first increment; a crash between those calls can leave the initial key without TTL, and sliding-window/token-bucket behavior is intentionally future work. Future API tickets will wire `limiter.allow(identity_key)` into routes/middleware and treat `allowed=False` as an HTTP rejection; these modules expose no HTTP behavior yet. `CACHE_REDIS_URL`-gated integration tests run in CI against the Compose Redis service.
+
 ## Object storage
 
 The API stores media and documents in S3-compatible object storage: MinIO locally

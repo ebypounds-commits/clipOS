@@ -1,0 +1,123 @@
+{
+  "ticket_id": "CLIP-012",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-012",
+  "worktree": "/srv/clipos/worktrees/CLIP-012",
+  "summary": "Implemented the M2 Redis cache and fixed-window rate-limit foundations: CacheConfig (env-driven, frozen, URL credential redaction), KeyValueCache Protocol, RedisCache with injectable client and CacheUnavailable error mapping, InMemoryCache with injected-clock expiry; RateLimitPolicy/Result, RateLimiter Protocol, RedisRateLimiter using INCR plus first-call EXPIRE with window+1 slack, and an equivalent InMemoryRateLimiter. Added redis>=5.0, 15 stub-based tests plus 2 CACHE_REDIS_URL-gated integration tests, CI Redis URL from docker-compose.dev.yml host mapping (port 6380, no password), and cache/rate-limit documentation.",
+  "files_changed": [
+    "services/api/pyproject.toml",
+    "services/api/clipos_api/cache.py",
+    "services/api/clipos_api/rate_limit.py",
+    "services/api/tests/test_cache_rate.py",
+    "services/api/tests/test_cache_integration.py",
+    ".github/workflows/baseline-ci.yml",
+    "docs/development.md"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "services/api/clipos_api/cache.py: CacheConfigurationError, CacheUnavailable, CacheConfig, KeyValueCache (Protocol), RedisCache, InMemoryCache",
+    "services/api/clipos_api/rate_limit.py: RateLimitPolicy, RateLimitResult, RateLimiter (Protocol), RedisRateLimiter, InMemoryRateLimiter"
+  ],
+  "tests": [
+    {
+      "name": "pytest",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "PASS",
+      "evidence": "160 passed, 4 skipped (2 MinIO integration and 2 Redis integration are honestly environment-gated in the no-network/no-Docker sandbox); coverage 88.84% vs 60% floor. Prior observed run was 146 passed, 2 skipped; 16 additional collected tests (12 unit test functions including 3 contract parametrizations, plus 2 gated integrations)."
+    },
+    {
+      "name": "ruff_format",
+      "command": ".venv/bin/ruff format services/api",
+      "result": "PASS",
+      "evidence": "3 files reformatted during iteration; final run reported 36 files left unchanged."
+    },
+    {
+      "name": "ruff_check_fix",
+      "command": ".venv/bin/ruff check --fix services/api",
+      "result": "PASS",
+      "evidence": "Final run: All checks passed."
+    },
+    {
+      "name": "ruff_check",
+      "command": ".venv/bin/ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed."
+    },
+    {
+      "name": "ruff_format_check",
+      "command": ".venv/bin/ruff format --check services/api",
+      "result": "PASS",
+      "evidence": "36 files already formatted."
+    },
+    {
+      "name": "mypy",
+      "command": ".venv/bin/mypy services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Success: no issues found in 16 source files."
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall services/api",
+      "result": "PASS",
+      "evidence": "Exit 0."
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-012; spec=2.0-hermes-vps; exit 0."
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "state: valid (17 completed); exit 0."
+    },
+    {
+      "name": "state_audit_verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "audit: 17/17 covered; exit 0."
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "adr-set/bounded-modules/provider-neutrality/registry-contract/ci-topology/build-state OK; exit 0."
+    },
+    {
+      "name": "validate_packet",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-012.md",
+      "result": "PASS",
+      "evidence": "packet: valid (.agent/task_packet_CLIP-012.md); exit 0."
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean; exit 0. Cache URL comes only from CACHE_REDIS_URL; compose topology is the source for the CI URL and Redis has no password."
+    },
+    {
+      "name": "workflow_yaml",
+      "command": "hermes-agent-venv python: yaml.safe_load('.github/workflows/baseline-ci.yml')",
+      "result": "PASS",
+      "evidence": "Parsed successfully; workflow name baseline-ci. The project venv does not include PyYAML and has no network to install it, so validation used /usr/local/lib/hermes-agent/venv."
+    },
+    {
+      "name": "redis_gated_integration",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "SKIP",
+      "evidence": "Two CACHE_REDIS_URL-gated integration tests skipped because the sandbox has no Docker/network. Orchestrator must run them with CACHE_REDIS_URL=redis://localhost:6380/0 against compose Redis."
+    }
+  ],
+  "security_rights_budget_impact": "none",
+  "known_limitations": [
+    "Redis fixed-window rate limiting uses INCR followed by EXPIRE only on the first increment; a crash in between can leave that first key without TTL. Sliding-window/token-bucket behavior is explicitly future work.",
+    "InMemoryCache/InMemoryRateLimiter are single-process fallbacks and are not distributed-safe.",
+    "No HTTP middleware or route wiring is included; route admission via limiter.allow() is documented as future API-ticket work.",
+    "CACHE_REDIS_URL-gated integration tests did not run in this sandbox; orchestrator must rerun them against real Redis."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}
