@@ -104,13 +104,14 @@ def test_illegal_lifecycle_transitions_are_rejected(
 
     # Legally advance to the requested current state when it is later in the chain.
     sequence = [
+        AgentState.DRAFT,
         AgentState.EVALUATING,
         AgentState.CANARY,
         AgentState.ACTIVE,
         AgentState.SUSPENDED,
         AgentState.RETIRED,
     ]
-    for next_state in sequence[: sequence.index(current)]:
+    for next_state in sequence[1 : sequence.index(current) + 1]:
         registry.transition("research", "v1", next_state)
     with pytest.raises(ValueError, match="illegal lifecycle transition"):
         registry.transition("research", "v1", target)
@@ -158,9 +159,13 @@ def test_high_risk_activation_requires_explicit_human_approval(
         registry.activate("rights", "v1")
     approved = registry.activate("rights", "v1", approved_high_risk=True)
     assert approved.activation_state is AgentState.ACTIVE
-    final = audit.read_events()[-1]
-    assert final["action"] == "agent_registry.state_changed"
-    assert final["details"]["approved_high_risk"] is True
+    tail_actions = [item["action"] for item in audit.read_events()[-2:]]
+    assert tail_actions == [
+        "agent_registry.state_changed",
+        "agent_registry.active_pointer_changed",
+    ]
+    state_event = audit.read_events()[-2]
+    assert state_event["details"]["approved_high_risk"] is True
 
 
 def test_register_version_is_idempotent_and_conflicts_are_immutable(

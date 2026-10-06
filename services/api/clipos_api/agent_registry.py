@@ -96,10 +96,15 @@ class EvaluatorRequirement(BaseModel):
 
 
 class AgentVersion(BaseModel):
-    """Immutable agent definition contract from 04_AGENT_REGISTRY.md."""
+    """Immutable agent definition contract from 04_AGENT_REGISTRY.md.
+
+    ``version`` is None in a bare definition; the registry stamps the
+    registered version identity onto every returned model.
+    """
 
     model_config = ConfigDict(frozen=True)
 
+    version: str | None = Field(default=None, min_length=1, max_length=128)
     name: str = Field(min_length=1, max_length=255)
     purpose: str = Field(min_length=1)
     agent_class: AgentClass
@@ -299,6 +304,7 @@ def _record_version(
 
 def _model_version(record: AgentVersionRecord) -> AgentVersion:
     return AgentVersion(
+        version=record.version,
         name=record.name,
         purpose=record.purpose,
         agent_class=AgentClass(record.agent_class),
@@ -327,6 +333,7 @@ def _definition_signature(contract: AgentVersion) -> dict[str, Any]:
     """Exclude mutable lifecycle state from immutable-version comparisons."""
     data = contract.model_dump()
     data.pop("activation_state")
+    data.pop("version", None)  # identity supplied by the registry, not the definition
     return data
 
 
