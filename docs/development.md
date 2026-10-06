@@ -166,9 +166,63 @@ assert result.ok, result.detail
 ```
 
 The CI test job sets `TEMPORAL_ADDRESS: localhost:7233`, so the live probe test
-runs there. Workflow, activity, and worker code is roadmap work (CLIP-015+);
-dev self-host auth and mTLS are deferred and must be designed before any
-non-dev deployment.
+runs there. Dev self-host auth and mTLS are deferred and must be designed before
+any non-dev deployment.
+
+## Workflow framework & conventions
+
+The M3 workflow foundation lives in three additive modules. `clipos_api.workflow_framework`
+holds the typed conventions from 06_WORKFLOW_ORCHESTRATION.md: `WorkflowMetadata`
+(frozen Pydantic: `organization_id`, optional `brand_id`/`content_id`, `policy_version`
+matching `v1`, `v1.2`, or `v1.2.3`-style versions, and `correlation_id`, with `as_dict()`
+for carrying across workflow inputs), the four `business_key()` idempotency formats
+(`publish:{account_id}:{variant_id}:{scheduled_slot}`,
+`render:{project_id}:{render_version}`,
+`rights-review:{source_item_id}:{rights_version}`, and
+`analytics:{publication_id}:{window}`; missing or extra parts raise `ValueError`),
+the seven retry categories with `retry_policy_for()` mappings, `durable_wait()`,
+`ApprovalRequest`/`approval_expired()`, and the `audit_workflow_event()` hook that
+writes `workflow.<name>` events through the shared audit module.
+
+Retry behavior by category:
+
+| Category | Policy |
+| --- | --- |
+| `network_transient` | exponential backoff: 2s initial, coefficient 2.0, 60s cap, 10 attempts |
+| `rate_limit` | 30s initial backoff, 5 attempts |
+| `auth_expired` | 2 attempts (single refresh) |
+| `invalid_request` | 1 attempt, no blind retry |
+| `policy_rejection` | 1 attempt, no blind retry |
+| `media_corruption` | 1 attempt, terminal/quarantine |
+| `insufficient_rights` | 1 attempt, terminal/quarantine |
+
+`durable_wait(seconds)` is a thin documented wrapper around
+`temporalio.workflow.sleep` and MUST only be called from workflow context;
+`asyncio.sleep` is forbidden in workflow code. Approval requests carry action,
+exact risk, non-empty evidence, a tz-aware future UTC expiry, the approver role,
+and `timeout_behavior: "deny"` (the default deny on timeout is enforced by
+`approval_expired`).
+
+`clipos_api.worker` is the worker bootstrap: `WorkerConfig.from_env()` reuses
+`TemporalConfig` for `TEMPORAL_ADDRESS`/`TEMPORAL_NAMESPACE` and adds
+`TEMPORAL_TASK_QUEUE` (default `clipos-core`) and
+`TEMPORAL_MAX_CONCURRENT_ACTIVITIES` (default 100); `connect_client`,
+`build_worker`, and `run_worker_until_stopped` provide connect/assemble/graceful
+shutdown with no stored credentials and no provider identifiers.
+
+`clipos_api.reference_workflow` is the framework self-test: it validates its
+`WorkflowMetadata`, runs the idempotent `record_idempotent_step` activity keyed by a
+`render` business key, sleeps on durable timers, and resolves the approval step with
+default-deny semantics. The in-memory idempotency store is injected at worker bootstrap
+(`use_idempotency_store`), so two workflow executions sharing a worker and the same
+business key prove `first_run: True` then `False`. Run it against a live server with:
+
+```python
+TEMPORAL_ADDRESS=localhost:7233 .venv/bin/pytest -q services/api/tests/test_workflow_integration.py
+```
+
+The integration test is skipped honestly without `TEMPORAL_ADDRESS`; the CI test job
+already sets it, so the workflow executes there against the Compose Temporal service.
 ## Autonomous runner
 
 Ticket execution follows the canonical conventions in

@@ -70,6 +70,16 @@ services:
       retries: 15
       start_period: 15s
 
+  temporal-init:
+    image: temporalio/auto-setup:1.29.7
+    restart: "no"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "temporal operator namespace create --address temporal:7233 clipos-dev || true; echo namespace-init-done"]
+    labels:
+      clipos.role: one-shot-init
+
   temporal-ui:
     image: temporalio/ui:2.55.0
     restart: "no"

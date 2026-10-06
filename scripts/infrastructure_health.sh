@@ -66,6 +66,20 @@ if [ -z "$grpc_ok" ]; then
   exit 1
 fi
 
+ns_ok=""
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  if docker compose -f docker-compose.dev.yml exec -T temporal \
+    temporal operator namespace describe --address temporal:7233 clipos-dev >/dev/null 2>&1; then
+    ns_ok=1
+    break
+  fi
+  sleep 2
+done
+if [ -z "$ns_ok" ]; then
+  echo "namespace clipos-dev missing (temporal-init one-shot did not run?)" >&2
+  exit 1
+fi
+
 if ! curl -fsS --max-time 3 http://localhost:8233/ >/dev/null 2>&1; then
   echo "temporal UI (host 8233) not responding" >&2
   exit 1

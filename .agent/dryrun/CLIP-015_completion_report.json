@@ -1,0 +1,45 @@
+{
+  "ticket_id": "CLIP-015",
+  "branch": "agent/CLIP-015",
+  "worktree": "/srv/clipos/worktrees/CLIP-015",
+  "status": "IMPLEMENTATION_COMPLETE_SANDBOX",
+  "sandbox_limits": [
+    "no docker / no live TEMPORAL_ADDRESS: test_workflow_integration SKIPs in-sandbox; must run against live Temporal by orchestrator/CI",
+    "git object database read-only: git add -A attempted and failed (index.lock on read-only /srv/clipos/clipOS/.git); secret scan executed with identical semantics over tracked+new file list (167 files): clean"
+  ],
+  "gates": {
+    "pytest": "209 passed, 7 skipped in 4.73s (final rerun; coverage floor 60 reached at 87.54%) (TEMPORAL_ADDRESS-gated integration SKIPs honestly in-sandbox)",
+    "ruff_format": "clean (47 files already formatted, format --check)",
+    "ruff_check": "All checks passed!",
+    "mypy": "Success: no issues found in 22 source files",
+    "compileall": "services/api scripts: OK",
+    "validate_handoff": "OK: 108 tickets; current=CLIP-015; spec=2.0-hermes-vps",
+    "validate_state": "state: valid (20 completed)",
+    "state_audit": "verify: 20/20 covered",
+    "architecture_guard": "all checks OK (adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state)",
+    "validate_packet": "packet: valid (.agent/task_packet_CLIP-015.md)",
+    "yaml_parse": "baseline-ci.yml: OK (yaml.safe_load); TEMPORAL_ADDRESS: localhost:7233 present at line 95 (untouched)",
+    "secret_scan": "clean over tracked+new files (167 files); git add -A blocked by read-only .git in sandbox"
+  },
+  "coverage": {
+    "total_percent": 87.54,
+    "statements": 1959,
+    "missed": 244
+  },
+  "deliverables": [
+    "services/api/clipos_api/workflow_framework.py: WorkflowMetadata (+as_dict), business_key 4 exact formats with missing/extra-part ValueError, RetryCategory + retry_policy_for exact 06 policies, durable_wait (workflow.sleep wrapper), ApprovalRequest/approval_expired (default deny, future UTC expiry), audit_workflow_event via clipos_api.audit",
+    "services/api/clipos_api/worker.py: WorkerConfig.from_env (TEMPORAL_TASK_QUEUE default clipos-core, TEMPORAL_MAX_CONCURRENT_ACTIVITIES default 100, reuses TemporalConfig), connect_client, build_worker, run_worker_until_stopped graceful shutdown; env-only, no credentials, no provider identifiers",
+    "services/api/clipos_api/reference_workflow.py: FrameworkSelfTestWorkflow (metadata validation, idempotent record_idempotent_step keyed by render business key, durable waits, default-deny approval decision) + evaluate_approval activity; shared in-memory store injectable via use_idempotency_store",
+    "services/api/tests/test_workflow_framework.py: 17 unit tests (metadata, business keys, retry policies, durable_wait guard, approvals, audit JSON)",
+    "services/api/tests/test_workflow_integration.py: TEMPORAL_ADDRESS-gated live test — in-process worker, workflow executes approved with first_run True, second execution same key first_run False; SKIPs honestly in-sandbox",
+    "docs/development.md: Workflow framework & conventions section (module map, business keys, retry table, durable timer rule, default-deny, how-to-run)",
+    ".github/workflows/baseline-ci.yml: untouched; TEMPORAL_ADDRESS present"
+  ],
+  "not_run_in_sandbox": [
+    "live workflow execution (requires TEMPORAL_ADDRESS/docker; orchestrator + CI run it)",
+    "git add -A / commit (read-only git object database; orchestrator stages/commits)"
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}
