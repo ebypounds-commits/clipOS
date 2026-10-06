@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-018",
+  "current_ticket": "CLIP-019",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -37,7 +37,8 @@
     "CLIP-014",
     "CLIP-015",
     "CLIP-016",
-    "CLIP-017"
+    "CLIP-017",
+    "CLIP-018"
   ],
   "blocked": [],
   "human_gates": {
@@ -48,11 +49,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-017",
-    "at": "2026-10-06T15:40:00+00:00",
-    "facts": "CLIP-017 complete: replay tests (temporalio Replayer over 27-event live-history fixture), AST determinism guard, live failure-injection (flaky activity retried to success), business-key search-attribute visibility, OperatorSnapshot + /operator/health; land b159a54, merge 9c8f9d0, CI green 37491026626 on c4464f8 (fixes: ruff format 2c4fa6a, temporal-init search-attr c4464f8); 229 offline + 2 live tests passed, ruff+mypy clean"
+    "ticket": "CLIP-018",
+    "at": "2026-10-06T19:55:00+00:00",
+    "facts": "CLIP-018 complete: Agent Registry (agent_registry.py 696L \u2014 AgentClass/AgentVersion/AgentRecord contracts, lifecycle DRAFT->EVALUATING->CANARY->ACTIVE->SUSPENDED->RETIRED with legal-transition validation, HIGH-risk activation requires explicit human approval, idempotent version registration with immutable-definition conflict check, model-alias resolution ordered+enabled-filtered, audit on all material changes, routes wired in main.py); migration 0003 (3 tables, verified upgrade+idempotence on real PG); 17 registry tests; land wip 9dec933 + fixes 9cd1baa, merge 53534e4, CI green on 53534e4; recovery per CLIP_018_RECOVERY_AND_WORKER_POLICY.md (worker preserved, sliced completion, deterministic corrections only)"
   },
-  "next_action": "Execute CLIP-018 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-019 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

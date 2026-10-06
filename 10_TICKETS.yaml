@@ -524,7 +524,7 @@ tickets:
 - id: CLIP-018
   milestone: M4
   title: Implement Agent Registry schema/API
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-017
