@@ -256,7 +256,7 @@ tickets:
 - id: CLIP-007
   milestone: M1
   title: Implement organization tenancy and memberships
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-006
@@ -271,6 +271,12 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T04:08:49+00:00'
+  evidence: 'commit fd70137; CI run 37412017615 status=success all4 jobs; tenancy foundation: Organization/Membership
+    contracts + thread-safe in-memory stores, TenancyService (slug-idempotent create with DNS-safe slug
+    pattern, idempotent membership lifecycle, last-active-owner invariant, require_membership deny-by-default
+    server-side tenant scoping per 07, org state changes), audit events, 10 tests incl 8-thread concurrency;
+    52 tests total, ~85% coverage; ruff/mypy clean; RBAC/routes/SQL deferred (CLIP-008/010)'
 - id: CLIP-008
   milestone: M1
   title: Implement RBAC/capability authorization
