@@ -505,7 +505,7 @@ tickets:
 - id: CLIP-017
   milestone: M3
   title: Implement replay/failure-injection tests and operator visibility
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-016
