@@ -280,7 +280,7 @@ tickets:
 - id: CLIP-008
   milestone: M1
   title: Implement RBAC/capability authorization
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-007
@@ -295,6 +295,13 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T04:39:15+00:00'
+  evidence: 'commit a781f3e; CI run 37414450274 status=success all4 jobs; authorization: validated resource:action
+    permissions, frozen built-in roles (owner/admin/member/reviewer/service_agent mapped to 01 personas),
+    tenant-scoped AuthorizationService deny-by-default via require_membership, authz.denied write-class
+    audit, CapabilityPolicy default-empty (GPU never assumed); 98 tests, 86.69% coverage; GLM fix-round
+    iterated with in-worktree venv pytest until green; ruff/mypy clean; route-wiring health test added
+    without TestClient'
 - id: CLIP-009
   milestone: M1
   title: Implement service identities and immutable audit trail
