@@ -479,7 +479,7 @@ tickets:
 - id: CLIP-016
   milestone: M3
   title: Implement idempotency/outbox/business keys
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-015
@@ -494,6 +494,14 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T10:46:02+00:00'
+  evidence: 'commit feebfe2; CI run 37450993084 status=success all4 jobs; migration 0002 (outbox_events
+    + idempotency_records, partial-unique business_key), OutboxStore (transactional enqueue, FOR UPDATE
+    SKIP LOCKED, exponential backoff, terminal failure), IdempotencyStore (ON CONFLICT claims, replay,
+    stale recovery, request-hash guard, execute_idempotency), secret-safe audit hooks; verified on real
+    Postgres: alembic 0001+0002 idempotent twice, 2-thread disjoint SKIP LOCKED claims, unique+rollback
+    proofs 2/2 passed; GLM fix rounds: claim_batch_in_transaction added, then orchestrator fixed psycopg3
+    savepoint ordering + rerun-safe pre-clean; suite 209+7'
 - id: CLIP-017
   milestone: M3
   title: Implement replay/failure-injection tests and operator visibility
