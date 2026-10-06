@@ -208,3 +208,29 @@ The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current impleme
 Service identities (CLIP-009) are machine principals — Service Agents, integrations, and workers — with typed frozen contracts (`ServiceIdentityKind`, `ServiceIdentityState`) and unique slug-like names. Credentials are stored as **references only** (e.g. `vault:prod/<name>`); raw secrets never enter the module, per the 07 "secrets manager references only" control. Service tokens follow the CLIP-006 identity pattern: a raw token is returned to the caller exactly once on creation or rotation, and only its SHA-256 hash is persisted. Token rotation invalidates the previous token immediately. `disable`/`enable` are idempotent state transitions, and disabled identities fail authentication.
 
 The immutable audit trail (`audit_trail.py`) is an append-only, hash-chained ledger: every event embeds a monotonic `seq`, the SHA-256 hash of its immediate predecessor (`prev_hash`), and the SHA-256 of its own canonical payload (`event_hash` = sha256 of `"{seq}|{timestamp}|{action}|{actor}|{subject}|{canonical_json(details)}|{prev_hash}"` with sorted-key compact JSON). Chain verification detects modification (hash mismatch), deletion (seq gap + detached event), and reordering (prev_hash mismatch). The `InMemoryAuditTrailStore` public interface is append-only — no update, delete, reverse, pop, or clear — enforcing immutability at the type level. `record_from_legacy` bridges `clipos_api.audit` file-based records into the hash chain. PostgreSQL persistence for `service_identities` and `audit_events` tables lands in CLIP-010.
+
+
+## Telemetry & backup
+
+`clipos_api.telemetry.init_telemetry()` is process-wide and idempotent; it reads
+`OTEL_SERVICE_NAME` (default `clipos-api`), `OTEL_MODE` (`none` default, or
+`console`), and `OTEL_LOG_LEVEL` (default `INFO`). `none` keeps the OTel API in
+its no-op provider mode, so application code can always call
+`handle.tracer("name")` / `handle.meter("name")`; `console` exports spans and
+metrics to stdout for local debugging. There is no remote collector yet, so
+OTLP/Prometheus exporters are intentionally absent until the architecture's
+collector deployment exists. `SecretRedactionFilter` (install with
+`install_redaction()`) masks Bearer tokens, `sk-`/AKIA-style keys, URL
+credentials, and `password=`/`token=` values in log records.
+
+Backup primitives in `clipos_api.backup` hash files into a manifest and re-hash
+to detect tampering:
+
+    python scripts/backup.py create backups/ file1.txt file2.txt
+    python scripts/backup.py verify backups/manifest.json
+    DATABASE_URL=... python scripts/backup.py pgdump backups/
+
+`pgdump` requires `DATABASE_URL`, never logs it, and runs `pg_dump
+--format=custom` into the destination directory. These are primitives only:
+scheduling (cron), encrypted backups at rest (12 runbook roadmap), and
+object-storage upload are future operations work.

@@ -1,0 +1,85 @@
+{
+  "ticket_id": "CLIP-013",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-013",
+  "worktree": "/srv/clipos/worktrees/CLIP-013",
+  "summary": "OpenTelemetry primitives (idempotent init with none|console modes, secret-redacting log filter, no-op-safe counter/histogram helpers) and backup primitives (file manifests with SHA-256 verification, pg_dump with URL redaction, CLI) implemented with 12 new tests; all in-sandbox gates pass and the DATABASE_URL-gated pgdump test honestly skips without a live database.",
+  "files_changed": [
+    "services/api/pyproject.toml",
+    "services/api/clipos_api/telemetry.py",
+    "services/api/clipos_api/backup.py",
+    "scripts/backup.py",
+    "services/api/tests/test_telemetry.py",
+    "services/api/tests/test_backup.py",
+    "docs/development.md",
+    ".agent/dryrun/CLIP-013_completion_report.json",
+    ".agent/task_packet_CLIP-013.md"
+  ],
+  "migrations": [],
+  "contracts_changed": [],
+  "tests": [
+    {
+      "name": "pytest full suite",
+      "command": ".venv/bin/pytest -q services/api",
+      "result": "PASS",
+      "evidence": "177 passed, 5 skipped (the pgdump test self-skips: DATABASE_URL unset; other 4 skips are pre-existing CACHE_REDIS_URL/DATABASE_URL-migration/STORAGE_ENDPOINT gates); coverage 87.78% >= 60%"
+    },
+    {
+      "name": "pgdump DATABASE_URL-gated test",
+      "command": "subset of pytest above",
+      "result": "SKIP",
+      "evidence": "pytest -rs shows SKIPPED [1] services/api/tests/test_backup.py:82: DATABASE_URL required for pg_dump integration; orchestrator/CI runs it against real Postgres"
+    },
+    {
+      "name": "ruff format",
+      "command": ".venv/bin/ruff format services/api",
+      "result": "PASS",
+      "evidence": "40 files already formatted (exit 0)"
+    },
+    {
+      "name": "ruff check",
+      "command": ".venv/bin/ruff check services/api",
+      "result": "PASS",
+      "evidence": "All checks passed!"
+    },
+    {
+      "name": "mypy",
+      "command": ".venv/bin/mypy services/api/clipos_api",
+      "result": "PASS",
+      "evidence": "Success: no issues found in 18 source files"
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall -q services/api scripts",
+      "result": "PASS",
+      "evidence": "exit 0"
+    },
+    {
+      "name": "handoff/state/audit/architecture/packet validators",
+      "command": "python3 scripts/validate_handoff.py && python3 scripts/validate_state.py && python3 scripts/state_audit.py verify && python3 scripts/architecture_guard.py && python3 scripts/validate_packet.py .agent/task_packet_CLIP-013.md",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-013; state valid (18 completed); audit 18/18 covered; all guards OK; packet valid"
+    },
+    {
+      "name": "secret scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "secret_scan: clean"
+    },
+    {
+      "name": "baseline-ci workflow YAML",
+      "command": "python3 yaml.safe_load('.github/workflows/baseline-ci.yml')",
+      "result": "PASS",
+      "evidence": "safe_load succeeded; workflow unchanged otherwise"
+    }
+  ],
+  "security_rights_budget_impact": "Adds credential redaction in logging (Bearer/sk-/AKIA/URL creds/password-token values) and redacted pg_dump error paths; no network calls at init in default none mode; no secrets introduced.",
+  "known_limitations": [
+    "Real Postgres pg_dump integration test and CI execution happen outside this network-restricted sandbox.",
+    "No OTLP/Prometheus exporter, scheduler, or backup encryption: explicitly future scope per packet and 12 runbook.",
+    "Manifest id/created_at differ across runs; item hashes are deterministic (documented in backup.py)."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}
