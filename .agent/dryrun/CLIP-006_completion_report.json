@@ -1,0 +1,106 @@
+{
+  "ticket_id": "CLIP-006",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-006",
+  "worktree": "/srv/clipos/worktrees/CLIP-006",
+  "summary": "Identity/session foundation: services/api/clipos_api/identity.py with frozen Pydantic v2 User/Session contracts (status/state enums, validated email and timezone-aware datetimes, optional org_ref/rotated_from/idempotency_key), runtime-checkable SessionStore Protocol (get, put_if_absent with idempotency-key collision replay, update, delete, list_by_user), thread-safe InMemorySessionStore, and IdentityService with idempotent create (raw token returned once, SHA-256 hash stored), rotation (old revoked, successor.rotated_from set), idempotent revoke (no-op + no duplicate audit for already-revoked), touch, expiry resolved via injected clock, new_csrf_token, and cookie_attributes (httpOnly/secure/sameSite=Lax). Session create/rotate/revoke audit events go through existing clipos_api.audit; additive audit.read_events read helper added without changing record(). Pytest suite services/api/tests/test_identity.py covers contract validation, roundtrip, idempotency, hash-only storage, rotation, revoke idempotence, injected-clock expiry, touch, 100 unique CSRF tokens, cookie attributes, audit actions, and 8-thread concurrency (distinct keys -> 8 sessions; same key -> exactly 1). docs/development.md gained an 'Identity/session foundation' paragraph. No new third-party dependencies; no SQL/SQLAlchemy/alembic; no HTTP routes.",
+  "files_changed": [
+    "services/api/clipos_api/identity.py",
+    "services/api/clipos_api/audit.py",
+    "services/api/tests/test_identity.py",
+    "docs/development.md",
+    ".agent/task_packet_CLIP-006.md",
+    ".agent/dryrun/CLIP-006_completion_report.json"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "services/api/clipos_api/identity.py: new User/Session Pydantic contracts, SessionStore Protocol, InMemorySessionStore, IdentityService",
+    "services/api/clipos_api/audit.py: additive read_events(path) helper only"
+  ],
+  "tests": [
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall -q services/api",
+      "result": "PASS",
+      "evidence": "exit 0"
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "exit 0; 'OK: 108 tickets; current=CLIP-006; spec=2.0-hermes-vps'"
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "exit 0; 'state: valid (11 completed)'"
+    },
+    {
+      "name": "state_audit verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "exit 0; 'audit: 11/11 covered'"
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "exit 0; adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state all OK"
+    },
+    {
+      "name": "validate_packet (this packet)",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-006.md",
+      "result": "PASS",
+      "evidence": "exit 0; 'packet: valid'"
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "exit 0; 'secret_scan: clean'"
+    },
+    {
+      "name": "workflow YAML parse",
+      "command": "yaml.safe_load(.github/workflows/baseline-ci.yml) via python3",
+      "result": "PASS",
+      "evidence": "exit 0; 'yaml parse OK'"
+    },
+    {
+      "name": "pytest (incl. new identity tests)",
+      "command": "python3 -m pytest -q services/api",
+      "result": "SKIP",
+      "evidence": "python3: No module named pytest; python3 -m pip absent (pip install attempt exit 1); sandbox has no network and no dependency venv. Orchestrator must re-run outside sandbox. Not claimed passing."
+    },
+    {
+      "name": "ruff format --check + ruff check",
+      "command": "python3 -m ruff format --check services/api && python3 -m ruff check services/api",
+      "result": "SKIP",
+      "evidence": "python3: No module named ruff; no pip/network in sandbox. Orchestrator must re-run."
+    },
+    {
+      "name": "mypy (services/api scope)",
+      "command": "python3 -m mypy services/api",
+      "result": "SKIP",
+      "evidence": "python3: No module named mypy; no pip/network in sandbox. Orchestrator must re-run."
+    },
+    {
+      "name": "pip install (attempted to unblock pytest/lint)",
+      "command": "python3 -m pip install pytest pydantic",
+      "result": "SKIP",
+      "evidence": "python3: No module named pip; exit 1"
+    }
+  ],
+  "security_rights_budget_impact": "Security-positive: only SHA-256 token hashes stored; raw tokens returned once and never logged (no print/log statements in identity.py); CSRF tokens via secrets; secure cookie defaults httpOnly/secure/sameSite=Lax; expiry clock injected; revocation idempotent. No budget impact.",
+  "known_limitations": [
+    "pytest, ruff, mypy, and pip unavailable in restricted sandbox; orchestrator must re-run the quality gates outside it.",
+    "Git commit blocked in sandbox: .git index.lock creation failed on read-only filesystem (/srv/clipos/clipOS/.git); changes remain staged-ready but uncommitted in the worktree.",
+    "In-memory token lookup scans store sessions (no secondary hash index); CLIP-010 SQL store should index token_hash.",
+    "Coverage gate unmeasured in-sandbox because pytest/pytest-cov could not run; CLIP-010/quality re-run must confirm >=60%."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [
+    "git commit unavailable in-sandbox: fatal: Unable to create '/srv/clipos/clipOS/.git/worktrees/CLIP-006/index.lock': Read-only file system"
+  ]
+}
