@@ -73,7 +73,8 @@ def test_workflow_classes_use_only_deterministic_time_and_scheduling() -> None:
             # Guard workflow methods only. Activity bodies may legitimately use
             # wall-clock input, and service helpers are outside replay code.
             workflow_body = any(
-                decorator in {"workflow.defn", "workflow.defn()", "workflow.run"} for decorator in decorators
+                decorator in {"workflow.defn", "workflow.defn()", "workflow.run"}
+                for decorator in decorators
             )
             if not workflow_body:
                 continue

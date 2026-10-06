@@ -41,7 +41,9 @@ def outbox_event(event_id: str) -> OutboxEvent:
 def test_operator_snapshot_counts_and_audit_tail(engine: sa.Engine) -> None:
     store = OutboxStore.from_engine(engine)
     evt1 = outbox_event("evt-1")
-    store.enqueue_in_transaction(evt1.model_copy(update={"available_at": now() - timedelta(seconds=90)}))
+    store.enqueue_in_transaction(
+        evt1.model_copy(update={"available_at": now() - timedelta(seconds=90)})
+    )
     store.enqueue_in_transaction(outbox_event("evt-2").model_copy(update={"available_at": now()}))
     store.claim_batch(1, 60, now() - timedelta(seconds=300))
     with sa.orm.Session(engine) as session:

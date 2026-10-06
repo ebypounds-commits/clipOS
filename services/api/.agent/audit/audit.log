@@ -1,0 +1,2 @@
+{"action":"workflow.approval_requested","actor":"workflow-worker","details":{"action":"reference.self_test","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.716760+00:00"}
+{"action":"workflow.self_test_completed","actor":"workflow-worker","details":{"outcome":"approved","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.717241+00:00"}
