@@ -5,6 +5,7 @@ Observed real shape (docker compose v5.3.1): `Health` is a STRING
 ("healthy"/"unhealthy"/"starting") or absent; older engines may ship it as
 a dict with a `Status` key. Both are accepted.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,9 +22,7 @@ class ServiceHealth(BaseModel):
     name: str
     status: ServiceStatus
     detail: str | None = None
-    checked_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC)
-    )
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class InfrastructureHealth(BaseModel):

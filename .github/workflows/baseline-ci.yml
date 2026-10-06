@@ -41,11 +41,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install API dependencies
-        run: pip install -e "services/api[dev]"
+      - name: Upgrade pip (audited component) then install API dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "services/api[dev]"
+      - name: Formatting check
+        run: ruff format --check services/api
       - name: Lint API
         run: ruff check services/api
-      - name: Run API tests
+      - name: Static type check
+        run: mypy services/api/clipos_api
+      - name: Run API tests with coverage
         run: pytest -q services/api
       - name: Validate development compose
         run: docker compose -f docker-compose.dev.yml config -q
@@ -68,6 +74,8 @@ jobs:
           fi
       - name: Confirm infrastructure health
         run: bash scripts/infrastructure_health.sh
+      - name: Integration smoke (PostgreSQL, Redis, MinIO)
+        run: bash scripts/integration_smoke.sh
       - name: Stop development infrastructure
         if: always()
         run: docker compose -f docker-compose.dev.yml down -v
@@ -75,14 +83,77 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci --no-audit --no-fund --loglevel=error
       - name: Web typecheck
         working-directory: apps/web
+        run: npx tsc --noEmit
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Upgrade pip (audited component) then install API dependencies
         run: |
-          npm install --no-audit --no-fund --loglevel=error
-          npx tsc --noEmit
+          python -m pip install --upgrade pip
+          pip install -e "services/api[dev]"
+      - name: Python dependency vulnerability audit
+        run: bash scripts/dependency_audit.sh
+      - name: Generate Python SBOM
+        run: cyclonedx-py env --output-reproducible -o sbom/api-python.cdx.json
+      - name: Upload Python SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-python-sbom
+          path: sbom/api-python.cdx.json
+      - name: Export and check OpenAPI contract
+        run: |
+          set -euo pipefail
+          PYTHONPATH=services/api python3 -c "import json; from clipos_api.main import app; json.dump(app.openapi(), open('openapi.json','w'), indent=2)"
+          python3 -c "import json; spec = json.load(open('openapi.json', encoding='utf-8')); assert '/health' in spec['paths'], 'missing /health path'"
+      - name: Upload OpenAPI contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-contract
+          path: openapi.json
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci --no-audit --no-fund --loglevel=error
+      - name: npm audit (high and above fails)
+        working-directory: apps/web
+        run: npm audit --audit-level=high
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build application images
+        run: docker compose -f docker-compose.dev.yml --profile app build
+      - name: E2E API smoke
+        run: bash scripts/e2e_smoke.sh
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frontend production build
+        working-directory: apps/web
+        run: |
+          npm ci --no-audit --no-fund --loglevel=error
+          npm run build
 
   report:
-    needs: [validate, test]
+    needs: [validate, test, quality, build]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -97,7 +168,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
-          if [ "${{ needs.validate.result }}" = "success" ] && [ "${{ needs.test.result }}" = "success" ]; then
+          if [ "${{ needs.validate.result }}" = "success" ] && [ "${{ needs.test.result }}" = "success" ] && [ "${{ needs.quality.result }}" = "success" ] && [ "${{ needs.build.result }}" = "success" ]; then
             result=success
           else
             result=failure

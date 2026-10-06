@@ -29,7 +29,9 @@ def test_no_hardcoded_provider_identifiers() -> None:
     source_root = Path(__file__).resolve().parents[1] / "clipos_api"
     for path in source_root.glob("*.py"):
         text = path.read_text()
-        normalized = text if path.name != "providers.py" else "\n".join(
-            line for line in text.splitlines() if not line.lstrip().startswith("#")
+        normalized = (
+            text
+            if path.name != "providers.py"
+            else "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
         )
         assert not PROVIDER_PATTERN.search(normalized), path.name

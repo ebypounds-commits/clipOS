@@ -1,4 +1,5 @@
 """FastAPI application entrypoint."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 from fastapi import FastAPI

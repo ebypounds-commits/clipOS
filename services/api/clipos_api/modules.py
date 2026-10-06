@@ -1,4 +1,5 @@
 """Explicit bounded module boundaries."""
+
 from enum import StrEnum
 
 

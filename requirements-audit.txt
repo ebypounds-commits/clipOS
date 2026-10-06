@@ -1,0 +1,2 @@
+# Audit input for pip-audit / cyclonedx-py: the API runtime plus dev tools.
+./services/api[dev]

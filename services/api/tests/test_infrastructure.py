@@ -18,7 +18,12 @@ def compose_line(
     status: str = "Up",
     created: str = "2026-10-06T12:00:00.000000000Z",
 ) -> str:
-    entry: dict[str, object] = {"Service": name, "State": state, "Status": status, "CreatedAt": created}
+    entry: dict[str, object] = {
+        "Service": name,
+        "State": state,
+        "Status": status,
+        "CreatedAt": created,
+    }
     if health is not None:
         entry["Health"] = health
     return json.dumps(entry)
@@ -47,7 +52,11 @@ def test_parse_unhealthy_marks_overall_degraded() -> None:
         "\n".join(
             [
                 compose_line("postgres", health={"Status": "healthy"}, status="Up (healthy)"),
-                compose_line("redis", health={"Status": "unhealthy", "FailingStreak": 2}, status="Up (unhealthy)"),
+                compose_line(
+                    "redis",
+                    health={"Status": "unhealthy", "FailingStreak": 2},
+                    status="Up (unhealthy)",
+                ),
             ]
         )
     )

@@ -1,4 +1,5 @@
 """Append-only structured audit logging for material state changes."""
+
 import json
 from datetime import UTC, datetime
 from pathlib import Path

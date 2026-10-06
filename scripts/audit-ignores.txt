@@ -1,0 +1,3 @@
+# Documented pip-audit ignore entries. Format: <CVE> # justification
+# Findings without an entry here must fail CI; do not add entries without a
+# written reason and an upstream fix/compensating-control reference.

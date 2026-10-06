@@ -3,10 +3,10 @@
 Keys are stable logical aliases owned by configuration. Concrete vendor and model
 identity is resolved by adapters at runtime.
 """
-from collections.abc import Mapping
+
 from typing import Any
 
-_REGISTRY: Mapping[str, Any] = {}
+_REGISTRY: dict[str, Any] = {}
 
 
 def register(alias: str, provider: Any) -> None:
