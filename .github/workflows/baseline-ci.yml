@@ -177,6 +177,9 @@ jobs:
             printf 'status=%s\n' "$result"
             printf 'run=%s\n' '${{ github.run_id }}'
             printf 'sha=%s\n' '${{ github.sha }}'
+            printf 'jobs=validate:%s,test:%s,quality:%s,build:%s\n' \
+              '${{ needs.validate.result }}' '${{ needs.test.result }}' \
+              '${{ needs.quality.result }}' '${{ needs.build.result }}'
           } > last_run.txt
           git add last_run.txt
           git diff --cached --quiet || git -c user.name=ci-bot -c user.email=ci-bot@clipos.local commit -m "ci: record last run"

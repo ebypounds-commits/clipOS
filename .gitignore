@@ -56,3 +56,9 @@ Thumbs.db
 # generated contract/sbom artifacts
 openapi.json
 sbom/
+
+# generated coverage/sbom artifacts
+.coverage
+coverage.xml
+openapi.json
+sbom/

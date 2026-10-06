@@ -20,9 +20,21 @@ while IFS= read -r cve; do
   [ -n "$cve" ] && args+=(--ignore-vuln "$cve")
 done < <(sed -n 's/^[[:space:]]*\([A-Za-z0-9][A-Za-z0-9._-]*\)[[:space:]]*#[[:space:]]*[^[:space:]].*$/\1/p' scripts/audit-ignores.txt)
 
-# Prefer auditing the installed environment (works in CI system env and local
-# venvs alike); fall back to the pinned requirements file if --local is absent.
-if "$PIPAUDIT" --help 2>&1 | grep -q -- '--local'; then
-  exec "$PIPAUDIT" --local "${args[@]}"
+# Scope: audit OUR declared dependencies (requirements-audit.txt), never the
+# host environment's full site-packages (on CI runners --local would audit
+# unrelated preinstalled tooling and produce false positives).
+if "$PIPAUDIT" -r requirements-audit.txt --help >/dev/null 2>&1 || [ -f requirements-audit.txt ]; then
+  if "$PIPAUDIT" -r requirements-audit.txt "${args[@]}"; then
+    exit 0
+  else
+    rc=$?
+    # -r with a local package path is unsupported on old pip-audit: fall back
+    # to the installed environment, which for CI/local venvs IS our dependency set.
+    if [ "$rc" -eq 2 ] || [ "$rc" -eq 3 ]; then
+      echo "dependency_audit: requirement-mode unsupported (rc=$rc), falling back to --local" >&2
+      exec "$PIPAUDIT" --local "${args[@]}"
+    fi
+    exit "$rc"
+  fi
 fi
-exec "$PIPAUDIT" -r requirements-audit.txt "${args[@]}"
+exec "$PIPAUDIT" --local "${args[@]}"
