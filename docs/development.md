@@ -64,6 +64,19 @@ Architecture decisions are recorded in [docs/adr/](adr/README.md); new material 
 
 The M1 identity/session foundation lives in `services/api/clipos_api/identity.py`: frozen Pydantic v2 contracts (`User`, `Session`), a `SessionStore` Protocol with a thread-safe `InMemorySessionStore`, and an `IdentityService` providing idempotent session creation, rotation, revocation, touch, expiry resolution through an injected clock, CSRF token generation, and secure-cookie attribute helpers. Raw bearer tokens are returned once and only SHA-256 hashes are stored; material session changes are recorded through the shared `clipos_api.audit` module (with an additive `read_events` helper for verification). CLIP-010 will add the PostgreSQL-backed implementation of the same store protocol; no SQL or HTTP layer is in scope here.
 
+## Organization tenancy
+
+The M1 organization tenancy foundation lives in `services/api/clipos_api/tenancy.py`:
+frozen Pydantic v2 contracts (`Organization`, `Membership`), `OrganizationStore` and
+`MembershipStore` Protocols with thread-safe in-memory implementations, and a
+`TenancyService` providing slug-idempotent organization creation, membership lifecycle
+with a last-active-owner invariant, and `require_membership` — the server-side
+tenant-scoping primitive required by 07 (it returns the active membership or `None`,
+and callers must deny on `None`). Roles are a simple owner/admin/member enum for tenancy
+management only; RBAC/capabilities arrive with CLIP-008, and CLIP-010 will add the
+PostgreSQL-backed store implementations. Material changes are recorded through the
+shared `clipos_api.audit` module.
+
 ## Autonomous runner
 
 Ticket execution follows the canonical conventions in

@@ -1,0 +1,96 @@
+{
+  "ticket_id": "CLIP-007",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-007",
+  "worktree": "/srv/clipos/worktrees/CLIP-007",
+  "summary": "Organization tenancy foundation: services/api/clipos_api/tenancy.py with frozen Pydantic v2 Organization (validated slug ^[a-z0-9][a-z0-9-]{1,62}$, active/suspended state) and Membership (owner/admin/member tenancy-only enum, active/removed state) contracts; runtime-checkable OrganizationStore and MembershipStore Protocols with thread-safe InMemoryOrganizationStore (slug-unique put_if_absent_by_slug) and InMemoryMembershipStore (unique (org_id, user_id) key, history kept by state so removal then re-add reactivates the same membership); and TenancyService with injected clock: slug-idempotent create_organization (replay returns existing org unchanged, org.created audited only on first), get_organization, set_org_state (org.suspended/org.reactivated, no-op replay without audit), idempotent add_member (member.added only on first activation; re-adding a removed member reactivates and audits), set_member_role (member.role_changed), idempotent remove_member (member.removed only on transition), last-active-owner invariant (remove/demote of the final active owner raises ValueError; with two owners demoting one succeeds), members_of_org/orgs_of_user filters, slug_available, and require_membership returning the active Membership or None (documented deny-by-default server-side tenant-scoping primitive per 07; returns None for removed memberships and suspended orgs; suspended orgs keep memberships readable). All privileged changes go through existing clipos_api.audit record()/read_events(); identity.py and audit.py untouched. services/api/tests/test_tenancy.py covers slug validation, create/add idempotency with exactly-one audit, lifecycle audit sequence, last-owner protection (remove raises, demote raises, 2-owner demote succeeds), require_membership tenant scoping (member vs non-member vs removed), listing filters, suspended-org rule, 8-thread same-slug -> 1 org and distinct-slug -> 8 orgs with injected clock and no sleeps. docs/development.md gained an 'Organization tenancy' paragraph (CLIP-008 RBAC out of scope; CLIP-010 SQL stores). No new dependencies, no SQL, no routes.",
+  "files_changed": [
+    "services/api/clipos_api/tenancy.py",
+    "services/api/tests/test_tenancy.py",
+    "docs/development.md",
+    ".agent/task_packet_CLIP-007.md",
+    ".agent/dryrun/CLIP-007_completion_report.json"
+  ],
+  "migrations": [],
+  "contracts_changed": [
+    "services/api/clipos_api/tenancy.py: new Organization/Membership Pydantic contracts, OrganizationStore/MembershipStore Protocols, InMemory stores, TenancyService"
+  ],
+  "tests": [
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall -q services/api",
+      "result": "PASS",
+      "evidence": "exit 0"
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "exit 0; 'OK: 108 tickets; current=CLIP-007; spec=2.0-hermes-vps'"
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "exit 0; 'state: valid (12 completed)'"
+    },
+    {
+      "name": "state_audit verify",
+      "command": "python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "exit 0; 'audit: 12/12 covered'"
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "exit 0; adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state all OK"
+    },
+    {
+      "name": "validate_packet (this packet)",
+      "command": "python3 scripts/validate_packet.py .agent/task_packet_CLIP-007.md",
+      "result": "PASS",
+      "evidence": "exit 0; 'packet: valid (.agent/task_packet_CLIP-007.md)'"
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "exit 0; 'secret_scan: clean'"
+    },
+    {
+      "name": "workflow YAML parse",
+      "command": "python3 -c 'import yaml; yaml.safe_load(open(\".github/workflows/baseline-ci.yml\"))'",
+      "result": "PASS",
+      "evidence": "exit 0; yaml module present in this environment, parse succeeded"
+    },
+    {
+      "name": "pytest (incl. new tenancy tests)",
+      "command": "python3 -m pytest -q services/api",
+      "result": "SKIP",
+      "evidence": "python3 3.14.4: No module named pytest; python3 -m pip absent (attempt to import pytest, pip fails; no network to install). Orchestrator must re-run outside sandbox. Not claimed passing."
+    },
+    {
+      "name": "ruff format --check + ruff check",
+      "command": "python3 -m ruff format --check services/api && python3 -m ruff check services/api",
+      "result": "SKIP",
+      "evidence": "python3: No module named ruff; no pip/network in sandbox. Orchestrator must re-run."
+    },
+    {
+      "name": "mypy (services/api scope)",
+      "command": "python3 -m mypy services/api",
+      "result": "SKIP",
+      "evidence": "python3: No module named mypy; no pip/network in sandbox. Orchestrator must re-run."
+    }
+  ],
+  "security_rights_budget_impact": "Security-positive: require_membership provides the server-side tenant-scoping primitive (deny by default on None, including removed memberships and suspended orgs); last-active-owner invariant enforced; all privileged changes audited via clipos_api.audit. No secrets or tokens in code/tests. No budget impact.",
+  "known_limitations": [
+    "pytest, ruff, mypy, pydantic, and pip unavailable in restricted sandbox (Python 3.14.4, no third-party modules); orchestrator must re-run quality gates outside it and confirm prior 41 + new tests green and coverage >=60%.",
+    "Roles are a tenancy-management-only enum; no RBAC/capability logic (CLIP-008) and no SQL persistence (CLIP-010) per scope boundaries."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": [
+    "git commit unavailable in-sandbox: fatal: Unable to create '/srv/clipos/clipOS/.git/worktrees/CLIP-007/index.lock': Read-only file system; change set left staged-ready in worktree for orchestrator commit."
+  ]
+}
