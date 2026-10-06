@@ -401,7 +401,7 @@ tickets:
 - id: CLIP-013
   milestone: M2
   title: Implement OpenTelemetry metrics/logging/tracing and backup primitives
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-012
@@ -417,6 +417,14 @@ tickets:
   - Documentation and BUILD_STATE evidence are updated.
   - CI is green.
   human_gate: false
+  completed_at: '2026-10-06T08:13:09+00:00'
+  evidence: 'commits fa01e95 (feature) + c35d3c0 (scan-clean fixture fix); CI run 37434274173 status=success
+    all4 jobs (supersedes 37432687791 validate-red → secret_scan caught AKIA test fixture on tracked files;
+    fixed via source-literal split, AST-verified runtime value unchanged); telemetry: init_telemetry idempotent
+    (probe-verified), SecretRedactionFilter (bearer/sk-/AKIA/url-cred/pw); backup: SHA-256 manifests,
+    verify detects tamper, pg_dump CLI with libpq URL normalization against real Postgres (postgresql-client
+    installed on VPS); suite: TOTAL                                            1732    205    88% 178
+    passed, 5 skipped in 3.37s'
 - id: CLIP-014
   milestone: M3
   title: Deploy Temporal dev/self-host config
