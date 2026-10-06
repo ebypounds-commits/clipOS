@@ -76,7 +76,7 @@ services:
     depends_on:
       temporal:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "temporal operator namespace create --address temporal:7233 clipos-dev || true; echo namespace-init-done"]
+    entrypoint: ["sh", "-c", "temporal operator namespace create --address temporal:7233 clipos-dev || true; temporal operator search-attribute create --address temporal:7233 --namespace clipos-dev --name CustomKeywordField --type Keyword || true; echo namespace-init-done"]
     labels:
       clipos.role: one-shot-init
 
