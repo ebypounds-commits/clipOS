@@ -47,8 +47,8 @@
   },
   "last_evidence": {
     "ticket": "CLIP-015",
-    "at": "2026-10-06T09:47:51+00:00",
-    "facts": "commit 5312012; CI 37444777985 green all4; live workflow approved+idempotent; TOTAL                                            1958    243    88% 209 passed, 7 skipped in 3.96s; spend {'usage_usd': 0.561352544, 'limit_remaining_usd': 4.438647456}"
+    "at": "2026-10-06T10:42:32+00:00",
+    "facts": "commit 5312012; CI 37444777985 green all4; live workflow approved+idempotent; TOTAL                                            1958    243    88% 209 passed, 7 skipped in 6.86s; spend {'usage_usd': 0.625729514, 'limit_remaining_usd': 4.374270486}"
   },
   "next_action": "Execute CLIP-016 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
