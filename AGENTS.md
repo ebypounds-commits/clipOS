@@ -13,6 +13,8 @@ Build and operate ClipOS according to the repository specifications with maximum
 - Codex must not spawn parallel repository workers unless Hermes explicitly authorizes it for dependency-independent scope.
 - Production ClipOS operational agents are separate from these development agents.
 
+Autonomous runner execution conventions: see `.agent/RUNNER_CONVENTIONS.md`.
+
 ## Source of truth
 Repository files override conversational assumptions. Before work, read the relevant specs, `BUILD_STATE.json`, and ticket. If implementation reality requires a material architecture deviation, write an ADR before changing the architecture.
 

@@ -60,6 +60,20 @@ The Compose project name is fixed to `clipos-dev`, so repeated commands address 
 
 Architecture decisions are recorded in [docs/adr/](adr/README.md); new material decisions (architecture, stack, provider policy, CI policy, security posture) follow the ADR process described there. `BUILD_STATE.json` is validated against `schemas/build_state.schema.json` by `python3 scripts/validate_state.py` (stdlib-only; also cross-checks the ticket backlog and last evidence). `python3 scripts/architecture_guard.py` statically checks the ADR set, the 21 bounded modules, provider neutrality in `providers.py`, the registry contract, and the four required CI jobs. Both run in the CI `validate` job after the secret scan, and `make governance` runs them together with the governance tests. Both validators are read-only: they never mutate `BUILD_STATE.json`, `10_TICKETS.yaml`, or reports.
 
+## Autonomous runner
+
+Ticket execution follows the canonical conventions in
+[.agent/RUNNER_CONVENTIONS.md](../.agent/RUNNER_CONVENTIONS.md): lease acquire, worktree,
+validated task packet, observed ground-truth evidence, gate re-runs, land, CI green,
+state advance, lease release. Task packets are checked with
+`python3 scripts/validate_packet.py <path>`; the CI `validate` job and `make governance`
+validate the packet template. Material state transitions are recorded in the append-only
+`docs/reports/STATE_AUDIT.jsonl` via `python3 scripts/state_audit.py`
+(`append`/`verify`/`bootstrap`; verify must cover every completed ticket before state is
+considered complete). Operators inspect the audit directly:
+`cat docs/reports/STATE_AUDIT.jsonl` (one JSON object per line, oldest first; existing
+lines are never rewritten).
+
 ## CI lane matrix
 
 The 16 lanes required by `11_CI_CD_DEPLOYMENT.md`, mapped to the current implementation:

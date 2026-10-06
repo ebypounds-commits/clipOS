@@ -35,6 +35,10 @@ jobs:
         run: |
           python3 scripts/validate_state.py
           python3 scripts/architecture_guard.py
+      - name: Validate task packets and state audit
+        run: |
+          python3 scripts/validate_packet.py .agent/CODEX_TASK_PACKET_TEMPLATE.md
+          python3 scripts/state_audit.py verify
 
   test:
     runs-on: ubuntu-latest

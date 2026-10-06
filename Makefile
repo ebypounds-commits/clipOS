@@ -49,3 +49,5 @@ governance:
 	python3 scripts/validate_state.py
 	python3 scripts/architecture_guard.py
 	python3 -m pytest -q services/api/tests/test_governance.py
+	python3 scripts/validate_packet.py .agent/CODEX_TASK_PACKET_TEMPLATE.md
+	python3 scripts/state_audit.py verify

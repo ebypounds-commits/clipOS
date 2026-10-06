@@ -1,0 +1,114 @@
+{
+  "ticket_id": "CLIP-005",
+  "status": "COMPLETE",
+  "branch": "agent/CLIP-005",
+  "worktree": "/srv/clipos/worktrees/CLIP-005",
+  "summary": "Autonomous ticket runner conventions: .agent/RUNNER_CONVENTIONS.md (lifecycle, single-lease exclusivity, ground-truth rule, retry policy, human-gate escalation, state-mutation rules) referenced additively from AGENTS.md and docs/development.md; stdlib-only scripts/validate_packet.py (required headings, lease keys, empty-section rejection, multi-path CLI); append-only scripts/state_audit.py (append idempotent per ticket, verify must cover every completed ticket, bootstrap from BUILD_STATE evidence sha; STATE_AUDIT_PATH/BUILD_STATE_PATH overrides; importable path-param functions) with bootstrapped docs/reports/STATE_AUDIT.jsonl (10/10 covered); pytest suite services/api/tests/test_runner_conventions.py; CI validate-job step (validate_packet + state_audit verify) and Makefile governance additions.",
+  "files_changed": [
+    ".agent/RUNNER_CONVENTIONS.md",
+    "scripts/validate_packet.py",
+    "scripts/state_audit.py",
+    "services/api/tests/test_runner_conventions.py",
+    "docs/reports/STATE_AUDIT.jsonl",
+    ".github/workflows/baseline-ci.yml",
+    "Makefile",
+    "docs/development.md",
+    "AGENTS.md",
+    ".agent/dryrun/CLIP-005_completion_report.json"
+  ],
+  "tests": [
+    {
+      "name": "validate_packet on template + this packet",
+      "command": "python3 scripts/validate_packet.py .agent/CODEX_TASK_PACKET_TEMPLATE.md .agent/task_packet_CLIP-005.md",
+      "result": "PASS",
+      "evidence": "exit 0; two 'packet: valid (...)' lines"
+    },
+    {
+      "name": "validate_packet negative (missing Acceptance + lease key)",
+      "command": "python3 scripts/validate_packet.py /tmp/broken_packet.md",
+      "result": "PASS",
+      "evidence": "exit 1; stderr: 'missing required Acceptance section heading', 'missing lease key: orchestrator_run_id'"
+    },
+    {
+      "name": "state_audit verify after bootstrap",
+      "command": "python3 scripts/state_audit.py bootstrap && python3 scripts/state_audit.py verify",
+      "result": "PASS",
+      "evidence": "bootstrap created 10 entries; verify exit 0, printed 'audit: 10/10 covered'"
+    },
+    {
+      "name": "state_audit append idempotence",
+      "command": "STATE_AUDIT_PATH=/tmp/audit_demo.jsonl state_audit.py append CLIP-005 0000000 (twice)",
+      "result": "PASS",
+      "evidence": "first 'appended', second 'exists'; /tmp/audit_demo.jsonl has exactly 1 line; real audit untouched by the demo"
+    },
+    {
+      "name": "validator logic in-process",
+      "command": "direct function checks (validate_packet.validate_packet, state_audit append/verify/bootstrap with tmp paths)",
+      "result": "PASS",
+      "evidence": "empty-section rejection, lease-key rejection, append idempotence, bootstrap sha extraction ([a-f]-requiring regex so CLIP-004's numeric CI run id is stored as 'unknown', not a fabricated sha), verify coverage all asserted"
+    },
+    {
+      "name": "compileall",
+      "command": "python3 -m compileall -q scripts services/api",
+      "result": "PASS",
+      "evidence": "exit 0"
+    },
+    {
+      "name": "validate_handoff",
+      "command": "python3 scripts/validate_handoff.py",
+      "result": "PASS",
+      "evidence": "OK: 108 tickets; current=CLIP-005; spec=2.0-hermes-vps"
+    },
+    {
+      "name": "validate_state",
+      "command": "python3 scripts/validate_state.py",
+      "result": "PASS",
+      "evidence": "exit 0: state: valid (10 completed)"
+    },
+    {
+      "name": "architecture_guard",
+      "command": "python3 scripts/architecture_guard.py",
+      "result": "PASS",
+      "evidence": "all 6 rules OK (adr-set, bounded-modules, provider-neutrality, registry-contract, ci-topology, build-state)"
+    },
+    {
+      "name": "secret_scan",
+      "command": "bash scripts/secret_scan.sh",
+      "result": "PASS",
+      "evidence": "clean; new files additionally reviewed (no secrets/credentials; only run-id actor string and UTC timestamps)"
+    },
+    {
+      "name": "workflow YAML parse + wiring",
+      "command": "python3 -c yaml.safe_load + grep",
+      "result": "PASS",
+      "evidence": "pyyaml parse OK; 'Validate task packets and state audit' step present after the validate_state/architecture_guard step; 4 jobs retained (validate, test, quality, build)"
+    },
+    {
+      "name": "pytest (21 prior + new runner-convention tests)",
+      "command": "python3 -m pytest -q services/api",
+      "result": "SKIP",
+      "evidence": "pytest is not installed in this sandbox; pip/network unavailable (Python 3.x system python, no venv). CI re-runs outside the sandbox; test logic for the new file was verified in-process (see validator-logic entry)."
+    },
+    {
+      "name": "ruff format --check / ruff check / mypy",
+      "command": "python3 -m ruff format --check services/api; python3 -m ruff check services/api; python3 -m mypy services/api/clipos_api",
+      "result": "SKIP",
+      "evidence": "ruff and mypy not installed in sandbox; pip/network unavailable. Code written to the existing formatting conventions (double quotes, trailing commas, sorted imports). scripts/ is outside the mypy target path."
+    },
+    {
+      "name": "commit on agent/CLIP-005",
+      "command": "git add -A && git commit",
+      "result": "SKIP",
+      "evidence": "git index write blocked: /srv/clipos/clipOS/.git/worktrees/CLIP-005/index.lock on a read-only filesystem. Completed change set left in the working tree; orchestrator commits or re-runs outside the sandbox."
+    }
+  ],
+  "security_rights_budget_impact": "none (local validators and append-only audit; no network, no external side effects, no secrets; strengthens state-transition auditability)",
+  "known_limitations": [
+    "pytest/ruff/mypy gates not runnable in this sandbox (tools absent, no network/pip); orchestrator must re-run outside.",
+    "commit blocked by read-only git index; change set is uncommitted in the worktree.",
+    "bootstrap wrote commit_sha 'unknown' for the 9 completed tickets without a hex sha in BUILD_STATE evidence; CLIP-004's evidence contained only a numeric CI run id, intentionally not stored as a sha."
+  ],
+  "commit_shas": [],
+  "working_tree_clean": false,
+  "blockers": []
+}
