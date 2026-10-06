@@ -1,0 +1,43 @@
+{
+  "ticket_id": "CLIP-014",
+  "branch": "agent/CLIP-014",
+  "worktree": "/srv/clipos/worktrees/CLIP-014",
+  "status": "IMPLEMENTATION_COMPLETE_SANDBOX",
+  "sandbox_limits": [
+    "no docker: compose runtime/probes deferred to orchestrator live run",
+    "git object database read-only: git add -A attempted and failed; secret scan executed with identical semantics over tracked+new file list (160 files): clean"
+  ],
+  "gates": {
+    "pytest": "192 passed, 6 skipped in 5.19s (final rerun) (TEMPORAL_ADDRESS live probe skipped honestly in-sandbox)",
+    "ruff_format": "clean (42 files already formatted)",
+    "ruff_check": "All checks passed!",
+    "mypy": "Success: no issues found in 19 source files",
+    "compileall": "services/api scripts: OK",
+    "validate_handoff": "OK: 108 tickets; current=CLIP-014; spec=2.0-hermes-vps",
+    "validate_state": "state: valid (19 completed)",
+    "state_audit": "verify: 19/19 covered",
+    "architecture_guard": "all checks OK",
+    "validate_packet": "packet: valid (.agent/task_packet_CLIP-014.md)",
+    "yaml_parse": "baseline-ci.yml + docker-compose.dev.yml: OK (python yaml.safe_load; docker compose config -q unavailable in-sandbox)",
+    "secret_scan": "clean over tracked+new files; literal script path run clean against original index"
+  },
+  "coverage": {
+    "total_percent": 88.47,
+    "statements": 1787,
+    "missed": 206
+  },
+  "deliverables": [
+    "docker-compose.dev.yml: temporal (temporalio/auto-setup:1.29.7, postgres12 backend, temporal DB, 7233) + temporal-ui (temporalio/ui:2.55.0, 8233->8088), healthchecks + depends_on",
+    "scripts/infrastructure_health.sh: temporal service health + gRPC 7233 compose-network probe + UI host 8233 probe",
+    "services/api/clipos_api/temporal_config.py: frozen TemporalConfig.from_env + bounded probe_temporal/TemporalProbeResult",
+    "services/api/pyproject.toml: temporalio>=1.34 floor",
+    "services/api/tests/test_temporal_config.py: 14 unit tests + live probe gated on TEMPORAL_ADDRESS",
+    ".github/workflows/baseline-ci.yml: TEMPORAL_ADDRESS: localhost:7233 added to test job env",
+    "docs/development.md: Temporal (dev/self-host) section"
+  ],
+  "not_run_in_sandbox": [
+    "docker compose config -q / up -d / teardown",
+    "live infrastructure_health.sh run",
+    "live probe_temporal via TEMPORAL_ADDRESS (test skipped until orchestrator/CI sets it)"
+  ]
+}

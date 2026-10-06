@@ -48,6 +48,46 @@ services:
       timeout: 3s
       retries: 10
 
+  temporal:
+    image: temporalio/auto-setup:1.29.7
+    restart: "no"
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: clipos_dev
+      POSTGRES_PWD: clipos_dev_local_only
+      POSTGRES_SEEDS: postgres
+      POSTGRES_DB: temporal
+    ports:
+      - "7233:7233"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "temporal operator cluster health --address $(hostname -i | cut -d' ' -f1):7233 2>/dev/null | grep -q SERVING"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+
+  temporal-ui:
+    image: temporalio/ui:2.55.0
+    restart: "no"
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_UI_PORT: "8088"
+    ports:
+      - "8233:8088"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8088/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   api:
     profiles: ["app"]
     restart: "no"

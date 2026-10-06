@@ -50,9 +50,25 @@ PY
 )"
 
 printf '%s\n' "$summary"
-python3 - "$summary" <<'PY'
-import json
-import sys
-health = json.loads(sys.argv[1])
-raise SystemExit(0 if health.get("overall") == "healthy" else 1)
-PY
+printf '%s\n' "$summary" | python3 -c '
+import json, sys
+health = json.loads(sys.stdin.read())
+names = {s["name"]: s["status"] for s in health["services"]}
+missing = [n for n in ("temporal", "temporal-ui") if names.get(n) != "healthy"]
+raise SystemExit(1 if missing else 0)
+'
+
+# Temporal reachability probes (read-only, short timeout).
+grpc_ok="$(docker compose -f docker-compose.dev.yml exec -T temporal \
+  sh -c 'temporal operator cluster health --address $(hostname -i | cut -d" " -f1):7233' 2>/dev/null || true)"
+if [ -z "$grpc_ok" ]; then
+  echo "temporal gRPC (7233) unreachable inside compose network" >&2
+  exit 1
+fi
+
+if ! curl -fsS --max-time 3 http://localhost:8233/ >/dev/null 2>&1; then
+  echo "temporal UI (host 8233) not responding" >&2
+  exit 1
+fi
+
+echo "temporal healthy (gRPC 7233, UI 8233)"

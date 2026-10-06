@@ -138,6 +138,37 @@ when `STORAGE_ENDPOINT` is set (the CI test job sets it against the Compose
 MinIO service). Multipart/resumable uploads via Temporal and CDN delivery are
 future work.
 
+## Temporal (dev/self-host)
+
+The dev Compose stack runs self-hosted Temporal for future durable orchestration
+(single-server topology per the system architecture): `temporalio/auto-setup:1.29.7`
+initializes and serves the frontend on host port 7233 (gRPC health endpoint) against
+the Compose PostgreSQL instance in a dedicated `temporal` database, and
+`temporalio/ui:2.55.0` serves the web UI on host port 8233 (container 8088).
+`scripts/infrastructure_health.sh` gates on the health-checked Compose services plus
+direct probes of gRPC 7233 inside the Compose network and UI HTTP 8233, so the CI
+test job already waits for Temporal alongside PostgreSQL, Redis, and MinIO.
+
+Configuration is environment-only, validated by
+`clipos_api.temporal_config.TemporalConfig.from_env()`: `TEMPORAL_ADDRESS`
+(default `localhost:7233`), `TEMPORAL_NAMESPACE` (default `clipos-dev`),
+`TEMPORAL_UI_URL` (default `http://localhost:8233`), and
+`TEMPORAL_CONNECT_TIMEOUT` seconds (default 5). Malformed addresses and
+non-positive timeouts raise `ValueError`. The connectivity helper
+`probe_temporal(config)` connects with `temporalio.Client.connect` inside the
+configured timeout and returns a frozen `TemporalProbeResult` (`ok`, sanitized
+`detail`); it never raises on unreachable servers and handles no credentials:
+
+```python
+config = TemporalConfig.from_env()
+result = await probe_temporal(config)
+assert result.ok, result.detail
+```
+
+The CI test job sets `TEMPORAL_ADDRESS: localhost:7233`, so the live probe test
+runs there. Workflow, activity, and worker code is roadmap work (CLIP-015+);
+dev self-host auth and mTLS are deferred and must be designed before any
+non-dev deployment.
 ## Autonomous runner
 
 Ticket execution follows the canonical conventions in
