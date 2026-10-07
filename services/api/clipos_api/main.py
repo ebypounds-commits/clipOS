@@ -11,6 +11,8 @@ from fastapi import Depends, FastAPI, HTTPException
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
+from clipos_api.llm_cost import CostLedger
+from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
@@ -27,6 +29,7 @@ app.router.routes.extend(agent_registry_router.routes)
 app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
+app.router.routes.extend(llm_cost_router.routes)
 
 
 @app.get("/health")
@@ -58,4 +61,8 @@ def operator_health(engine: Annotated[sa.Engine, Depends(database_engine)]) -> O
 
 def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
     """Production wiring point: operators register adapter factories here."""
-    return LLMGateway(ModelRegistryStore.from_engine(engine), AdapterRegistry())
+    return LLMGateway(
+        ModelRegistryStore.from_engine(engine),
+        AdapterRegistry(),
+        ledger=CostLedger.from_engine(engine),
+    )

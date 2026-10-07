@@ -30,6 +30,7 @@ _EXPECTED_TABLES = {
     "agent_policy_overrides",
     "model_routes",
     "agent_budget_configs",
+    "llm_dispatch_records",
 }
 
 
