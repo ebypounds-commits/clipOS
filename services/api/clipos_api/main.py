@@ -11,6 +11,8 @@ from fastapi import Depends, FastAPI, HTTPException
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
+from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
+from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.repository import get_engine
@@ -52,3 +54,8 @@ def operator_health(engine: Annotated[sa.Engine, Depends(database_engine)]) -> O
         datetime.now(UTC),
         temporal_reachable=bool(os.environ.get("TEMPORAL_ADDRESS")),
     )
+
+
+def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
+    """Production wiring point: operators register adapter factories here."""
+    return LLMGateway(ModelRegistryStore.from_engine(engine), AdapterRegistry())
