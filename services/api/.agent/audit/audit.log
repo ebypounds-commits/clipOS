@@ -1,2 +1,6 @@
 {"action":"workflow.approval_requested","actor":"workflow-worker","details":{"action":"reference.self_test","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.716760+00:00"}
 {"action":"workflow.self_test_completed","actor":"workflow-worker","details":{"outcome":"approved","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.717241+00:00"}
+{"action":"org.created","actor":"tenancy-service","details":{"name":"Acme","slug":"acme"},"subject":"e8d71a32-175e-4cfc-a4c8-3664235d13b6","timestamp":"2026-10-06T15:26:51.079633+00:00"}
+{"action":"member.added","actor":"tenancy-service","details":{"org_id":"e8d71a32-175e-4cfc-a4c8-3664235d13b6","role":"owner","user_id":"user-1"},"subject":"f0f30195-3098-4554-a6f8-d287887d6332","timestamp":"2026-10-06T15:26:51.087822+00:00"}
+{"action":"org.created","actor":"tenancy-service","details":{"name":"Acme","slug":"acme"},"subject":"d6aa47b6-dd8d-4cce-b907-76a451cb6f10","timestamp":"2026-10-06T15:28:41.859523+00:00"}
+{"action":"member.added","actor":"tenancy-service","details":{"org_id":"d6aa47b6-dd8d-4cce-b907-76a451cb6f10","role":"owner","user_id":"user-1"},"subject":"eda19265-20e0-4799-92ba-94404c25477a","timestamp":"2026-10-06T15:28:41.865595+00:00"}
