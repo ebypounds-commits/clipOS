@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-024",
+  "current_ticket": "CLIP-025",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -43,7 +43,8 @@
     "CLIP-020",
     "CLIP-021",
     "CLIP-022",
-    "CLIP-023"
+    "CLIP-023",
+    "CLIP-024"
   ],
   "blocked": [],
   "human_gates": {
@@ -54,11 +55,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-023",
-    "at": "2026-10-07T17:40:00+00:00",
-    "facts": "CLIP-023 complete: LLMGateway provider-neutral AI client \u2014 resolves logical aliases via ModelRegistryStore.resolve_alias (priority fallback chain), ProviderAdapter ABC + pluggable factory registry keyed by provider name (no provider SDK imports at module scope, proven by subprocess sys.modules test; no SDK deps in pyproject; no hard-coded provider model ids), failed routes marked degraded (audited) then next route tried, dispatch idempotent per execution_id (in-memory response cache) and audited start-to-finish, build_llm_gateway wiring in main; 10 new tests; land d5a87e0, merge 1d33fb7, CI green all 4 jobs; suite 281+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-024",
+    "at": "2026-10-07T21:30:00+00:00",
+    "facts": "CLIP-024 complete: CostLedger append-only dispatch records idempotent by (execution_id, route) \u2014 migration 0008 CREATE-only PG-verified (0008 head, llm_dispatch_records exists, stamp idempotent), per-attempt outcomes succeeded|failed|degraded_fallback recorded from the gateway fallback chain, degraded-route cooldown 300s default with injectable clock + recovery to ok on success, operator endpoints /models/{alias}/costs (window sum + rows) and /models/{alias}/dispatches wired in main, model_registry tz-safe _aware mapper; 11 new tests; land b7345ca, merge 680fa16, CI green all 4 jobs; suite 292+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-024 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-025 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

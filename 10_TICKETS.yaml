@@ -632,7 +632,7 @@ tickets:
 - id: CLIP-024
   milestone: M5
   title: Implement routing/fallback/health/cost tracking
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-023
