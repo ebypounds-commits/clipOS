@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-020",
+  "current_ticket": "CLIP-021",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -39,7 +39,8 @@
     "CLIP-016",
     "CLIP-017",
     "CLIP-018",
-    "CLIP-019"
+    "CLIP-019",
+    "CLIP-020"
   ],
   "blocked": [],
   "human_gates": {
@@ -50,11 +51,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-019",
-    "at": "2026-10-07T03:10:00+00:00",
-    "facts": "CLIP-019 complete: agent_policy.py (typed RetryPolicy/EscalationPolicy/MemoryPolicy/BudgetConfiguration contracts; escalation target validated against known agent_class or human; budget ceilings ordering per_run<=hourly<=daily<=monthly; effective-dated policy overrides + append-only budget history with window supersede; override-vs-default precedence resolution at point-in-time; audit on all material changes); promote_version copies definition into NEW DRAFT (immutability preserved) + /agents/{id}/promote + /agent-policies routes; migration 0004 (agent_policy_overrides + agent_budget_configs, PG-verified upgrade+idempotence); 7 policy tests; land d272501, merge f66d451, CI green all 4 jobs; worker self-verified 253+11 offline / 257+7 PG lane; recovered per checkpoint-recovery directive (worker hit 25min budget timeout mid-baseline-check, work preserved, gates completed by orchestrator)"
+    "ticket": "CLIP-020",
+    "at": "2026-10-07T04:20:00+00:00",
+    "facts": "CLIP-020 complete: agent_lifecycle_events table (migration 0005, PG-verified idempotent), lifecycle_history() + /agents/{id}/lifecycle endpoint, actor pass-through fix in transition() (worker's PARTIAL \u2014 deterministic one-line correction), suspension/retirement guards rejecting policy/budget mutations on non-ACTIVE states, /agents operator UI page (Next server component, alias-only, no new deps) linked from home; land a2bf9f2, merge ef47950, CI green all 4 jobs; 258+25 offline suite"
   },
-  "next_action": "Execute CLIP-020 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-021 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

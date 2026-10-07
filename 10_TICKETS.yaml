@@ -560,7 +560,7 @@ tickets:
 - id: CLIP-020
   milestone: M4
   title: Implement agent UI and activation lifecycle
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-019
