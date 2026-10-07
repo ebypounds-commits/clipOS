@@ -13,12 +13,16 @@ from __future__ import annotations
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from clipos_api import audit
 from clipos_api.model_registry import HealthState, ModelRegistryStore, ModelRoute
+
+if TYPE_CHECKING:
+    from clipos_api.llm_cost import CostLedger, DispatchRecord
 
 _GATEWAY_ACTOR = "llm-gateway"
 
@@ -104,12 +108,26 @@ class LLMDispatchError(RuntimeError):
     """Raised when every route in the alias fallback chain failed."""
 
 
+_DEFAULT_DEGRADED_COOLDOWN_SECONDS = 300.0
+
+
 class LLMGateway:
     """Alias-resolving dispatch client over an ordered model-route registry."""
 
-    def __init__(self, registry: ModelRegistryStore, adapters: AdapterRegistry) -> None:
+    def __init__(
+        self,
+        registry: ModelRegistryStore,
+        adapters: AdapterRegistry,
+        *,
+        ledger: CostLedger | None = None,
+        degraded_cooldown_seconds: float = _DEFAULT_DEGRADED_COOLDOWN_SECONDS,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self._registry = registry
         self._adapters = adapters
+        self._ledger = ledger
+        self._cooldown_seconds = max(0.0, degraded_cooldown_seconds)
+        self._clock = clock or (lambda: datetime.now(UTC))
         self._cache: dict[str, LLMResponse] = {}
 
     def register_adapter(self, provider_name: str, factory: AdapterFactory) -> None:
@@ -119,6 +137,36 @@ class LLMGateway:
     def _audit(self, action: str, subject: str, details: dict[str, Any]) -> None:
         audit.record(action=action, actor=_GATEWAY_ACTOR, subject=subject, details=details)
 
+    def _record(self, record: DispatchRecord) -> None:
+        """Persist one dispatch attempt; ledger failures never mask dispatch ones."""
+        if self._ledger is None:
+            return
+        try:
+            self._ledger.record(record)
+        except Exception:  # noqa: BLE001 - persistence must not mask dispatch outcomes
+            self._audit(
+                "llm_gateway.dispatch_record_failed",
+                f"execution:{record.execution_id}",
+                {"provider": record.provider, "model_ref": record.model_ref},
+            )
+
+    def _eligible_routes(self, alias: str) -> list[ModelRoute]:
+        """Resolve enabled routes, re-admitting degraded ones after cooldown."""
+        now = self._clock()
+        eligible: list[ModelRoute] = []
+        for route in self._registry.list_routes(alias):
+            if not route.enabled or route.health_state is HealthState.DISABLED:
+                continue
+            if route.health_state is HealthState.DEGRADED:
+                degraded_at = route.updated_at
+                if degraded_at is None:
+                    continue
+                elapsed = (now - degraded_at).total_seconds()
+                if elapsed < self._cooldown_seconds:
+                    continue
+            eligible.append(route)
+        return eligible
+
     def _degrade_route(self, route: ModelRoute) -> None:
         """Mark a failed route degraded; audit failures never mask dispatch ones."""
         try:
@@ -126,6 +174,19 @@ class LLMGateway:
                 route.alias, route.provider, route.model_ref, HealthState.DEGRADED
             )
         except Exception:  # noqa: BLE001 - audit/persistence must not mask dispatch failure
+            self._audit(
+                "llm_gateway.health_update_failed",
+                f"model_route:{route.alias}:{route.provider}:{route.model_ref}",
+                {},
+            )
+
+    def _recover_route(self, route: ModelRoute) -> None:
+        """Mark a cooldown-recovered route healthy again; audit failures never mask."""
+        try:
+            self._registry.set_route_health(
+                route.alias, route.provider, route.model_ref, HealthState.OK
+            )
+        except Exception:  # noqa: BLE001 - persistence must not mask dispatch success
             self._audit(
                 "llm_gateway.health_update_failed",
                 f"model_route:{route.alias}:{route.provider}:{route.model_ref}",
@@ -145,7 +206,7 @@ class LLMGateway:
         cached = self._cache.get(request.execution_id)
         if cached is not None:
             return cached
-        routes = self._registry.resolve_alias(request.alias)
+        routes = self._eligible_routes(request.alias)
         if not routes:
             raise LLMDispatchError(f"no enabled routes for alias: {request.alias}")
         subject = f"execution:{request.execution_id}"
@@ -154,6 +215,8 @@ class LLMGateway:
             subject,
             {"alias": request.alias, "routes": len(routes)},
         )
+        from clipos_api.llm_cost import DispatchOutcome, DispatchRecord
+
         try:
             failures: list[dict[str, Any]] = []
             for route in routes:
@@ -168,7 +231,36 @@ class LLMGateway:
                         }
                     )
                     self._degrade_route(route)
+                    self._record(
+                        DispatchRecord(
+                            execution_id=request.execution_id,
+                            alias=request.alias,
+                            provider=route.provider,
+                            model_ref=route.model_ref,
+                            outcome=DispatchOutcome.FAILED,
+                            latency_ms=0,
+                            at=self._clock(),
+                        )
+                    )
                     continue
+                if route.health_state is HealthState.DEGRADED:
+                    self._recover_route(route)
+                self._record(
+                    DispatchRecord(
+                        execution_id=request.execution_id,
+                        alias=request.alias,
+                        provider=route.provider,
+                        model_ref=route.model_ref,
+                        outcome=(
+                            DispatchOutcome.DEGRADED_FALLBACK
+                            if failures
+                            else DispatchOutcome.SUCCEEDED
+                        ),
+                        latency_ms=response.latency_ms,
+                        usage=response.usage,
+                        at=self._clock(),
+                    )
+                )
                 self._cache[request.execution_id] = response
                 self._audit(
                     "llm_gateway.dispatch_succeeded",

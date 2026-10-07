@@ -48,6 +48,7 @@ class ModelRoute(BaseModel):
     enabled: bool = True
     health_state: HealthState = HealthState.OK
     metadata: dict[str, Any] = Field(default_factory=dict)
+    updated_at: datetime | None = None
 
 
 class HealthRequest(BaseModel):
@@ -98,7 +99,13 @@ def _route_from_row(row: ModelRouteRecord) -> ModelRoute:
         enabled=row.enabled,
         health_state=HealthState(row.health_state),
         metadata=row.route_metadata,
+        updated_at=_aware(row.updated_at),
     )
+
+
+def _aware(value: datetime) -> datetime:
+    """Normalize values read from backends that strip the timezone (SQLite)."""
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value
 
 
 def _route_signature(route: ModelRoute) -> dict[str, Any]:
@@ -106,6 +113,7 @@ def _route_signature(route: ModelRoute) -> dict[str, Any]:
     data = route.model_dump()
     data.pop("health_state")
     data.pop("enabled")
+    data.pop("updated_at")
     return data
 
 
