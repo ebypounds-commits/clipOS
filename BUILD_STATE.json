@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-023",
+  "current_ticket": "CLIP-024",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -42,7 +42,8 @@
     "CLIP-019",
     "CLIP-020",
     "CLIP-021",
-    "CLIP-022"
+    "CLIP-022",
+    "CLIP-023"
   ],
   "blocked": [],
   "human_gates": {
@@ -53,11 +54,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-022",
-    "at": "2026-10-07T16:10:00+00:00",
-    "facts": "CLIP-022 complete: ModelRegistryStore idempotent register on natural key (alias, provider, model_ref), priority-ordered resolve_alias excluding disabled/unhealthy routes, audited health/enable/disable transitions, 5 operator endpoints (/models GET/POST, /{alias}, /{alias}/health, /{alias}/resolve) wired in main, migration 0007 CREATE-only PG-verified (0007 head, model_routes exists, stamp idempotent), no provider model ids hard-coded; land 99e2d47, merge 23c8837, CI green all 4 jobs; suite 271+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-023",
+    "at": "2026-10-07T17:40:00+00:00",
+    "facts": "CLIP-023 complete: LLMGateway provider-neutral AI client \u2014 resolves logical aliases via ModelRegistryStore.resolve_alias (priority fallback chain), ProviderAdapter ABC + pluggable factory registry keyed by provider name (no provider SDK imports at module scope, proven by subprocess sys.modules test; no SDK deps in pyproject; no hard-coded provider model ids), failed routes marked degraded (audited) then next route tried, dispatch idempotent per execution_id (in-memory response cache) and audited start-to-finish, build_llm_gateway wiring in main; 10 new tests; land d5a87e0, merge 1d33fb7, CI green all 4 jobs; suite 281+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-023 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-024 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

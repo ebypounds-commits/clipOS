@@ -614,7 +614,7 @@ tickets:
 - id: CLIP-023
   milestone: M5
   title: Implement provider-neutral AI client and logical aliases
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-022
