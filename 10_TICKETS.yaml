@@ -596,7 +596,7 @@ tickets:
 - id: CLIP-022
   milestone: M5
   title: Implement Model Registry schema/API
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-021

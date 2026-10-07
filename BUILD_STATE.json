@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-022",
+  "current_ticket": "CLIP-023",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -41,7 +41,8 @@
     "CLIP-018",
     "CLIP-019",
     "CLIP-020",
-    "CLIP-021"
+    "CLIP-021",
+    "CLIP-022"
   ],
   "blocked": [],
   "human_gates": {
@@ -52,11 +53,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-021",
-    "at": "2026-10-07T15:00:00+00:00",
-    "facts": "CLIP-021 complete: evaluation_gate enforced on activate (LOW fails closed without recent passing runs; HIGH-risk human-approval check precedes gate; approved waiver audited as evaluation_gate_waived), AgentEvaluationStore with idempotent record_evaluation/record_execution_start/finish + execute_audited failure-safe close, migration 0006 CREATE-only PG-verified (0006 head, tables exist, stamp idempotent), 3 operator endpoints wired (/agents/{id}/evaluations, /evaluations/record, /executions), no provider model ids; land 97d63d4, merge 6722174, CI green all 4 jobs; suite 265+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-022",
+    "at": "2026-10-07T16:10:00+00:00",
+    "facts": "CLIP-022 complete: ModelRegistryStore idempotent register on natural key (alias, provider, model_ref), priority-ordered resolve_alias excluding disabled/unhealthy routes, audited health/enable/disable transitions, 5 operator endpoints (/models GET/POST, /{alias}, /{alias}/health, /{alias}/resolve) wired in main, migration 0007 CREATE-only PG-verified (0007 head, model_routes exists, stamp idempotent), no provider model ids hard-coded; land 99e2d47, merge 23c8837, CI green all 4 jobs; suite 271+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-022 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-023 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
