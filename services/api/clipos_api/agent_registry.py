@@ -414,6 +414,23 @@ class AgentRegistryStore:
         with self._sessions.begin() as session:
             return self.register_version_in_transaction(session, agent_id, version, definition)
 
+    def promote_version_in_transaction(
+        self, session: Session, agent_id: str, from_version: str, to_version: str
+    ) -> AgentVersion:
+        """Copy an existing definition into a NEW DRAFT version in the caller's transaction."""
+        source = session.get(AgentVersionRecord, {"agent_id": agent_id, "version": from_version})
+        if source is None:
+            raise ValueError(f"agent version not found: {agent_id}:{from_version}")
+        definition = _model_version(source).model_copy(
+            update={"version": None, "activation_state": AgentState.DRAFT}
+        )
+        return self.register_version_in_transaction(session, agent_id, to_version, definition)
+
+    def promote_version(self, agent_id: str, from_version: str, to_version: str) -> AgentVersion:
+        """Promote by registering a new DRAFT copy; the source version is untouched."""
+        with self._sessions.begin() as session:
+            return self.promote_version_in_transaction(session, agent_id, from_version, to_version)
+
     def transition_in_transaction(
         self,
         session: Session,
@@ -687,6 +704,27 @@ def activate_agent(
         raise HTTPException(status_code=status, detail=message) from exc
 
 
+class PromoteRequest(BaseModel):
+    """POST payload promoting one version's definition into a new DRAFT version."""
+
+    model_config = ConfigDict(frozen=True)
+
+    from_version: str = Field(min_length=1, max_length=128)
+    to_version: str = Field(min_length=1, max_length=128)
+
+
+def promote_agent_version(
+    agent_id: str,
+    request: PromoteRequest,
+    registry: Annotated[AgentRegistryStore, Depends(_registry_store)],
+) -> AgentVersion:
+    """Register a new DRAFT version copied from an existing version."""
+    try:
+        return registry.promote_version(agent_id, request.from_version, request.to_version)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 router = APIRouter(prefix="/agents", tags=["agents"])
 router.add_api_route("", register_version, methods=["POST"], name="register_agent_version")
 router.add_api_route("/{agent_id}", get_agent, methods=["GET"], name="get_agent")
@@ -694,3 +732,6 @@ router.add_api_route(
     "/{agent_id}/activate", activate_agent, methods=["POST"], name="activate_agent"
 )
 router.add_api_route("/{agent_id}/resolve", resolve_agent, methods=["GET"], name="resolve_agent")
+router.add_api_route(
+    "/{agent_id}/promote", promote_agent_version, methods=["POST"], name="promote_agent_version"
+)

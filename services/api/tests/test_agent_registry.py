@@ -293,6 +293,7 @@ def test_routes_are_wired_by_identity(monkeypatch: pytest.MonkeyPatch) -> None:
         "get_agent": "/agents/{agent_id}",
         "activate_agent": "/agents/{agent_id}/activate",
         "resolve_agent": "/agents/{agent_id}/resolve",
+        "promote_agent_version": "/agents/{agent_id}/promote",
     }
 
 

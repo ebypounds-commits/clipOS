@@ -8,6 +8,7 @@ from typing import Annotated
 import sqlalchemy as sa
 from fastapi import Depends, FastAPI, HTTPException
 
+from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.repository import get_engine
@@ -19,6 +20,7 @@ except PackageNotFoundError:
 
 app = FastAPI(title="ClipOS API", version=APP_VERSION)
 app.router.routes.extend(agent_registry_router.routes)
+app.router.routes.extend(agent_policy_router.routes)
 
 
 @app.get("/health")

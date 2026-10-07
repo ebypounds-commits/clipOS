@@ -1,2 +1,4 @@
 {"action":"workflow.approval_requested","actor":"workflow-worker","details":{"action":"reference.self_test","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.716760+00:00"}
 {"action":"workflow.self_test_completed","actor":"workflow-worker","details":{"outcome":"approved","timeout_behavior":"deny"},"subject":"search-d63f26ac8e2f440ab7909b6266180650","timestamp":"2026-10-06T15:08:18.717241+00:00"}
+{"action":"org.created","actor":"tenancy-service","details":{"name":"Acme","slug":"acme"},"subject":"49152ced-6fd1-40a6-bf5d-45e05465034f","timestamp":"2026-10-07T05:36:18.837012+00:00"}
+{"action":"member.added","actor":"tenancy-service","details":{"org_id":"49152ced-6fd1-40a6-bf5d-45e05465034f","role":"owner","user_id":"user-1"},"subject":"c79c8b65-e372-4f84-9378-6489e480340e","timestamp":"2026-10-07T05:36:18.845060+00:00"}

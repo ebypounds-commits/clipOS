@@ -27,6 +27,8 @@ _EXPECTED_TABLES = {
     "agent_records",
     "agent_versions",
     "model_alias_targets",
+    "agent_policy_overrides",
+    "agent_budget_configs",
 }
 
 
