@@ -9,6 +9,7 @@ from fastapi.routing import APIRoute
 from sqlalchemy import create_engine
 
 from clipos_api import agent_registry, audit, main
+from clipos_api.agent_evaluation import AgentEvaluationStore, RecordEvaluationRequest
 from clipos_api.agent_registry import (
     AgentClass,
     AgentRegistryStore,
@@ -27,6 +28,28 @@ def store(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> AgentRegistryStore
     agent_registry.AgentVersionRecord.metadata.create_all(engine)
     agent_registry.LifecycleEventRecord.metadata.create_all(engine)
     return AgentRegistryStore.from_engine(engine)
+
+
+def record_passing_eval(registry: AgentRegistryStore, version: str = "v1") -> None:
+    """Record a passing factuality eval run so the activation gate passes."""
+    eval_store = AgentEvaluationStore.from_engine(registry._sessions.kw["bind"])
+    eval_store.record_evaluation(
+        "research",
+        RecordEvaluationRequest(
+            version=version, evaluator="factuality", score=0.95, run_id=f"run-{version}-pass"
+        ),
+    )
+
+
+def record_passing_eval_for(registry: AgentRegistryStore, agent_id: str, version: str) -> None:
+    """Record a passing factuality eval run for an arbitrary agent."""
+    eval_store = AgentEvaluationStore.from_engine(registry._sessions.kw["bind"])
+    eval_store.record_evaluation(
+        agent_id,
+        RecordEvaluationRequest(
+            version=version, evaluator="factuality", score=0.95, run_id=f"run-{agent_id}-{version}"
+        ),
+    )
 
 
 def definition(risk: RiskClassification = RiskClassification.LOW) -> AgentVersion:
@@ -132,6 +155,8 @@ def test_full_lifecycle_and_canary_percentage(
     assert canary.canary_percentage == 1
     assert registry.set_canary_percentage("research", "v1", 25).canary_percentage == 25
     assert registry.set_canary_percentage("research", "v1", 25).canary_percentage == 25
+
+    record_passing_eval(registry, "v1")
 
     active = registry.activate("research", "v1")
     assert active.activation_state is AgentState.ACTIVE
@@ -269,6 +294,7 @@ def test_agent_record_returns_versions_and_active_pointer(
     registry.register_version("research", "v2", definition().model_copy(update={"name": "Next"}))
     registry.transition("research", "v1", AgentState.EVALUATING)
     registry.transition("research", "v1", AgentState.CANARY)
+    record_passing_eval(registry, "v1")
     registry.activate("research", "v1")
     record = registry.get_agent("research")
     assert record is not None
@@ -297,6 +323,9 @@ def test_routes_are_wired_by_identity(monkeypatch: pytest.MonkeyPatch) -> None:
         "resolve_agent": "/agents/{agent_id}/resolve",
         "promote_agent_version": "/agents/{agent_id}/promote",
         "get_agent_lifecycle": "/agents/{agent_id}/lifecycle",
+        "get_agent_evaluations": "/agents/{agent_id}/evaluations",
+        "record_agent_evaluation": "/agents/{agent_id}/evaluations/record",
+        "get_agent_executions": "/agents/{agent_id}/executions",
     }
 
 

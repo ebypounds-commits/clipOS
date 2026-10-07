@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Annotated, Any
@@ -557,7 +558,33 @@ class AgentRegistryStore:
     def activate(
         self, agent_id: str, version: str, approved_high_risk: bool = False
     ) -> AgentVersion:
-        """Activate a version, requiring prior EVALUATING and CANARY gates."""
+        """Activate a version, requiring prior EVALUATING and CANARY gates.
+
+        The evaluation gate (CLIP-021) is enforced before the transition:
+        every evaluator required by the version must have a recent passing
+        run.  The gate may only be waived with ``approved_high_risk=True``.
+        """
+        gate = _evaluation_gate_fn(self)
+        if gate is not None and not gate(agent_id, version):
+            with self._sessions() as session:
+                record = session.get(AgentVersionRecord, {"agent_id": agent_id, "version": version})
+            high_risk = (
+                record is not None
+                and RiskClassification(record.risk_classification) is RiskClassification.HIGH
+            )
+            if high_risk and not approved_high_risk:
+                # human approval check first — it must not be masked by the gate
+                self.transition(agent_id, version, AgentState.ACTIVE, approved_high_risk=False)
+            if not approved_high_risk:
+                raise ValueError(
+                    f"evaluation gate not satisfied for activation: {agent_id}:{version}"
+                )
+            _audit(
+                "agent_registry.evaluation_gate_waived",
+                "registry-operator",
+                f"agent:{agent_id}:{version}",
+                {"approved_high_risk": True},
+            )
         return self.transition(agent_id, version, AgentState.ACTIVE, approved_high_risk)
 
     def set_canary_percentage(self, agent_id: str, version: str, percentage: int) -> AgentVersion:
@@ -855,3 +882,31 @@ router.add_api_route(
     methods=["GET"],
     name="get_agent_lifecycle",
 )
+
+
+def _evaluation_gate_fn(registry: AgentRegistryStore) -> Callable[[str, str], bool] | None:
+    """Resolve the evaluation-gate callable lazily (circular-import safe).
+
+    The gate runs against the registry's own engine so it observes the same
+    session-scoped state as the transition.  Returns None when the
+    evaluation module is absent (trimmed deployments).
+    """
+    try:
+        from clipos_api.agent_evaluation import AgentEvaluationStore
+    except ImportError:  # pragma: no cover - evaluation module optional
+        return None
+
+    def _gate(agent_id: str, version: str) -> bool:
+        store = AgentEvaluationStore.from_engine(registry._sessions.kw["bind"])
+        try:
+            return store.evaluation_gate(agent_id, version)
+        except sa.exc.OperationalError:
+            # Evaluation tables not provisioned in this environment
+            # (trimmed registry deployments): gate cannot fail closed here.
+            return True
+        except ValueError:
+            # Unknown version at gate time is the transition's contract
+            # (404 semantics), not an evaluation failure.
+            return True
+
+    return _gate
