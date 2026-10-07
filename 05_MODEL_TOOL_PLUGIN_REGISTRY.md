@@ -43,6 +43,7 @@ Routing inputs:
 
 Routing output must record actual provider/model selected for audit and cost attribution.
 
+Implemented in `services/api/clipos_api/llm_gateway.py` (CLIP-023): the `LLMGateway` resolves logical aliases through `ModelRegistryStore.resolve_alias` and dispatches to provider adapters in priority order. Provider adapters are registered by provider name at startup through pluggable factories (`register_adapter`); provider SDKs are never imported at module scope. Failed routes are marked `degraded` (audited) and the next route is tried. Dispatch is audited start-to-finish and idempotent per `execution_id` via an in-memory response cache. Production adapter factories are operator wiring; no real provider adapters ship in core.
 ## 3. Tool Registry
 Tool definition fields:
 - stable `tool_id`;
