@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
+from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.repository import get_engine
 
@@ -23,6 +24,7 @@ app = FastAPI(title="ClipOS API", version=APP_VERSION)
 app.router.routes.extend(agent_registry_router.routes)
 app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
+app.router.routes.extend(model_registry_router.routes)
 
 
 @app.get("/health")

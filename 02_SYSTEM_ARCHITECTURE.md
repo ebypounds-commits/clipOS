@@ -48,6 +48,12 @@ flowchart TD
   MW --> O
 ```
 
+The Model Registry (`services/api/clipos_api/model_registry.py`) stores logical
+model aliases as ordered provider routes on natural key `(alias, provider,
+model_ref)`. `resolve_alias` returns the enabled, non-disabled fallback chain in
+priority order for the LLM Gateway; registration is idempotent and health,
+enable, and disable transitions are audited as material state changes.
+
 ## 4. Bounded modules
 1. identity
 2. organizations
