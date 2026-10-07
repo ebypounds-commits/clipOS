@@ -542,7 +542,7 @@ tickets:
 - id: CLIP-019
   milestone: M4
   title: Implement agent versioning/policies/budget configuration
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-018
