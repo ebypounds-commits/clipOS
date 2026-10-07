@@ -25,6 +25,7 @@ def store(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> AgentRegistryStore
     audit.AUDIT_PATH.write_text("", encoding="utf-8")
     engine = create_engine("sqlite:///:memory:")
     agent_registry.AgentVersionRecord.metadata.create_all(engine)
+    agent_registry.LifecycleEventRecord.metadata.create_all(engine)
     return AgentRegistryStore.from_engine(engine)
 
 
@@ -290,10 +291,12 @@ def test_routes_are_wired_by_identity(monkeypatch: pytest.MonkeyPatch) -> None:
     }
     assert names == {
         "register_agent_version": "/agents",
+        "list_agents": "/agents",
         "get_agent": "/agents/{agent_id}",
         "activate_agent": "/agents/{agent_id}/activate",
         "resolve_agent": "/agents/{agent_id}/resolve",
         "promote_agent_version": "/agents/{agent_id}/promote",
+        "get_agent_lifecycle": "/agents/{agent_id}/lifecycle",
     }
 
 
@@ -301,3 +304,57 @@ def test_no_provider_model_identifiers_in_agent_definitions() -> None:
     value = definition()
     assert value.model_alias == "reasoning-standard"
     assert value.fallback_aliases == ["research-fast"]
+
+
+def test_lifecycle_history_records_every_transition(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Each legal transition appends a durable, ordered lifecycle event."""
+    registry = store(monkeypatch, tmp_path)
+    registry.register_version("research", "v1", definition())
+    for target in (AgentState.EVALUATING, AgentState.CANARY, AgentState.ACTIVE):
+        registry.transition("research", "v1", target, actor="ops-operator")
+
+    history = registry.lifecycle_history("research")
+    assert [item.from_state for item in history] == [
+        AgentState.DRAFT,
+        AgentState.EVALUATING,
+        AgentState.CANARY,
+    ]
+    assert [item.to_state for item in history] == [
+        AgentState.EVALUATING,
+        AgentState.CANARY,
+        AgentState.ACTIVE,
+    ]
+    assert all(item.agent_id == "research" and item.version == "v1" for item in history)
+    assert all(item.actor == "ops-operator" for item in history)
+    assert history == registry.lifecycle_history("research", "v1")
+    assert registry.lifecycle_history("missing") == []
+
+
+def test_list_agents_returns_registry_summary(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The registry list exposes every agent with active pointer and versions."""
+    registry = store(monkeypatch, tmp_path)
+    assert registry.list_agents() == []
+    registry.register_version("research", "v1", definition())
+    registry.register_version("research", "v2", definition())
+    registry.transition("research", "v1", AgentState.EVALUATING)
+
+    agents = registry.list_agents()
+    assert len(agents) == 1
+    assert agents[0].agent_id == "research"
+    assert agents[0].active_version is None
+    assert [item.version for item in agents[0].versions] == ["v1", "v2"]
+
+
+def test_agent_list_and_lifecycle_routes_are_wired(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Operator lifecycle and list routes are identity-present on the app."""
+    for route in agent_registry.router.routes:
+        assert any(candidate is route for candidate in main.app.routes)
+    by_path = {route.path: route for route in main.app.routes if isinstance(route, APIRoute)}
+    lifecycle = by_path["/agents/{agent_id}/lifecycle"]
+    listing = by_path["/agents"]
+    assert lifecycle.methods == {"GET"}
+    assert listing.methods == {"GET"}

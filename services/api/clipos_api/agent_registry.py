@@ -188,6 +188,8 @@ class ModelAliasTarget(BaseModel):
 
 _LOGICAL_ALIAS_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:[-_.][a-z0-9]+)*$")
 
+_DEFAULT_ACTOR = "registry-operator"
+
 _LEGAL_TRANSITIONS: dict[AgentState, set[AgentState]] = {
     AgentState.DRAFT: {AgentState.EVALUATING},
     AgentState.EVALUATING: {AgentState.CANARY},
@@ -200,6 +202,19 @@ _LEGAL_TRANSITIONS: dict[AgentState, set[AgentState]] = {
 def _validate_transition(current: AgentState, target: AgentState) -> None:
     if target not in _LEGAL_TRANSITIONS.get(current, set()):
         raise ValueError(f"illegal lifecycle transition: {current.value} -> {target.value}")
+
+
+class LifecycleEvent(BaseModel):
+    """One durable lifecycle transition visible to operators."""
+
+    model_config = ConfigDict(frozen=True)
+
+    agent_id: str = Field(min_length=1, max_length=128)
+    version: str = Field(min_length=1, max_length=128)
+    from_state: AgentState
+    to_state: AgentState
+    at: datetime
+    actor: str = Field(min_length=1, max_length=128)
 
 
 class AgentVersionRecord(Base):
@@ -237,6 +252,28 @@ class AgentVersionRecord(Base):
     canary_percentage: Mapped[int] = mapped_column(sa.Integer, nullable=False)
     created_at: Mapped[Any] = mapped_column(sa.DateTime(timezone=True), nullable=False)
     updated_at: Mapped[Any] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+
+
+class LifecycleEventRecord(Base):
+    """SQL row for one agent version lifecycle transition."""
+
+    __tablename__ = "agent_lifecycle_events"
+    __table_args__ = (
+        sa.Index(
+            "ix_agent_lifecycle_events_lookup",
+            "agent_id",
+            "version",
+            "at",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement=True)
+    agent_id: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    version: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    from_state: Mapped[str] = mapped_column(sa.String(16), nullable=False)
+    to_state: Mapped[str] = mapped_column(sa.String(16), nullable=False)
+    actor: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    at: Mapped[Any] = mapped_column(sa.DateTime(timezone=True), nullable=False)
 
 
 class AgentRecordModel(Base):
@@ -438,6 +475,7 @@ class AgentRegistryStore:
         version: str,
         target: AgentState,
         approved_high_risk: bool = False,
+        actor: str = _DEFAULT_ACTOR,
     ) -> AgentVersion:
         """Apply one legal lifecycle transition inside the caller's transaction."""
         record = session.get(AgentVersionRecord, {"agent_id": agent_id, "version": version})
@@ -477,6 +515,16 @@ class AgentRegistryStore:
         record.updated_at = agent_record.updated_at
         if target == AgentState.CANARY and record.canary_percentage == 0:
             record.canary_percentage = 1
+        session.add(
+            LifecycleEventRecord(
+                agent_id=agent_id,
+                version=version,
+                from_state=current.value,
+                to_state=target.value,
+                actor=actor,
+                at=agent_record.updated_at,
+            )
+        )
         session.flush()
         _audit_state_change(record, agent_id, version, target)
         if previous_pointer != agent_record.active_version:
@@ -498,11 +546,12 @@ class AgentRegistryStore:
         version: str,
         target: AgentState,
         approved_high_risk: bool = False,
+        actor: str = _DEFAULT_ACTOR,
     ) -> AgentVersion:
         """Apply one legal lifecycle transition and commit it."""
         with self._sessions.begin() as session:
             return self.transition_in_transaction(
-                session, agent_id, version, target, approved_high_risk
+                session, agent_id, version, target, approved_high_risk, actor
             )
 
     def activate(
@@ -565,6 +614,52 @@ class AgentRegistryStore:
                 active_version=agent_record.active_version,
                 versions=[_model_version(row) for row in rows],
             )
+
+    def lifecycle_history(self, agent_id: str, version: str | None = None) -> list[LifecycleEvent]:
+        """Return the durable lifecycle transitions, oldest first."""
+        with self._sessions() as session:
+            query = sa.select(LifecycleEventRecord).where(LifecycleEventRecord.agent_id == agent_id)
+            if version is not None:
+                query = query.where(LifecycleEventRecord.version == version)
+            rows = session.scalars(
+                query.order_by(LifecycleEventRecord.at, LifecycleEventRecord.id)
+            ).all()
+            return [
+                LifecycleEvent(
+                    agent_id=row.agent_id,
+                    version=row.version,
+                    from_state=AgentState(row.from_state),
+                    to_state=AgentState(row.to_state),
+                    at=row.at,
+                    actor=row.actor,
+                )
+                for row in rows
+            ]
+
+    def list_agents(self) -> list[AgentRecord]:
+        """Return every agent record with all versions, ordered by agent id."""
+        with self._sessions() as session:
+            agents = session.scalars(
+                sa.select(AgentRecordModel).order_by(AgentRecordModel.agent_id)
+            ).all()
+            rows = session.scalars(
+                sa.select(AgentVersionRecord).order_by(
+                    AgentVersionRecord.agent_id,
+                    AgentVersionRecord.created_at,
+                    AgentVersionRecord.version,
+                )
+            ).all()
+            grouped: dict[str, list[AgentVersion]] = {}
+            for row in rows:
+                grouped.setdefault(row.agent_id, []).append(_model_version(row))
+            return [
+                AgentRecord(
+                    agent_id=agent.agent_id,
+                    active_version=agent.active_version,
+                    versions=grouped.get(agent.agent_id, []),
+                )
+                for agent in agents
+            ]
 
     def set_alias_targets(self, targets: list[ModelAliasTarget]) -> None:
         """Atomically replace all targets for each supplied logical alias."""
@@ -713,6 +808,24 @@ class PromoteRequest(BaseModel):
     to_version: str = Field(min_length=1, max_length=128)
 
 
+def list_agents(
+    registry: Annotated[AgentRegistryStore, Depends(_registry_store)],
+) -> list[AgentRecord]:
+    """Return the full agent registry for operator UIs."""
+    return registry.list_agents()
+
+
+def get_agent_lifecycle(
+    agent_id: str,
+    registry: Annotated[AgentRegistryStore, Depends(_registry_store)],
+    version: str | None = None,
+) -> list[LifecycleEvent]:
+    """Return the lifecycle transition history for one agent."""
+    if registry.get_agent(agent_id) is None:
+        raise HTTPException(status_code=404, detail="agent not found")
+    return registry.lifecycle_history(agent_id, version)
+
+
 def promote_agent_version(
     agent_id: str,
     request: PromoteRequest,
@@ -727,6 +840,7 @@ def promote_agent_version(
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 router.add_api_route("", register_version, methods=["POST"], name="register_agent_version")
+router.add_api_route("", list_agents, methods=["GET"], name="list_agents")
 router.add_api_route("/{agent_id}", get_agent, methods=["GET"], name="get_agent")
 router.add_api_route(
     "/{agent_id}/activate", activate_agent, methods=["POST"], name="activate_agent"
@@ -734,4 +848,10 @@ router.add_api_route(
 router.add_api_route("/{agent_id}/resolve", resolve_agent, methods=["GET"], name="resolve_agent")
 router.add_api_route(
     "/{agent_id}/promote", promote_agent_version, methods=["POST"], name="promote_agent_version"
+)
+router.add_api_route(
+    "/{agent_id}/lifecycle",
+    get_agent_lifecycle,
+    methods=["GET"],
+    name="get_agent_lifecycle",
 )

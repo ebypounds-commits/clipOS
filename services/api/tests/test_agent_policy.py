@@ -33,6 +33,7 @@ def policy_store(
     agent_registry.AgentVersionRecord.metadata.create_all(engine)
     agent_policy.PolicyOverrideRecord.metadata.create_all(engine)
     agent_policy.AgentBudgetConfigurationRecord.metadata.create_all(engine)
+    agent_policy.AgentBudgetConfigurationRecord.metadata.create_all(engine)
     return (
         AgentRegistryStore.from_engine(engine),
         AgentPolicyStore.from_engine(engine),
@@ -235,14 +236,80 @@ def test_budget_history_rows_are_append_only(
 
 def test_policy_routes_are_wired() -> None:
     """Policy and promotion routes are identity-checkable from the app."""
-    names = {route.name for route in main.app.routes if isinstance(route, APIRoute)}
+    names = {
+        route.name
+        for route in main.app.routes
+        if isinstance(route, APIRoute) and route.path.startswith("/agent-policies")
+    }
     assert {
         "set_agent_policy_override",
         "resolve_agent_effective_policy",
         "update_agent_budget",
-        "promote_agent_version",
     } <= names
     router_paths = {
         route.path for route in agent_policy.router.routes if isinstance(route, APIRoute)
     }
     assert "/agent-policies/{agent_id}/{version}/policy-override" in router_paths
+
+
+def test_suspended_and_retired_versions_reject_policy_and_budget_changes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Lifecycle-frozen versions reject override and budget mutations with 409 semantics."""
+    registry, policies = policy_store(monkeypatch, tmp_path)
+    registry.register_version("research", "v1", definition())
+    for target in (
+        agent_registry.AgentState.EVALUATING,
+        agent_registry.AgentState.CANARY,
+        agent_registry.AgentState.ACTIVE,
+        agent_registry.AgentState.SUSPENDED,
+    ):
+        registry.transition("research", "v1", target)
+
+    override = PolicyOverride(
+        retry_policy=RetryPolicy(max_attempts=3, backoff_seconds=2),
+        effective_from=datetime.now(UTC),
+    )
+    with pytest.raises(ValueError, match="SUSPENDED"):
+        policies.set_override("research", "v1", override)
+    with pytest.raises(ValueError, match="SUSPENDED"):
+        policies.update_budget(
+            "research",
+            "v1",
+            BudgetConfiguration(per_run=0.2, hourly=2.0, daily=20.0, monthly=200.0),
+            datetime.now(UTC) + timedelta(hours=1),
+        )
+
+    registry.transition("research", "v1", agent_registry.AgentState.RETIRED)
+    with pytest.raises(ValueError, match="RETIRED"):
+        policies.set_override("research", "v1", override)
+
+    # A pre-suspension override remains resolvable; the mutation was rejected, not applied.
+    resolved = policies.resolve("research", "v1")
+    assert resolved.override_applied is False
+
+
+def test_active_version_still_accepts_policy_and_budget_changes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Only SUSPENDED and RETIRED versions are lifecycle-frozen."""
+    registry, policies = policy_store(monkeypatch, tmp_path)
+    registry.register_version("research", "v1", definition())
+    for target in (
+        agent_registry.AgentState.EVALUATING,
+        agent_registry.AgentState.CANARY,
+        agent_registry.AgentState.ACTIVE,
+    ):
+        registry.transition("research", "v1", target)
+    resolved = policies.set_override(
+        "research",
+        "v1",
+        PolicyOverride(effective_from=datetime.now(UTC)),
+    )
+    assert resolved.override_applied is True
+    policies.update_budget(
+        "research",
+        "v1",
+        BudgetConfiguration(per_run=0.2, hourly=2.0, daily=20.0, monthly=200.0),
+        datetime.now(UTC),
+    )
