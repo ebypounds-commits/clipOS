@@ -24,6 +24,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 from clipos_api import audit
 from clipos_api.agent_registry import (
     AgentClass,
+    AgentState,
     AgentVersionRecord,
     database_engine,
 )
@@ -227,13 +228,21 @@ class AgentPolicyStore:
             raise ValueError(f"agent version not found: {agent_id}:{version}")
         return record
 
+    @staticmethod
+    def _require_mutable(record: AgentVersionRecord) -> AgentVersionRecord:
+        """Reject lifecycle-frozen versions from material configuration changes."""
+        state = AgentState(record.state)
+        if state in {AgentState.SUSPENDED, AgentState.RETIRED}:
+            raise ValueError(f"agent version is {state.value}; configuration is lifecycle-frozen")
+        return record
+
     def set_override(
         self, agent_id: str, version: str, override: PolicyOverride
     ) -> EffectivePolicy:
         """Attach or update the version override, auditing a material change."""
         payload = _material_payload(override)
         with self._sessions.begin() as session:
-            self._require_version(session, agent_id, version)
+            self._require_mutable(self._require_version(session, agent_id, version))
             now = datetime.now(UTC)
             row = session.get(PolicyOverrideRecord, {"agent_id": agent_id, "version": version})
             previous_payload = row.policies if row is not None else None
@@ -276,7 +285,7 @@ class AgentPolicyStore:
         """Append an effective-dated budget, superseding the previous window."""
         payload = budget.model_dump()
         with self._sessions.begin() as session:
-            self._require_version(session, agent_id, version)
+            self._require_mutable(self._require_version(session, agent_id, version))
             now = datetime.now(UTC)
             open_rows = session.scalars(
                 sa.select(AgentBudgetConfigurationRecord)
