@@ -740,7 +740,7 @@ tickets:
 - id: CLIP-030
   milestone: M7
   title: Implement creators/sources/source-items
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-029
