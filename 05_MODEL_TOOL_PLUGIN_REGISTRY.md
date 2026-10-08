@@ -71,6 +71,8 @@ For critical/high-throughput integrations: YouTube, TikTok, Meta, storage, trans
 ### MCP server
 For controlled, discoverable tool surfaces where MCP is appropriate. Prefer private/self-hosted MCP for internal systems and hosted MCP only when trust/network policy permits.
 
+Implemented in `services/api/clipos_api/mcp_boundary.py` (CLIP-028): the boundary speaks a minimal JSON-RPC 2.0 `tools/call` POST subset over HTTP and does not import an MCP SDK. The plugin must be registered as `mcp_server` and enabled; private/self-hosted metadata is trusted by default, while a plugin marked `hosted` is callable only with an explicit `trusted: true` metadata flag. Each call is additionally gated by the Tool Registry's agent-version capability check. The `config_ref` names the endpoint environment variable and is resolved by the endpoint provider, never treated as an inline endpoint. Calls are idempotent per `execution_id` in the gateway-owned in-memory cache, transport/HTTP/malformed-response failures return failure-safe results, successful calls are audited by plugin and tool name without arguments, and policy denials are audited and raised as boundary errors.
+
 ### REST/Webhook connector
 For ordinary third-party APIs and inbound notifications.
 

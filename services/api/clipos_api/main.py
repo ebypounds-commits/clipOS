@@ -15,6 +15,7 @@ from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
 from clipos_api.local_adapter import build_local_adapter, local_adapter_provider_name
+from clipos_api.mcp_boundary import McpBoundary, build_mcp_boundary
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
@@ -74,3 +75,8 @@ def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
     if os.environ.get("LOCAL_ADAPTER_BASE_URL"):
         gateway.register_adapter(local_adapter_provider_name(), build_local_adapter)
     return gateway
+
+
+def build_mcp_client_boundary(engine: sa.Engine) -> McpBoundary:
+    """Production wiring point for the MCP tools/call boundary."""
+    return build_mcp_boundary(engine)
