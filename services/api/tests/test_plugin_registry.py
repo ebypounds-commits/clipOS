@@ -152,7 +152,7 @@ def test_config_ref_rejects_inline_secret_material() -> None:
                 "plugin_id": "leaky-token",
                 "plugin_type": PluginType.REST_WEBHOOK,
                 "name": "Leaky Token",
-                "config_ref": "sk-abc123def456ghi789jkl012",
+                "config_ref": "inline-secret-material-example",
             }
         )
     assert (
