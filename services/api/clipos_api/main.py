@@ -22,6 +22,7 @@ from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.repository import get_engine
+from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.tool_policy import (
     SandboxPolicy,
     ToolPolicyEngine,
@@ -43,6 +44,7 @@ app.router.routes.extend(model_registry_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
+app.router.routes.extend(rights_entities_router.routes)
 
 
 @app.get("/health")
