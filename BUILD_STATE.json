@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-025",
+  "current_ticket": "CLIP-026",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -44,7 +44,8 @@
     "CLIP-021",
     "CLIP-022",
     "CLIP-023",
-    "CLIP-024"
+    "CLIP-024",
+    "CLIP-025"
   ],
   "blocked": [],
   "human_gates": {
@@ -55,11 +56,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-024",
-    "at": "2026-10-07T21:30:00+00:00",
-    "facts": "CLIP-024 complete: CostLedger append-only dispatch records idempotent by (execution_id, route) \u2014 migration 0008 CREATE-only PG-verified (0008 head, llm_dispatch_records exists, stamp idempotent), per-attempt outcomes succeeded|failed|degraded_fallback recorded from the gateway fallback chain, degraded-route cooldown 300s default with injectable clock + recovery to ok on success, operator endpoints /models/{alias}/costs (window sum + rows) and /models/{alias}/dispatches wired in main, model_registry tz-safe _aware mapper; 11 new tests; land b7345ca, merge 680fa16, CI green all 4 jobs; suite 292+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-025",
+    "at": "2026-10-08T08:20:00+00:00",
+    "facts": "CLIP-025 complete: LocalProviderAdapter speaking plain HTTP (OpenAI-compatible chat completions shape) to configurable base_url \u2014 no provider SDK imports, timeout/failure-safe errors routed through gateway fallback chain (degraded + next route), wired via register_adapter factory gated on LOCAL_ADAPTER_BASE_URL env (unset = not registered); /models operator UI page (Next server component, alias-only, no new deps) linked from home; orchestrator fix: httpx promoted from dev-extra to core dependency (runtime import broke api container e2e smoke in CI build job); stub-HTTP-server tests: success, connection-refused fallback, timeout; land 90a3707, httpx fix 74d9173, merge be268a5, CI green all 4 jobs; suite 304+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-025 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-026 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

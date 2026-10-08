@@ -650,7 +650,7 @@ tickets:
 - id: CLIP-025
   milestone: M5
   title: Implement local-provider adapter and model registry UI
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-024
