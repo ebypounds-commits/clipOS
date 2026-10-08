@@ -722,7 +722,7 @@ tickets:
 - id: CLIP-029
   milestone: M6
   title: Implement tool sandbox/audit/rate-limit policies
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-028

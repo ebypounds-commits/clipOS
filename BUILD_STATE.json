@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-029",
+  "current_ticket": "CLIP-030",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -48,7 +48,8 @@
     "CLIP-025",
     "CLIP-026",
     "CLIP-027",
-    "CLIP-028"
+    "CLIP-028",
+    "CLIP-029"
   ],
   "blocked": [],
   "human_gates": {
@@ -59,11 +60,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-028",
-    "at": "2026-10-08T15:30:00+00:00",
-    "facts": "CLIP-028 complete: McpBoundary SDK-free MCP client \u2014 JSON-RPC 2.0 tools/call over httpx (no MCP SDK import, proven by subprocess sys.modules check), trust policy (self-hosted trusted by default, hosted requires explicit trust metadata flag; wrong-type/disabled plugin/missing capability denied + audited mcp_boundary.call_denied), failure-safe transport errors (network/timeout/http_error/rpc_error/invalid_response become ok=False results, failures not cached), idempotent per execution_id, request arguments content NEVER audited (privacy), endpoints resolved via env-var config_ref (no inline URLs/credentials in registry); orchestrator test-bugfix: endpoint fixture pointed at unresolvable fake domain instead of real thread server; land 75b4d59, merge ecc9205, CI green all 4 jobs; suite 329+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-029",
+    "at": "2026-10-08T15:50:00+00:00",
+    "facts": "CLIP-029 complete: ToolPolicyEngine \u2014 composes tool_registry check_capability + SandboxPolicy rules (capability scopes, network_access flag, filesystem_scopes, max_calls_per_window) + in-memory rate limiting per (agent_version, tool_id) with injectable clock and window reset, denials audited tool_policy.denied with reason enum (no argument content), successful calls audited tool_policy.call_recorded, decision reasons (capability_ok/rate_limited/sandbox_violation/tool_disabled/tool_not_found/capability_denied), factory wiring in main (operator opt-in, not forced into gateway/MCP paths); 7 new tests; land 5bae11a, merge 5b6e99f, CI green all 4 jobs; suite 336+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-029 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-030 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
