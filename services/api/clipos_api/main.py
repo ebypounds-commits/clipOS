@@ -18,6 +18,7 @@ from clipos_api.local_adapter import build_local_adapter, local_adapter_provider
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
+from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.repository import get_engine
 from clipos_api.tool_registry import router as tool_registry_router
 
@@ -33,6 +34,7 @@ app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
+app.router.routes.extend(plugin_registry_router.routes)
 
 
 @app.get("/health")
