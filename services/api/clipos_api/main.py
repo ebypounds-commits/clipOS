@@ -21,6 +21,7 @@ from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.plugin_registry import router as plugin_registry_router
+from clipos_api.provenance import router as provenance_router
 from clipos_api.repository import get_engine
 from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.rights_ledger import router as rights_ledger_router
@@ -47,6 +48,7 @@ app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)
+app.router.routes.extend(provenance_router.routes)
 
 
 @app.get("/health")
