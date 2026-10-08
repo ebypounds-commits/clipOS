@@ -758,7 +758,7 @@ tickets:
 - id: CLIP-031
   milestone: M7
   title: Implement rights ledger/license evidence
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-030

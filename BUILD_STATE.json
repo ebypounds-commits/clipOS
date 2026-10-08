@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-031",
+  "current_ticket": "CLIP-032",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -50,7 +50,8 @@
     "CLIP-027",
     "CLIP-028",
     "CLIP-029",
-    "CLIP-030"
+    "CLIP-030",
+    "CLIP-031"
   ],
   "blocked": [],
   "human_gates": {
@@ -61,11 +62,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-030",
-    "at": "2026-10-08T16:10:00+00:00",
-    "facts": "CLIP-030 complete: RightsEntitiesStore (Rights & Provenance foundations) \u2014 creators/content_sources/source_items: idempotent registration (source validates creator exists + org match; item idempotent by (source_id, external_ref) + validates source exists + org match), contact_ref must be a reference (no inline secrets), deactivation audited rights_entities.source_deactivated + excluded from active lists, org-scoped listings, source_type constrained enum (upload|feed|partner_feed|scrape_approved); migration 0011 CREATE-only (3 tables) verified on real PG (0010->0011, tables present); 7 operator routes wired; 12 new tests; land 3fe90db, merge ec15172, CI green all 4 jobs; suite 348+11, ruff format/check + mypy clean (37 files)"
+    "ticket": "CLIP-031",
+    "at": "2026-10-08T16:30:00+00:00",
+    "facts": "CLIP-031 complete: RightsLedgerStore (rights ledger/license evidence) \u2014 rights_records (spec status enum UNKNOWN|REVIEW_REQUIRED|CLEAR|RESTRICTED|EXPIRED|REVOKED|REJECTED; basis enum; initial never auto-CLEAR; idempotent per (item_id, org_id); FK source_items validated + org match), licenses (idempotent per (record_id, terms_ref, starts_at), expiry derived with injectable clock), license_evidence (append-only: contract|invoice|email|attestation, evidence_ref not inline), attribution_requirements (idempotent per (record_id, applies_to, requirement)), rights_events append-only ledger audited rights_ledger.status_changed (from/to/reason_ref, no content blobs); effective_status derives CLEAR/RESTRICTED/EXPIRED from license state; migration 0012 CREATE-only (5 tables) verified on real PG (0011->0012, all 5 tables present); 7 operator routes wired; 14 new tests; land c74ac50, merge 9a3497f, CI green all 4 jobs; suite 362+11, ruff format/check + mypy clean (38 files)"
   },
-  "next_action": "Execute CLIP-031 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-032 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
