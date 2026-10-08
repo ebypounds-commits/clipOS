@@ -116,3 +116,5 @@ LLM-facing code/shell tools must run inside constrained sandboxes with:
 - CPU/memory/time limits;
 - no production secrets unless a narrowly scoped action requires them;
 - complete invocation audit.
+
+Implemented in `services/api/clipos_api/tool_policy.py` (CLIP-029): `ToolPolicyEngine` composes the Tool Registry capability check with an operator-declared `SandboxPolicy` (allowed capability scopes, network access, filesystem scopes, and a maximum call count per injectable time window). Capability scopes must be covered by the sandbox, tool metadata requesting network or filesystem access must fit the declared sandbox, disabled/unknown/ungranted tools and sandbox violations are denied, and denials are audited as `tool_policy.denied` while executed calls are audited as `tool_policy.call_recorded` without argument content. Rate-limit state is in-memory with an injectable clock and requires no migration; `build_tool_policy` is the production factory and existing gateway/MCP paths are not force-wired by this ticket.

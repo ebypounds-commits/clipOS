@@ -1,6 +1,7 @@
 """FastAPI application entrypoint."""
 
 import os
+from collections.abc import Callable
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from typing import Annotated
@@ -21,6 +22,12 @@ from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.repository import get_engine
+from clipos_api.tool_policy import (
+    SandboxPolicy,
+    ToolPolicyEngine,
+    ToolPolicyRequest,
+    build_tool_policy,
+)
 from clipos_api.tool_registry import router as tool_registry_router
 
 try:
@@ -80,3 +87,11 @@ def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
 def build_mcp_client_boundary(engine: sa.Engine) -> McpBoundary:
     """Production wiring point for the MCP tools/call boundary."""
     return build_mcp_boundary(engine)
+
+
+def build_tool_policy_engine(
+    engine: sa.Engine,
+    sandbox_for: Callable[[ToolPolicyRequest], SandboxPolicy],
+) -> ToolPolicyEngine:
+    """Production wiring point composing tool capability checks with policy."""
+    return build_tool_policy(engine, sandbox_for)
