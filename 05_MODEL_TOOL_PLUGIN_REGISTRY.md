@@ -62,6 +62,8 @@ Tool definition fields:
 - health check;
 - enabled state.
 
+Implemented in `services/api/clipos_api/tool_registry.py` (CLIP-026): tools are persisted by their stable `tool_id` with capability scopes, per-run budget, enabled state, and metadata. Re-registration is idempotent only when immutable definition fields match. Capability grants attach a tool to an immutable agent-version identity, matching the agent registry's `tool_grants` and `prohibited_tools` contract. Grant and revoke transitions are append-only audited, capability checks require an enabled tool, a registered agent version, an active grant, and no version prohibition, and revalidation drops active grants when a tool is disabled.
+
 ## 4. Plugin types
 ### Native adapter
 For critical/high-throughput integrations: YouTube, TikTok, Meta, storage, transcription, major model providers.
