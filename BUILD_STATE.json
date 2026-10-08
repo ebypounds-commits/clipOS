@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-027",
+  "current_ticket": "CLIP-028",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -46,7 +46,8 @@
     "CLIP-023",
     "CLIP-024",
     "CLIP-025",
-    "CLIP-026"
+    "CLIP-026",
+    "CLIP-027"
   ],
   "blocked": [],
   "human_gates": {
@@ -57,11 +58,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-026",
-    "at": "2026-10-08T12:30:00+00:00",
-    "facts": "CLIP-026 complete: ToolRegistryStore \u2014 ToolDef persisted by stable tool_id (idempotent register, immutable definition-field conflict check), CapabilityGrant bound to immutable agent-version identity aligned with agent_registry tool_grants/prohibited_tools contract, audited grant/revoke lifecycle (tool_registry.granted/.revoked), check_capability matrix (tool enabled + agent version registered + grant active + not prohibited), disabled tool drops active grants with audited revalidation, migration 0009 CREATE-only PG-verified (0009 head, tools table exists, stamp idempotent), 5 operator endpoints (/tools GET/POST, /{tool_id}/grant, /{tool_id}/revoke, /{tool_id}/agents) wired in main; 8 new tests; land ad6e843, merge 4fcd6fd, CI green all 4 jobs; suite 312+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-027",
+    "at": "2026-10-08T14:30:00+00:00",
+    "facts": "CLIP-027 complete: PluginRegistryStore \u2014 PluginDef persisted by stable plugin_id across the 4 spec plugin types (native_adapter/mcp_server/rest_webhook/operator_extension), idempotent register with immutable-field conflict checks, audited enable/disable/health transitions, operator_extension allow-list gate (enable denied+audited until allow_listed; other types exempt), config_ref secret-material rejection (URL-embedded creds + token-shaped strings), migration 0010 CREATE-only PG-verified (0010 head, plugins table exists, stamp idempotent), 6 operator endpoints wired in main; orchestrator fix: fake token in test sentinel tripped secret_scan (validate job) \u2014 replaced with scanner-safe string, land 32e0e3b + scanfix 5bbfe23, CI green all 4 jobs; suite 320+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-027 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-028 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

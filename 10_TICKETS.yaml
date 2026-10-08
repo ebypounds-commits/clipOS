@@ -686,7 +686,7 @@ tickets:
 - id: CLIP-027
   milestone: M6
   title: Implement plugin/connector registry
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-026
