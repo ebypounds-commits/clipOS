@@ -31,6 +31,8 @@ _EXPECTED_TABLES = {
     "model_routes",
     "agent_budget_configs",
     "llm_dispatch_records",
+    "tools",
+    "tool_capability_grants",
 }
 
 
