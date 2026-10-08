@@ -364,3 +364,19 @@ to detect tampering:
 --format=custom` into the destination directory. These are primitives only:
 scheduling (cron), encrypted backups at rest (12 runbook roadmap), and
 object-storage upload are future operations work.
+
+## Local model adapter (M5)
+
+The LLM gateway dispatches through provider adapters; `local_adapter.py` adds the
+local-inference route. `LocalProviderAdapter` speaks a plain OpenAI-compatible
+chat-completions protocol over HTTP (`httpx`, already a dependency) to whatever
+base URL is configured — no provider SDK is imported and no provider identifier
+is embedded. Startup wiring is opt-in: when `LOCAL_ADAPTER_BASE_URL` is set,
+`build_llm_gateway` registers `build_local_adapter` under the provider name from
+`LOCAL_ADAPTER_PROVIDER` (default `local`); unset, no adapter is registered.
+Timeouts come from `LOCAL_ADAPTER_TIMEOUT_SECONDS` (default 30s). Connection,
+HTTP, and timeout failures raise `LocalProviderDispatchError` (an
+`LLMDispatchError`), so the gateway degrades the route and walks the next
+entry in the alias fallback chain. `apps/web/app/models/page.tsx` is a server
+component that renders alias routes — provider names, priorities, and health
+states — from `GET /models` only, following the alias-only rule.

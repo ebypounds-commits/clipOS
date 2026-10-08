@@ -14,6 +14,7 @@ from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
+from clipos_api.local_adapter import build_local_adapter, local_adapter_provider_name
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
@@ -61,8 +62,11 @@ def operator_health(engine: Annotated[sa.Engine, Depends(database_engine)]) -> O
 
 def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
     """Production wiring point: operators register adapter factories here."""
-    return LLMGateway(
+    gateway = LLMGateway(
         ModelRegistryStore.from_engine(engine),
         AdapterRegistry(),
         ledger=CostLedger.from_engine(engine),
     )
+    if os.environ.get("LOCAL_ADAPTER_BASE_URL"):
+        gateway.register_adapter(local_adapter_provider_name(), build_local_adapter)
+    return gateway
