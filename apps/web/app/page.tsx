@@ -7,6 +7,7 @@ export default function HomePage() {
       <p>Operator control surface.</p>
       <nav>
         <Link href="/agents">Agent Registry</Link>
+        <Link href="/models">Model Registry</Link>
       </nav>
     </main>
   );
