@@ -1,8 +1,8 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M3",
-  "current_ticket": "CLIP-033",
+  "current_milestone": "M7",
+  "current_ticket": "CLIP-034",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -73,5 +73,14 @@
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M3"
+  "milestone": "M3",
+  "tickets_completed": 39,
+  "updated_at": "2026-10-08T19:50:08.246537+00:00",
+  "evidence": [
+    {
+      "ticket": "CLIP-033",
+      "merge_sha": "acdba95",
+      "summary": "Deterministic rights publication gate: RightsPublicationGate composing rights_ledger effective_status + provenance manifest presence + attribution requirement satisfaction; no-LLM pure decision; POST /rights-gate/{item_id}/evaluate; audited rights_gate.evaluate; 13 new tests; 387+11 suite; fix commit 0bd245b after CI quality failure (PEP 563 Depends-after-route ForwardRef bug); CI green acdba95"
+    }
+  ]
 }
