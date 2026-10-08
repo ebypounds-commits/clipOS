@@ -198,6 +198,19 @@ class RightsPublicationGate:
 # Router
 # ----------------------------------------------------------------------
 
+
+def _gate_ledger_store() -> RightsLedgerStore:
+    from clipos_api.main import database_engine
+
+    return RightsLedgerStore.from_engine(database_engine())
+
+
+def _gate_provenance_store() -> ProvenanceStore | None:
+    from clipos_api.main import database_engine
+
+    return ProvenanceStore.from_engine(database_engine())
+
+
 router = APIRouter(tags=["rights-gate"])
 
 
@@ -230,15 +243,3 @@ async def evaluate_rights_gate(
     if decision.reason is RightsGateReason.NOT_FOUND:
         raise HTTPException(status_code=404, detail="rights record not found")
     return decision
-
-
-def _gate_ledger_store() -> RightsLedgerStore:
-    from clipos_api.main import database_engine
-
-    return RightsLedgerStore.from_engine(database_engine())
-
-
-def _gate_provenance_store() -> ProvenanceStore | None:
-    from clipos_api.main import database_engine
-
-    return ProvenanceStore.from_engine(database_engine())
