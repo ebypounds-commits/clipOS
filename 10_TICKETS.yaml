@@ -668,7 +668,7 @@ tickets:
 - id: CLIP-026
   milestone: M6
   title: Implement Tool Registry and capability permissions
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-025

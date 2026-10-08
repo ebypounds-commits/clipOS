@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-026",
+  "current_ticket": "CLIP-027",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -45,7 +45,8 @@
     "CLIP-022",
     "CLIP-023",
     "CLIP-024",
-    "CLIP-025"
+    "CLIP-025",
+    "CLIP-026"
   ],
   "blocked": [],
   "human_gates": {
@@ -56,11 +57,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-025",
-    "at": "2026-10-08T08:20:00+00:00",
-    "facts": "CLIP-025 complete: LocalProviderAdapter speaking plain HTTP (OpenAI-compatible chat completions shape) to configurable base_url \u2014 no provider SDK imports, timeout/failure-safe errors routed through gateway fallback chain (degraded + next route), wired via register_adapter factory gated on LOCAL_ADAPTER_BASE_URL env (unset = not registered); /models operator UI page (Next server component, alias-only, no new deps) linked from home; orchestrator fix: httpx promoted from dev-extra to core dependency (runtime import broke api container e2e smoke in CI build job); stub-HTTP-server tests: success, connection-refused fallback, timeout; land 90a3707, httpx fix 74d9173, merge be268a5, CI green all 4 jobs; suite 304+11, ruff format/check + mypy clean"
+    "ticket": "CLIP-026",
+    "at": "2026-10-08T12:30:00+00:00",
+    "facts": "CLIP-026 complete: ToolRegistryStore \u2014 ToolDef persisted by stable tool_id (idempotent register, immutable definition-field conflict check), CapabilityGrant bound to immutable agent-version identity aligned with agent_registry tool_grants/prohibited_tools contract, audited grant/revoke lifecycle (tool_registry.granted/.revoked), check_capability matrix (tool enabled + agent version registered + grant active + not prohibited), disabled tool drops active grants with audited revalidation, migration 0009 CREATE-only PG-verified (0009 head, tools table exists, stamp idempotent), 5 operator endpoints (/tools GET/POST, /{tool_id}/grant, /{tool_id}/revoke, /{tool_id}/agents) wired in main; 8 new tests; land ad6e843, merge 4fcd6fd, CI green all 4 jobs; suite 312+11, ruff format/check + mypy clean"
   },
-  "next_action": "Execute CLIP-026 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-027 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
