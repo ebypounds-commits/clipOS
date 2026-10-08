@@ -704,7 +704,7 @@ tickets:
 - id: CLIP-028
   milestone: M6
   title: Implement MCP client/server integration boundary
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-027
