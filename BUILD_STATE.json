@@ -1,8 +1,8 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M7",
-  "current_ticket": "CLIP-034",
+  "current_milestone": "M8",
+  "current_ticket": "CLIP-035",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,13 +74,18 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 39,
-  "updated_at": "2026-10-08T19:50:08.246537+00:00",
+  "tickets_completed": 40,
+  "updated_at": "2026-10-08T21:52:21.648796+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
       "merge_sha": "acdba95",
       "summary": "Deterministic rights publication gate: RightsPublicationGate composing rights_ledger effective_status + provenance manifest presence + attribution requirement satisfaction; no-LLM pure decision; POST /rights-gate/{item_id}/evaluate; audited rights_gate.evaluate; 13 new tests; 387+11 suite; fix commit 0bd245b after CI quality failure (PEP 563 Depends-after-route ForwardRef bug); CI green acdba95"
+    },
+    {
+      "ticket": "CLIP-034",
+      "merge_sha": "0beb434",
+      "summary": "Signal source/observation framework: SignalSourcesStore (org-scoped sources idempotent per (org_id, source_id); append-only observations idempotent per observation_id, refs not blobs), migration 0014 CREATE-only (2 tables, PG-verified), 5 operator routes wired, audited signal_sources.*; 17 new tests; 404+11 suite; orchestrator-finished after worker checkpoint-recovery (worker burned 344k tokens then wedged); CI green 0beb434"
     }
   ]
 }

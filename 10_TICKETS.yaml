@@ -812,7 +812,7 @@ tickets:
 - id: CLIP-034
   milestone: M8
   title: Implement signal source/observation framework
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-033
