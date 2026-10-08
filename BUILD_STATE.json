@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M3",
-  "current_ticket": "CLIP-032",
+  "current_ticket": "CLIP-033",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -51,7 +51,8 @@
     "CLIP-028",
     "CLIP-029",
     "CLIP-030",
-    "CLIP-031"
+    "CLIP-031",
+    "CLIP-032"
   ],
   "blocked": [],
   "human_gates": {
@@ -62,11 +63,11 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-031",
-    "at": "2026-10-08T16:30:00+00:00",
-    "facts": "CLIP-031 complete: RightsLedgerStore (rights ledger/license evidence) \u2014 rights_records (spec status enum UNKNOWN|REVIEW_REQUIRED|CLEAR|RESTRICTED|EXPIRED|REVOKED|REJECTED; basis enum; initial never auto-CLEAR; idempotent per (item_id, org_id); FK source_items validated + org match), licenses (idempotent per (record_id, terms_ref, starts_at), expiry derived with injectable clock), license_evidence (append-only: contract|invoice|email|attestation, evidence_ref not inline), attribution_requirements (idempotent per (record_id, applies_to, requirement)), rights_events append-only ledger audited rights_ledger.status_changed (from/to/reason_ref, no content blobs); effective_status derives CLEAR/RESTRICTED/EXPIRED from license state; migration 0012 CREATE-only (5 tables) verified on real PG (0011->0012, all 5 tables present); 7 operator routes wired; 14 new tests; land c74ac50, merge 9a3497f, CI green all 4 jobs; suite 362+11, ruff format/check + mypy clean (38 files)"
+    "ticket": "CLIP-032",
+    "at": "2026-10-08T16:45:00+00:00",
+    "facts": "CLIP-032 complete: ProvenanceStore (provenance manifests/fingerprints) \u2014 append-only provenance steps (captured|transformed|enriched|published; item + org validated; audited provenance.step_appended), generate_manifest (canonical sorted-keys compact JSON, deterministic sha256 hash computed server-side and recorded, audited provenance.manifest_generated), content_fingerprints (algorithm sha256|sha1|md5 with hex length+charset validation: 64/40/32, idempotent per (manifest_id, algorithm)), org-scoped listings, steps stored as JSON column on manifests (append-only by convention + audited); migration 0013 CREATE-only (2 tables) verified on real PG (0012->0013, tables present); 5 operator routes wired; 12 new tests; land 44588bd, merge 29131f1, CI green all 4 jobs; suite 374+11, ruff format/check + mypy clean (39 files)"
   },
-  "next_action": "Execute CLIP-032 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-033 per 10_TICKETS.yaml.",
   "orchestrator": "Hermes Agent",
   "coding_engine": "Codex on VPS",
   "repository_mode": "GitHub canonical repo + VPS worktrees",

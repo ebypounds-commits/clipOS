@@ -776,7 +776,7 @@ tickets:
 - id: CLIP-032
   milestone: M7
   title: Implement provenance manifests/fingerprints
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-031
