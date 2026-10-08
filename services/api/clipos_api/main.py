@@ -26,6 +26,7 @@ from clipos_api.repository import get_engine
 from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.rights_gate import router as rights_gate_router
 from clipos_api.rights_ledger import router as rights_ledger_router
+from clipos_api.signal_sources import router as signal_sources_router
 from clipos_api.tool_policy import (
     SandboxPolicy,
     ToolPolicyEngine,
@@ -50,6 +51,7 @@ app.router.routes.extend(plugin_registry_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)
+app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(provenance_router.routes)
 
 
