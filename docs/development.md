@@ -380,3 +380,28 @@ HTTP, and timeout failures raise `LocalProviderDispatchError` (an
 entry in the alias fallback chain. `apps/web/app/models/page.tsx` is a server
 component that renders alias routes — provider names, priorities, and health
 states — from `GET /models` only, following the alias-only rule.
+
+## Rights ledger and license evidence (M7)
+
+`clipos_api.rights_ledger` builds on the CLIP-030 foundations and adds the
+operational rights ledger. `RightsLedgerStore` persists rights records,
+licenses, license evidence, attribution requirements, and append-only rights
+events (migration `0012`, CREATE-only). Rights records are org-scoped and
+idempotent per `(item_id, org_id)`; they validate that the referenced source
+item exists in the same organization, and their initial status is constrained
+to `UNKNOWN` or `REVIEW_REQUIRED` — `CLEAR` is never assigned automatically.
+
+Status transitions accept only the spec enum values and append a `rights_events`
+row plus an audited `rights_ledger.status_changed` entry carrying
+`from_status`, `to_status`, and an optional `reason_ref` (references only, no
+content). Licenses are idempotent per `(record_id, terms_ref, starts_at)`;
+license evidence is append-only (update attempts are rejected) and stores file
+or blob references, never inline content. Attribution requirements are
+idempotent per `(record_id, applies_to, requirement)`.
+
+`effective_status(record)` derives the current state from license windows and
+recorded transitions with an injectable clock: an expired license window makes
+the record `EXPIRED`; an active license makes it `CLEAR`; otherwise the stored
+status stands. Listing and event reads are organization-scoped. The module
+exposes operator routes under `/rights-records` and `/licenses`, wired in
+`main.py`, following the same store/router pattern as the other registries.
