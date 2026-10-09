@@ -20,6 +20,7 @@ from clipos_api.mcp_boundary import McpBoundary, build_mcp_boundary
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
+from clipos_api.opportunities import router as opportunity_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.repository import get_engine
@@ -54,6 +55,7 @@ app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)
 app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(topics_router.routes)
+app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
 
 
