@@ -884,7 +884,7 @@ tickets:
 - id: CLIP-038
   milestone: M9
   title: Implement authorized media ingestion
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-037

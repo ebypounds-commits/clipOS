@@ -1,8 +1,8 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M8",
-  "current_ticket": "CLIP-038",
+  "current_milestone": "M9",
+  "current_ticket": "CLIP-039",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,8 +74,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 43,
-  "updated_at": "2026-10-09T12:38:17.968402+00:00",
+  "tickets_completed": 44,
+  "updated_at": "2026-10-09T13:12:47.000236+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -101,6 +101,11 @@
       "ticket": "CLIP-037",
       "merge_sha": "a08b2e9",
       "summary": "Watchlist/dashboard and Trend workflow: watchlists (org-scoped idempotent per (org_id, watchlist_id), active filter), watchlist_summary (pure per-topic latest-vs-threshold, missing snapshot breaches), watchlist_alerts (append-only idempotent per (run_id, topic_id), conflicts raise), trend_workflow_runs + TrendWorkflowRunner (deterministic local runner, lifecycle PENDING/RUNNING/SUCCEEDED/FAILED, failure audited); migration 0017 CREATE-only w/ 0016 copy (PG-verified to 0017, server_default sa.true()); 5 routes wired; 17 new tests; 445+11 suite; orchestrator-finished after worker 504"
+    },
+    {
+      "ticket": "CLIP-038",
+      "merge_sha": "ae669df",
+      "summary": "Authorized media ingestion: IngestionGate.authorize (ALLOWED only on rights status CLEAR or basis GENERATED, pure DB check), media_assets (org-scoped idempotent per (org_id, media_asset_id)), asset_versions (immutable, idempotent per (media_asset_id, version), strictly monotonic max+1), ingest_asset flow (DENIED -> PermissionError -> route 403); migration 0018 CREATE-only (2 tables, PG-verified to 0018); 6 routes wired; 21 new tests; 489+11 suite; orchestrator-finished (local 7b fallback blocked, free model 504s)"
     }
   ]
 }
