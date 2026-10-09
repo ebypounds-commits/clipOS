@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M8",
-  "current_ticket": "CLIP-035",
+  "current_ticket": "CLIP-036",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,8 +74,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 40,
-  "updated_at": "2026-10-08T21:52:21.648796+00:00",
+  "tickets_completed": 41,
+  "updated_at": "2026-10-09T11:23:46.079332+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -86,6 +86,11 @@
       "ticket": "CLIP-034",
       "merge_sha": "0beb434",
       "summary": "Signal source/observation framework: SignalSourcesStore (org-scoped sources idempotent per (org_id, source_id); append-only observations idempotent per observation_id, refs not blobs), migration 0014 CREATE-only (2 tables, PG-verified), 5 operator routes wired, audited signal_sources.*; 17 new tests; 404+11 suite; orchestrator-finished after worker checkpoint-recovery (worker burned 344k tokens then wedged); CI green 0beb434"
+    },
+    {
+      "ticket": "CLIP-035",
+      "merge_sha": "d4a38c6",
+      "summary": "Topic normalization/clustering: topics (org-scoped idempotent per (org_id, topic_id)), topic_aliases (alias->topic idempotent per (org_id, alias), conflicts raise), trend_snapshots (append-only JSON metrics refs-not-blobs), pure normalize_topic_text + cluster_aliases (token-Jaccard deterministic); migration 0015 CREATE-only (3 tables, PG-verified); 7 routes wired; 24 new tests; 428+11 suite; orchestrator consolidated duplicate worker module; CI green d4a38c6"
     }
   ]
 }

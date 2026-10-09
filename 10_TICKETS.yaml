@@ -830,7 +830,7 @@ tickets:
 - id: CLIP-035
   milestone: M8
   title: Implement topic normalization/clustering
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-034
