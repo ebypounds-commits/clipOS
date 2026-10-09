@@ -17,6 +17,7 @@ from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
 from clipos_api.local_adapter import build_local_adapter, local_adapter_provider_name
 from clipos_api.mcp_boundary import McpBoundary, build_mcp_boundary
+from clipos_api.media_ingestion import router as media_ingestion_router
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
@@ -58,6 +59,7 @@ app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
+app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 
 
