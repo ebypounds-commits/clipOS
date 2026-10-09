@@ -36,6 +36,7 @@ from clipos_api.tool_policy import (
 )
 from clipos_api.tool_registry import router as tool_registry_router
 from clipos_api.topics import router as topics_router
+from clipos_api.watchlists import router as watchlist_router
 
 try:
     APP_VERSION = version("clipos-api")
@@ -57,6 +58,7 @@ app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
+app.router.routes.extend(watchlist_router.routes)
 
 
 @app.get("/health")
