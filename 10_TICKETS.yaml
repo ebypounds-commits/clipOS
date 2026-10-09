@@ -848,7 +848,7 @@ tickets:
 - id: CLIP-036
   milestone: M8
   title: Implement opportunity scoring and policy
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-035
