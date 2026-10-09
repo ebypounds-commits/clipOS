@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M8",
-  "current_ticket": "CLIP-037",
+  "current_ticket": "CLIP-038",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,8 +74,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 42,
-  "updated_at": "2026-10-09T12:37:40.202163+00:00",
+  "tickets_completed": 43,
+  "updated_at": "2026-10-09T12:38:17.968402+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -96,6 +96,11 @@
       "ticket": "CLIP-036",
       "merge_sha": "b207acc",
       "summary": "Opportunity scoring and policy: opportunities (org-scoped idempotent per (org_id, opportunity_id)), opportunity_scores (deterministic weighted-sum purity, idempotent per opportunity, conflicts raise), opportunity_decisions (append-only APPROVE/REJECT actor_ref+reason_ref no blobs); pure score_opportunity + apply_opportunity_policy (caller-supplied thresholds); migration 0016 CREATE-only (3 tables, PG-verified); 7 routes wired w/ Depends-before-decorator; 23 new tests; 451+11 suite; orchestrator-finished after worker 504; CI green b207acc"
+    },
+    {
+      "ticket": "CLIP-037",
+      "merge_sha": "a08b2e9",
+      "summary": "Watchlist/dashboard and Trend workflow: watchlists (org-scoped idempotent per (org_id, watchlist_id), active filter), watchlist_summary (pure per-topic latest-vs-threshold, missing snapshot breaches), watchlist_alerts (append-only idempotent per (run_id, topic_id), conflicts raise), trend_workflow_runs + TrendWorkflowRunner (deterministic local runner, lifecycle PENDING/RUNNING/SUCCEEDED/FAILED, failure audited); migration 0017 CREATE-only w/ 0016 copy (PG-verified to 0017, server_default sa.true()); 5 routes wired; 17 new tests; 445+11 suite; orchestrator-finished after worker 504"
     }
   ]
 }
