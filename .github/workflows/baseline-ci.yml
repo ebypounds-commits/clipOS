@@ -93,7 +93,16 @@ jobs:
           STORAGE_BUCKET: clipos-test
           CACHE_REDIS_URL: redis://localhost:6380/0
           TEMPORAL_ADDRESS: localhost:7233
-        run: pytest -q services/api
+        run: |
+          set -o pipefail
+          pytest -q services/api 2>&1 | tee pytest_output.txt
+      - name: Upload pytest output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-output
+          path: pytest_output.txt
+          retention-days: 7
       - name: Integration smoke (PostgreSQL, Redis, MinIO)
         run: bash scripts/integration_smoke.sh
       - name: Stop development infrastructure
@@ -185,6 +194,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Download pytest output
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-output
+        continue-on-error: true
       - name: Write and publish CI result
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -203,6 +217,12 @@ jobs:
               '${{ needs.validate.result }}' '${{ needs.test.result }}' \
               '${{ needs.quality.result }}' '${{ needs.build.result }}'
           } > last_run.txt
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "failure_log_begin" >> last_run.txt
+            grep -E "^(FAILED|ERROR) " pytest_output.txt 2>/dev/null | head -30 >> last_run.txt || true
+            grep -B2 -A8 "^(FAILED|ERROR)" pytest_output.txt 2>/dev/null | head -60 >> last_run.txt || true
+            echo "failure_log_end" >> last_run.txt
+          fi
           git add last_run.txt
           git diff --cached --quiet || git -c user.name=ci-bot -c user.email=ci-bot@clipos.local commit -m "ci: record last run"
           git_repo_url="${{ github.server_url }}/${{ github.repository }}.git"
