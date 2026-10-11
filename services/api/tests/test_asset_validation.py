@@ -43,7 +43,7 @@ def _real_media_file():
 
     ff = shutil.which("ffmpeg")
     if ff is None:
-        pytest.skip("ffmpeg not available")
+        pytest.skip("ffmpeg not available", allow_module_level=True)
     out = "/tmp/clipos039_sample.mp4"
     if not os.path.exists(out):
         r = sp.run(
@@ -64,7 +64,7 @@ def _real_media_file():
             check=False,
         )
         if r.returncode != 0:
-            pytest.skip(f"ffmpeg sample generation failed: {r.stderr[:120]}")
+            pytest.skip(f"ffmpeg sample generation failed: {r.stderr[:120]}", allow_module_level=True)
     return out
 
 
