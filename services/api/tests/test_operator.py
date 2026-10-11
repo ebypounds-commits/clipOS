@@ -109,7 +109,7 @@ def test_operator_snapshot_counts_and_audit_tail(engine: sa.Engine) -> None:
 
 def test_operator_snapshot_rejects_naive_time_and_zero_tail(engine: sa.Engine) -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
-        OperatorSnapshot.build(engine, datetime(2026, 1, 1, 12, 0, 0))  # noqa: DTZ001 - intentionally naive
+        OperatorSnapshot.build(engine, datetime(2026, 1, 1, 12, 0, 0))
     with pytest.raises(ValueError, match="last_n"):
         OperatorSnapshot.build(engine, now(), last_n=0)
 

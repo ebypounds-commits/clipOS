@@ -97,4 +97,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Intentionally not implemented: this migration is CREATE-only."""
-    pass
