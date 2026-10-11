@@ -65,6 +65,8 @@ jobs:
         run: docker compose -f docker-compose.dev.yml up -d
       - name: Wait for infrastructure health
         run: |
+          echo "step=wait_health" >> step_status.txt
+          echo "step=start_infra" >> step_status.txt
           set -euo pipefail
           ok=0
           for attempt in $(seq 1 18); do
@@ -88,6 +90,8 @@ jobs:
         env:
           DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
         run: |
+          echo "step=migrations" >> step_status.txt
+          echo "step=confirm_health" >> step_status.txt
           set -o pipefail
           alembic -c services/api/alembic.ini upgrade head 2>&1 | tee migrations_output.txt
       - name: Run API tests with coverage (lane 5 PostgreSQL DB tests)
@@ -100,10 +104,12 @@ jobs:
           CACHE_REDIS_URL: redis://localhost:6380/0
           TEMPORAL_ADDRESS: localhost:7233
         run: |
+          echo "step=pytest" >> step_status.txt
           set -o pipefail
           pytest -q services/api 2>&1 | tee pytest_output.txt
       - name: Integration smoke (PostgreSQL, Redis, MinIO)
         run: |
+          echo "step=smoke" >> step_status.txt
           set -o pipefail
           bash scripts/integration_smoke.sh 2>&1 | tee smoke_output.txt
       - name: Upload step outputs
@@ -116,6 +122,7 @@ jobs:
             migrations_output.txt
             smoke_output.txt
             infra_diagnostics.txt
+            step_status.txt
           retention-days: 7
           if-no-files-found: ignore
       - name: Stop development infrastructure
@@ -232,6 +239,10 @@ jobs:
           } > last_run.txt
           if [ "${{ needs.test.result }}" != "success" ]; then
             echo "failure_log_begin" >> last_run.txt
+            if [ -f step_status.txt ]; then
+              echo "steps_reached:" >> last_run.txt
+              cat step_status.txt >> last_run.txt
+            fi
             for f in pytest_output.txt migrations_output.txt smoke_output.txt infra_diagnostics.txt; do
               if [ -f "$f" ]; then
                 echo "artifact_file=$f bytes=$(wc -c < "$f")" >> last_run.txt
