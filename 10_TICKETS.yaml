@@ -902,7 +902,7 @@ tickets:
 - id: CLIP-039
   milestone: M9
   title: Implement ffprobe validation/quarantine
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-038

@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M9",
-  "current_ticket": "CLIP-039",
+  "current_ticket": "CLIP-040",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,8 +74,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 44,
-  "updated_at": "2026-10-09T13:12:47.000236+00:00",
+  "tickets_completed": 45,
+  "updated_at": "2026-10-11T11:01:11.432573+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -106,6 +106,11 @@
       "ticket": "CLIP-038",
       "merge_sha": "ae669df",
       "summary": "Authorized media ingestion: IngestionGate.authorize (ALLOWED only on rights status CLEAR or basis GENERATED, pure DB check), media_assets (org-scoped idempotent per (org_id, media_asset_id)), asset_versions (immutable, idempotent per (media_asset_id, version), strictly monotonic max+1), ingest_asset flow (DENIED -> PermissionError -> route 403); migration 0018 CREATE-only (2 tables, PG-verified to 0018); 6 routes wired; 21 new tests; 489+11 suite; orchestrator-finished (local 7b fallback blocked, free model 504s)"
+    },
+    {
+      "ticket": "CLIP-039",
+      "merge_sha": "e756002",
+      "summary": "ffprobe validation/quarantine: FFprobeValidator (real ffprobe subprocess w/ 30s timeout, JSON probe parse, env-driven FFPROBE_BIN), asset_validations (append-only), quarantine_records (idempotent per media_asset, identical-reason no-op, release/re-quarantine lifecycle), validate_and_record flow (QUARANTINED->REJECTED, VALID->READY, transactional commit); migration 0019 CREATE-only (2 tables, PG-verified to 0019); 3 routes wired; 12 new tests; 501+11 suite; CI green 2315826 baseline"
     }
   ]
 }
