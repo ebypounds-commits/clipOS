@@ -35,10 +35,11 @@ _EXPECTED_TABLES = {
     "tool_capability_grants",
     "media_assets",
     "asset_versions",
-    "semantic_segments",
-    "segment_embeddings",
     "transcripts",
     "transcript_segments",
+    "semantic_segments",
+    "segment_embeddings",
+    "clip_candidates",
 }
 
 
