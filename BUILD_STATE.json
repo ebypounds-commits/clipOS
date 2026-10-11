@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M9",
-  "current_ticket": "CLIP-040",
+  "current_ticket": "CLIP-041",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,8 +74,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M3",
-  "tickets_completed": 45,
-  "updated_at": "2026-10-11T11:01:11.432573+00:00",
+  "tickets_completed": 46,
+  "updated_at": "2026-10-11T17:12:04.899596+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -111,6 +111,11 @@
       "ticket": "CLIP-039",
       "merge_sha": "e756002",
       "summary": "ffprobe validation/quarantine: FFprobeValidator (real ffprobe subprocess w/ 30s timeout, JSON probe parse, env-driven FFPROBE_BIN), asset_validations (append-only), quarantine_records (idempotent per media_asset, identical-reason no-op, release/re-quarantine lifecycle), validate_and_record flow (QUARANTINED->REJECTED, VALID->READY, transactional commit); migration 0019 CREATE-only (2 tables, PG-verified to 0019); 3 routes wired; 12 new tests; 501+11 suite; CI green 2315826 baseline"
+    },
+    {
+      "ticket": "CLIP-040",
+      "merge_sha": "3a46fa6",
+      "summary": "Transcription adapters and transcript storage: transcripts (idempotent per (org_id, media_asset_id, language)), transcript_segments (append-only, seq monotonic/unique, idempotent identical re-append), TranscriptionAdapter Protocol + deterministic mock (no vendor SDK), transcribe_and_store flow audited; migration 0020 CREATE-only (2 tables, PG-verified to 0020); 4 routes wired; 17 new tests; 518+11 suite; orchestrator-finished after worker false GREEN marker; CI green 46879b1"
     }
   ]
 }

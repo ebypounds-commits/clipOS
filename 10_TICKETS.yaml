@@ -920,7 +920,7 @@ tickets:
 - id: CLIP-040
   milestone: M9
   title: Implement transcription adapters and transcript storage
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-039
