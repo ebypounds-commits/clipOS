@@ -33,6 +33,11 @@ _EXPECTED_TABLES = {
     "llm_dispatch_records",
     "tools",
     "tool_capability_grants",
+    "media_assets",
+    "asset_versions",
+    "transcripts",
+    "transcript_segments",
+    "clip_candidates",
 }
 
 
