@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M9",
-  "current_ticket": "CLIP-041",
+  "current_ticket": "CLIP-043",
   "status": "M3_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -75,7 +75,7 @@
   "codex_subagents_default": false,
   "milestone": "M3",
   "tickets_completed": 46,
-  "updated_at": "2026-10-11T17:12:04.899596+00:00",
+  "updated_at": "2026-10-11T22:10:35.761891+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -116,6 +116,15 @@
       "ticket": "CLIP-040",
       "merge_sha": "3a46fa6",
       "summary": "Transcription adapters and transcript storage: transcripts (idempotent per (org_id, media_asset_id, language)), transcript_segments (append-only, seq monotonic/unique, idempotent identical re-append), TranscriptionAdapter Protocol + deterministic mock (no vendor SDK), transcribe_and_store flow audited; migration 0020 CREATE-only (2 tables, PG-verified to 0020); 4 routes wired; 17 new tests; 518+11 suite; orchestrator-finished after worker false GREEN marker; CI green 46879b1"
+    }
+  ],
+  "tokens_completed": 48,
+  "tickets_total": 102,
+  "history": [
+    {
+      "ts": "2026-10-11T22:10:35.761953+00:00",
+      "event": "CLIP-041+CLIP-042 landed via parallel codex workers (orchestrator-finished)",
+      "sha": "pending"
     }
   ]
 }

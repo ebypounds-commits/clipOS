@@ -1,7 +1,7 @@
 """Create clip_candidates table (CLIP-042).
 
 Revision ID: 0023
-Revises: 0020
+Revises: 0021
 Create Date: 2026-10-11
 
 Create-only migration introducing clip_candidates table.
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "0023"
-down_revision: str | None = "0020"
+down_revision: str | None = "0021"
 branch_labels: tuple[str, ...] | None = None
 depends_on: tuple[str, ...] | None = None
 
