@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-if TYPE_CHECKING:
-    from clipos_api.clip_candidates import ClipCandidateStore
+from clipos_api.clip_candidates import ClipCandidateStore
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, ConfigDict, Field
