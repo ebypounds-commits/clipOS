@@ -75,7 +75,11 @@ jobs:
             sleep 5
           done
           if [ "$ok" -ne 1 ]; then
-            docker compose -f docker-compose.dev.yml ps || true
+            {
+              echo "infra_health_failed attempt_count=18"
+              docker compose -f docker-compose.dev.yml ps || true
+              docker compose -f docker-compose.dev.yml logs --tail 40 postgres redis minio || true
+            } 2>&1 | tee infra_diagnostics.txt
             exit 1
           fi
       - name: Confirm infrastructure health
@@ -111,6 +115,7 @@ jobs:
             pytest_output.txt
             migrations_output.txt
             smoke_output.txt
+            infra_diagnostics.txt
           retention-days: 7
           if-no-files-found: ignore
       - name: Stop development infrastructure
@@ -227,7 +232,7 @@ jobs:
           } > last_run.txt
           if [ "${{ needs.test.result }}" != "success" ]; then
             echo "failure_log_begin" >> last_run.txt
-            for f in pytest_output.txt migrations_output.txt smoke_output.txt; do
+            for f in pytest_output.txt migrations_output.txt smoke_output.txt infra_diagnostics.txt; do
               if [ -f "$f" ]; then
                 echo "artifact_file=$f bytes=$(wc -c < "$f")" >> last_run.txt
                 grep -E "^(FAILED|ERROR) " "$f" 2>/dev/null | head -25 >> last_run.txt || true
