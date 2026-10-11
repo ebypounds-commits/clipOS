@@ -14,13 +14,12 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from typing import TYPE_CHECKING, Annotated, Protocol
+from typing import Annotated, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
-if TYPE_CHECKING:
-    from clipos_api.transcription_store import TranscriptionStore
+
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
@@ -158,6 +157,9 @@ def transcribe_and_store(
 # ---------------------------------------------------------------------------
 # Router — Depends providers BEFORE route decorators (CLIP-033 rule)
 # ---------------------------------------------------------------------------
+
+from clipos_api.transcription_store import TranscriptionStore  # runtime import (PEP 563 safe)
+
 
 router = APIRouter(tags=["transcription"])
 
