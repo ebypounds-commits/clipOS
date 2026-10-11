@@ -64,7 +64,9 @@ def _real_media_file():
             check=False,
         )
         if r.returncode != 0:
-            pytest.skip(f"ffmpeg sample generation failed: {r.stderr[:120]}", allow_module_level=True)
+            pytest.skip(
+                f"ffmpeg sample generation failed: {r.stderr[:120]}", allow_module_level=True
+            )
     return out
 
 
