@@ -49,18 +49,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Mark job start
+        run: echo "step=job_start" >> step_status.txt
       - name: Upgrade pip (audited component) then install API dependencies
         run: |
+          echo "step=pip_install" >> step_status.txt
           python -m pip install --upgrade pip
           pip install -e "services/api[dev]"
       - name: Formatting check
-        run: ruff format --check services/api
+        run: |
+          echo "step=ruff_format" >> step_status.txt
+          ruff format --check services/api
       - name: Lint API
-        run: ruff check services/api
+        run: |
+          echo "step=ruff_lint" >> step_status.txt
+          ruff check services/api
       - name: Static type check
-        run: mypy services/api/clipos_api
+        run: |
+          echo "step=mypy" >> step_status.txt
+          mypy services/api/clipos_api
       - name: Validate development compose
-        run: docker compose -f docker-compose.dev.yml config -q
+        run: |
+          echo "step=compose_config" >> step_status.txt
+          docker compose -f docker-compose.dev.yml config -q
       - name: Start development infrastructure
         run: docker compose -f docker-compose.dev.yml up -d
       - name: Wait for infrastructure health
