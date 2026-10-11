@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
-from clipos_api.clip_candidates import ClipCandidateStore
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -12,6 +11,7 @@ from sqlalchemy.engine import Engine
 
 from clipos_api.clip_candidates import (
     ClipCandidateSource,
+    ClipCandidateStore,
     extract_and_register,
 )
 from clipos_api.repository import get_engine
