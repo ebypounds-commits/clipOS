@@ -18,8 +18,6 @@ from typing import Annotated, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
-
-
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
@@ -159,7 +157,6 @@ def transcribe_and_store(
 # ---------------------------------------------------------------------------
 
 from clipos_api.transcription_store import TranscriptionStore  # runtime import (PEP 563 safe)
-
 
 router = APIRouter(tags=["transcription"])
 
