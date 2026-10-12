@@ -48,6 +48,9 @@ _EXPECTED_TABLES = {
     "claim_sources",
     "content_briefs",
     "content_plans",
+    "hooks",
+    "scripts",
+    "script_versions",
 }
 
 

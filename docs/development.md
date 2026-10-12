@@ -549,3 +549,25 @@ Routes (CLIP-033 pattern): POST/GET /content-briefs, POST
 claims), GET /content-briefs/{brief_id}/plan (latest version or null).
 No LLM, network, or provider identifier participates — plan derivation is
 deterministic software.
+
+## Hooks, scripts, and script versioning (M11)
+
+clipos_api.script_hooks (CLIP-048) adds the creative-asset layer from
+PRD domain E. hooks are attention lines for a content brief: registration
+is idempotent on the semantic key (org_id, brief_id, text) (unique index)
+— the same hook text for the same brief is the same hook — and requires
+the brief to exist (404); audited as hooks.registered. scripts are
+versioned bodies grounded in one brief (client script_id, idempotent per
+(org_id, script_id), conflict on different brief/title -> 409,
+current_version starts at 0, audited scripts.registered).
+script_versions (migration  029, 0028 -> 0029) is the append-only
+history: save_version mints version N+1 for a changed body, bumps
+scripts.current_version, and audits scripts.version_appended; an
+identical body re-save (regardless of author) returns the latest version
+untouched. Bodies are capped at 8192 chars.
+
+Routes (CLIP-033 pattern, _map_error 404/409/422): POST /hooks,
+GET /hooks?org_id=&brief_id= (404 unknown brief), POST/GET /scripts,
+GET /scripts/{script_id}, POST /scripts/{script_id}/versions,
+GET /scripts/{script_id}/versions (404 unknown script). No LLM,
+network, or provider identifier is involved.
