@@ -629,3 +629,39 @@ identifiers. Routes: POST/GET /render-projects, GET
 endpoint. The stored spec is the source document CLIP-051's FFmpeg render
 pipeline will consume; captions/audio normalization/aspect variants are
 exercised here as spec data, executed by the pipeline ticket.
+
+## FFmpeg worker and render pipeline (M12)
+
+clipos_api.render_pipeline (CLIP-051) executes CLIP-050 specs.
+spec_fingerprint is sha256 over canonical sorted-key compact JSON — key
+order never changes a render identity. uild_render_argv is the pure
+argv builder: trim (-t duration), aspect filter chain from
+ASPECT_FILTERS (9:16 -> 1080x1920, 16:9 -> 1920x1080, 1:1 -> 1080x1080,
+each scale+pad with black bars), optional loudnorm=I=<target> when audio
+normalization is enabled, and -movflags +faststart mp4 output. Caption
+burn-in is intentionally deferred to CLIP-052; the deterministic manifest
+records captions_requested so the next ticket can act on it. argv lists
+are executed with shell=False — there is no injection surface; the
+ffmpeg binary is FFMPEG_BIN (default fmpeg), never a provider id.
+
+ender_jobs (migration  032, 0031 -> 0032) run the lifecycle
+PENDING -> RUNNING -> SUCCEEDED / FAILED, idempotent per
+(org_id, job_id) at creation (bound to one project + spec fingerprint;
+same id for a different project -> 409). Execution
+(POST /render-jobs/{job_id}/execute) is **workdir-confined** per the
+CLIP-039 path policy: input and output must resolve inside
+RENDER_WORKDIR (default /tmp/clipos-render) — escapes are 422 — the
+input must exist, the output must be .mp4, SUCCEEDED/RUNNING jobs
+refuse re-execution (409), FAILED jobs may retry. Success stores the
+manifest (fingerprint, argv, paths, flags, timestamps) and audits
+ender_jobs.succeeded; failure stores the stderr tail (<=512) as
+error_ref and audits ender_jobs.failed. Creation audits
+ender_jobs.created.
+
+SubprocessRenderRunner is the real backend (timeout
+RENDER_FFMPEG_TIMEOUT_SECONDS, default 120s, timeout -> failed job);
+tests inject the RenderRunner protocol with a recording double, plus
+real-ffmpeg integration tests that build a 	estsrc clip and assert a
+non-empty mp4 (skipped when ffmpeg is absent). Routes:
+POST /render-projects/{id}/jobs, POST /render-jobs/{id}/execute,
+GET /render-jobs/{id}, GET /render-jobs?render_project_id=.
