@@ -104,7 +104,7 @@
   "last_evidence": {
     "ticket": "CLIP-060",
     "at": "2026-10-12T19:30:29+00:00",
-    "facts": "CLIP-060 TikTok publishing/status adapter complete: TikTokPublishingAdapter deterministic mock (health_check ok [upload,privacy,status,creator_info], publish tt-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/tiktok-businessapi/vendor ids) registered at module import via publishing.register_adapter('tiktok',...); no new migration (platform_accounts 0039 covers tiktok accounts); publishing route selects adapter per request.platform via get_adapter fallback Mock; OpenAPI probe 171 paths, land 387f408 merge 8c32b97, 15 new tests (adapter 5 + integration 2 + routes 2 + platform isolation 1 + fallback 1 + existing unbroken 4), suite 969 passed CI-env full services (91.27% cov) and 958+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 70 files (CI invocation), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 65/65 pre-advance. M14 progress: CLIP-058 contract/policy + 059 YouTube + 060 TikTok done; 061 Meta remains"
+    "facts": "CLIP-060 TikTok publishing/status adapter complete: TikTokPublishingAdapter deterministic mock (health_check ok [upload,privacy,status,creator_info], publish tt-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/tiktok-businessapi/vendor ids) registered at module import via publishing.register_adapter('tiktok',...); no new migration (platform_accounts 0039 covers tiktok accounts); publishing route selects adapter per request.platform via get_adapter fallback Mock; OpenAPI probe 171 paths, land 387f408 merge b6ee9c4, 15 new tests (adapter 5 + integration 2 + routes 2 + platform isolation 1 + fallback 1 + existing unbroken 4), suite 969 passed CI-env full services (91.27% cov) and 958+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 70 files (CI invocation), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 65/65 pre-advance. M14 progress: CLIP-058 contract/policy + 059 YouTube + 060 TikTok done; 061 Meta remains"
   },
   "next_action": "Execute CLIP-061 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -253,7 +253,7 @@
     },
     {
       "ticket": "CLIP-060",
-      "merge_sha": "8c32b97",
+      "merge_sha": "b6ee9c4",
       "summary": "TikTok publishing/status adapter: TikTokPublishingAdapter deterministic mock (health ok [upload,privacy,status,creator_info], publish tt-mock-{sha1[:10]}, get_status SUCCEEDED, no network/vendor ids) registered at import via publishing.register_adapter('tiktok',...); no new migration (platform_accounts 0039); publishing route adapter-aware via get_adapter; 15 tests; 969 CI-env (91.27% cov); CI green 8c32b97"
     }
   ],
