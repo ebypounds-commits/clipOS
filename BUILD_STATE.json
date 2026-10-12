@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-059",
+  "current_ticket": "CLIP-060",
   "status": "M14_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -89,7 +89,8 @@
     "CLIP-055",
     "CLIP-056",
     "CLIP-057",
-    "CLIP-058"
+    "CLIP-058",
+    "CLIP-059"
   ],
   "blocked": [],
   "human_gates": {
@@ -100,9 +101,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-058",
-    "at": "2026-10-12T18:50:00+00:00",
-    "facts": "CLIP-058 publishing adapter contract/private-test policy complete (M14 opener): PublishingAdapter Protocol (health_check with capabilities, publish normalized PublishRequest/PublishResult, get_status PublishStatus) + MockPublishingAdapter (deterministic external_id from sha1(idempotency_key)[:12], ok health with ['upload','status'] capabilities, no network/vendor ids); Visibility PRIVATE/UNLISTED/PUBLIC, OperatingMode PRD OBSERVE/DRAFT/PRIVATE_TEST/GUARDED_PUBLIC/AUTONOMOUS_PUBLIC; evaluate_publish_policy pure fail-closed: kill_switch denies everything, OBSERVE/DRAFT deny all publishing, visibility not in allowed_visibilities denies, PRIVATE_TEST forbids PUBLIC, PUBLIC requires public_enabled AND in allowed list; publish_policies table (migration 0038 CREATE-only, 0037->0038 PG-verified idempotent, unique (org_id, policy_id) + unique (org_id, platform) one policy per platform, public_enabled default FALSE, kill_switch default FALSE, audited publish_policies.registered); publication_jobs unique (org_id, idempotency_key) arbitration at row-insert time (repeat -> return stored without re-publishing, different content/platform/visibility -> 409), adapter called OUTSIDE DB transaction (SQLite nested-lock safety), DENIED -> audited DENIED row no adapter call, FAILED -> audited with error_ref; operating_mode request-carried until M23 binds server-side ops config, PUBLIC blocking and kill switch enforce regardless of claimed mode; 5 routes CLIP-033 pattern (policies register/get/list, publications submit+job get 404), OpenAPI probe 126 paths, land a1f7733 merge 062854f, 25 new tests (policy matrix 6 + mock 1 + store 4 + flow 6 incl adapter-failure + routes 7), suite 945 passed CI-env full services (91.24% cov) and 934+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 67 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 63/63 pre-advance"
+    "ticket": "CLIP-059",
+    "at": "2026-10-12T19:11:00+00:00",
+    "facts": "CLIP-059 YouTube publishing/status adapter complete: YouTubePublishingAdapter deterministic mock (health_check ok [upload,metadata,status,resumable], publish yt-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/youtube-dataapi/vendor ids) registered at module import via publishing.register_adapter('youtube',...); publishing.py get_adapter(platform) selects adapter per submission platform with MockPublishingAdapter fallback; platform_accounts table (migration 0039 CREATE-only, 0038->0039 PG-verified idempotent, unique (org_id, platform, account_ref) + ix (org, platform), scopes JSON list + channel_ref + metadata, vault refs only, audited platform_accounts.registered); 3 routes platform-accounts register/get/list (platform filter), CLIP-033 pattern; publishing route now adapter-aware; existing publishing tests unbroken (YouTubePublishingAdapter also returns SUCCEEDED + 'mock' in external_id); OpenAPI probe 128 paths, land 0e3f83b merge 11b3013, 25 new tests (store 7 + routes 5 + adapter 3 + integration 3), suite 959 passed CI-env full services (91.29% cov) and 948+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 69 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 64/64 pre-advance. M14 progress: CLIP-058 contract/policy + 059 YouTube done; 060 TikTok + 061 Meta remain"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -111,8 +112,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 64,
-  "updated_at": "2026-10-12T18:50:00+00:00",
+  "tickets_completed": 65,
+  "updated_at": "2026-10-12T19:11:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -243,6 +244,11 @@
       "ticket": "CLIP-058",
       "merge_sha": "062854f",
       "summary": "Publishing adapter contract/private-test policy (M14 opener): PublishingAdapter Protocol + MockPublishingAdapter (deterministic, no network/vendor ids), Visibility/OperatingMode enums, evaluate_publish_policy pure fail-closed (kill_switch, mode denies, visibility policy), publish_policies table (migration 0038, one per org+platform, public disabled by default, kill switch), publication_jobs idempotent (org, idempotency_key) adapter outside txn; 5 routes; 25 tests; suite 945 passed CI-env (91.24% cov); ruff/mypy/secret_scan/arch_guard green; land a1f7733, merge 062854f"
+    },
+    {
+      "ticket": "CLIP-059",
+      "merge_sha": "11b3013",
+      "summary": "YouTube publishing adapter + platform accounts (M14): YouTubePublishingAdapter Mock (registered at import), get_adapter platform-aware route, platform_accounts table (migration 0039), 3 routes, 25 tests; suite 959 CI-env 91.29%; ruff/mypy/secret/arch_guard green; land 0e3f83b, merge 11b3013"
     }
   ],
   "tickets_total": 102,
@@ -331,6 +337,11 @@
       "ts": "2026-10-12T18:50:00+00:00",
       "event": "CLIP-058 landed via MiMo direct implementation (publishing contract + private-test policy; M14 opener)",
       "sha": "062854f"
+    },
+    {
+      "ts": "2026-10-12T19:11:00+00:00",
+      "event": "CLIP-059 landed via MiMo direct implementation (YouTube adapter mock + platform accounts; M14 2/4)",
+      "sha": "11b3013"
     }
   ]
 }

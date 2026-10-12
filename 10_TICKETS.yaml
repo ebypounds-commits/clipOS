@@ -1262,7 +1262,7 @@ tickets:
 - id: CLIP-059
   milestone: M14
   title: Implement YouTube publishing/status adapter
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-058

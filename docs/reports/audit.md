@@ -157,3 +157,10 @@
 - submit_publication restructured: adapter call moved OUTSIDE with store._sessions.begin() (SQLite write-lock issue); read-only phase (idempotency replay + policy load), evaluate, adapter call (or DENIED), short write transaction with idempotency re-check at insert.
 - Gates (observed): ruff format/check clean (I001 auto-fixes); mypy clean 67 files (CI + --python-version 3.12); pytest SQLite 934+11 (90.89% cov); pytest CI-env full services 945 passed (91.24% cov); PG upgrade 0037->0038 idempotent (current=0038 head); OpenAPI probe 126 paths; secret_scan clean; architecture_guard 6/6; state_audit verify 63/63; 25 new tests (suite delta 921->945 CI-env).
 - Land: worktree commit a1f7733, merge 062854f into main; state advance 64/102, current -> CLIP-059 (YouTube publishing/status adapter — M14 real adapter tickets begin).
+
+## 2026-10-12 - CLIP-059 YouTube publishing/status adapter (single-orchestrator direct implementation)
+- YouTubePublishingAdapter: deterministic mock (health ok [upload,metadata,status,resumable], publish yt-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/vendor ids) registered at import via publishing.register_adapter.
+- publishing.py: ADAPTERS registry dict + register_adapter + get_adapter (Mock fallback); submit_publication route now selects adapter per request.platform.
+- platform_accounts (migration 0039, 0038->0039 PG idempotent): uq (org, platform, account_ref) + ix (org, platform); scopes JSON + channel_ref + account_metadata; vault refs only (no secrets); audited platform_accounts.registered; 3 routes register/get/list (platform filter).
+- Gates: ruff format/check clean; mypy clean 69 files; pytest 959 CI-env (91.29% cov); PG 0039 head; OpenAPI 128 paths; secret/arch_guard/state_audit 64/64; 25 new tests (suite delta 945->959); publish tests unbroken (YouTubeMock also SUCCEEDED with 'mock' in external_id).
+- Land: worktree 0e3f83b, merge 11b3013; state advance 65/102, current -> CLIP-060 (TikTok adapter; M14 3/4).
