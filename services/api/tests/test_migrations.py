@@ -53,6 +53,7 @@ _EXPECTED_TABLES = {
     "script_versions",
     "factuality_evaluations",
     "transformation_records",
+    "render_projects",
 }
 
 

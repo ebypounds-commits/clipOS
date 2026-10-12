@@ -601,3 +601,31 @@ Routes (CLIP-033 pattern): POST/GET /factuality-evaluations
 (brief-scoped GET 404s). Audits: actuality_evaluations.recorded,
 claims.veracity_changed, 	ransformation_records.registered. No LLM,
 network, or provider identifier participates.
+
+## Render project DSL (M12)
+
+clipos_api.render_project (CLIP-050) introduces the declarative document
+that drives the media studio: a render project pins one content brief to a
+validated render **spec** (the DSL). Spec shape: ersion (must be 1),
+inputs (candidate_id required), composition (spect in
+9:16/16:9/1:1, duration_ms 1000..600000, optional captions
+{enabled, style_ref} and udio_normalization {enabled, target_lufs
+-24..-5 — target required when enabled}), and outputs (1..8 objects each
+with a unique platform slug). Unknown top-level keys are rejected so
+typos fail loudly; nested unknown keys are tolerated for forward
+compatibility.
+
+alidate_render_spec(spec) -> list[str] is the pure, side-effect-free
+validator — the single source of truth for spec validity, exercised both
+by registration (invalid spec -> 422 carrying the error list, nothing
+persisted) and by the dry-run route POST /render-specs/validate (returns
+{valid, errors} with no database access at all). ender_projects
+(migration  031, 0030 -> 0031) stores the validated document, idempotent
+per (org_id, render_project_id), brief-gated (404), conflict on changed
+fields (409), audited ender_projects.registered with spec version and
+output count. Platform entries are generic slugs — no provider
+identifiers. Routes: POST/GET /render-projects, GET
+/render-projects/{render_project_id} (404), plus the pure validator
+endpoint. The stored spec is the source document CLIP-051's FFmpeg render
+pipeline will consume; captions/audio normalization/aspect variants are
+exercised here as spec data, executed by the pipeline ticket.
