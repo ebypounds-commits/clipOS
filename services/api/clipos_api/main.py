@@ -34,6 +34,7 @@ from clipos_api.operator import OperatorSnapshot
 from clipos_api.opportunities import router as opportunity_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
+from clipos_api.publishing import router as publishing_router
 from clipos_api.render_pipeline import router as render_pipeline_router
 from clipos_api.render_project import router as render_project_router
 from clipos_api.render_variants import router as render_variants_router
@@ -83,6 +84,7 @@ app.router.routes.extend(semantic_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
+app.router.routes.extend(publishing_router.routes)
 app.router.routes.extend(render_pipeline_router.routes)
 app.router.routes.extend(render_project_router.routes)
 app.router.routes.extend(render_variants_router.routes)
