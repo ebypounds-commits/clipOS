@@ -47,6 +47,12 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 
 from clipos_api import audit
+from clipos_api.ai_labels import (
+    GeneratedMediaMetadataRequest,
+    GeneratedMediaStore,
+    record_generated_media,
+)
+from clipos_api.content_evals import ContentEvalStore
 from clipos_api.content_planning import ContentBriefRecord
 from clipos_api.media_ingestion import (
     AssetVersion,
@@ -463,6 +469,14 @@ def _ingestion(engine: Annotated[Engine, Depends(_database_engine)]) -> MediaIng
     return MediaIngestionStore.from_engine(engine)
 
 
+def _labels(engine: Annotated[Engine, Depends(_database_engine)]) -> GeneratedMediaStore:
+    return GeneratedMediaStore.from_engine(engine)
+
+
+def _transformations(engine: Annotated[Engine, Depends(_database_engine)]) -> ContentEvalStore:
+    return ContentEvalStore.from_engine(engine)
+
+
 def _database_engine() -> Engine:
     from clipos_api.main import database_engine
 
@@ -488,10 +502,25 @@ def _map_error(exc: ValueError) -> HTTPException:
 def generate_image_route(
     request: ImageGenerationRequest,
     store: Annotated[GenerationStore, Depends(_store)],
+    labels: Annotated[GeneratedMediaStore, Depends(_labels)],
+    transformations: Annotated[ContentEvalStore, Depends(_transformations)],
 ) -> ImageAsset:
-    """Generate one PNG for a brief (Mock adapter; idempotent)."""
+    """Generate one PNG for a brief (Mock adapter; idempotent; auto-labeled)."""
     try:
-        return generate_image(MockImageGenAdapter(), store, request)
+        image = generate_image(MockImageGenAdapter(), store, request)
+        record_generated_media(
+            labels,
+            GeneratedMediaMetadataRequest(
+                org_id=image.org_id,
+                brief_id=image.brief_id,
+                asset_kind=MediaAssetKind.IMAGE,
+                asset_ref=image.output_path,
+                generator_alias=image.model_alias,
+                prompt=image.prompt,
+            ),
+            transformation_store=transformations,
+        )
+        return image
     except ValueError as exc:
         raise _map_error(exc) from exc
 
@@ -539,10 +568,25 @@ def generate_video_route(
     request: VideoGenerationRequest,
     store: Annotated[GenerationStore, Depends(_store)],
     ingestion: Annotated[MediaIngestionStore, Depends(_ingestion)],
+    labels: Annotated[GeneratedMediaStore, Depends(_labels)],
+    transformations: Annotated[ContentEvalStore, Depends(_transformations)],
 ) -> VideoGenerationResult:
-    """Generate one video for a brief (Mock adapter; media chain v1)."""
+    """Generate one video for a brief (Mock adapter; chain v1; auto-labeled)."""
     try:
-        return generate_video(MockVideoGenAdapter(), ingestion, store, request)
+        result = generate_video(MockVideoGenAdapter(), ingestion, store, request)
+        record_generated_media(
+            labels,
+            GeneratedMediaMetadataRequest(
+                org_id=result.org_id,
+                brief_id=request.brief_id,
+                asset_kind=MediaAssetKind.VIDEO,
+                asset_ref=result.storage_ref,
+                generator_alias=request.model_alias,
+                prompt=request.prompt,
+            ),
+            transformation_store=transformations,
+        )
+        return result
     except ValueError as exc:
         raise _map_error(exc) from exc
 

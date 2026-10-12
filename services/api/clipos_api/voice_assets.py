@@ -34,6 +34,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 
 from clipos_api import audit
+from clipos_api.ai_labels import (
+    GeneratedMediaMetadataRequest,
+    GeneratedMediaStore,
+    record_generated_media,
+    relative_ref,
+)
+from clipos_api.media_ingestion import MediaAssetKind
 from clipos_api.render_pipeline import confine_path
 from clipos_api.repository import Base
 
@@ -278,6 +285,10 @@ def _store(engine: Annotated[Engine, Depends(_database_engine)]) -> VoiceAssetSt
     return VoiceAssetStore.from_engine(engine)
 
 
+def _labels(engine: Annotated[Engine, Depends(_database_engine)]) -> GeneratedMediaStore:
+    return GeneratedMediaStore.from_engine(engine)
+
+
 def _database_engine() -> Engine:
     from clipos_api.main import database_engine
 
@@ -350,15 +361,28 @@ def synthesize_voice_asset_route(
     request: VoiceSynthesisRequest,
     voice_asset_id: Annotated[str, ApiPath(min_length=1, max_length=128)],
     store: Annotated[VoiceAssetStore, Depends(_store)],
+    labels: Annotated[GeneratedMediaStore, Depends(_labels)],
 ) -> VoiceSynthesisResult:
     """Synthesize speech to a confined WAV (deterministic Mock adapter).
 
     The MockTTSAdapter is the stand-in until real provider adapters
     register behind the TTSAdapter Protocol (later M13 tickets,
     dispatched by the asset's model_alias). output_path must already
-    resolve inside RENDER_WORKDIR (422 otherwise).
+    resolve inside RENDER_WORKDIR (422 otherwise). Every successful
+    synthesis is auto-labeled AI_GENERATED (CLIP-057) with the asset's
+    registry alias.
     """
     try:
-        return synthesize_speech(MockTTSAdapter(), store, voice_asset_id, request)
+        result = synthesize_speech(MockTTSAdapter(), store, voice_asset_id, request)
+        record_generated_media(
+            labels,
+            GeneratedMediaMetadataRequest(
+                org_id=request.org_id,
+                asset_kind=MediaAssetKind.AUDIO,
+                asset_ref=relative_ref(result.output_path),
+                generator_alias=result.model_alias,
+            ),
+        )
+        return result
     except ValueError as exc:
         raise _map_error(exc) from exc
