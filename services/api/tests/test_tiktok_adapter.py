@@ -8,6 +8,8 @@ import pytest
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.engine import Engine
 
+import clipos_api.tiktok_adapter  # triggers adapter registration
+import clipos_api.youtube_adapter  # noqa: F401  # triggers adapter registration
 from clipos_api import audit
 from clipos_api.publishing import (
     OperatingMode,
