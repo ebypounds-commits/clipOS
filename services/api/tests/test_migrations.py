@@ -64,6 +64,7 @@ _EXPECTED_TABLES = {
     "ai_labels",
     "publish_policies",
     "publication_jobs",
+    "platform_accounts",
 }
 
 

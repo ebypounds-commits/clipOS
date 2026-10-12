@@ -939,3 +939,34 @@ Routes (CLIP-033 pattern): policy register/get/list, publication
 submit, job get (404 when unknown). Audits:
 publish_policies.registered, publication_jobs.submitted,
 publication_jobs.denied. No LLM.
+
+## YouTube publishing/status adapter and platform accounts (M14)
+
+clipos_api.platform_accounts (CLIP-059 infrastructure) persists
+channel/account linkage and OAuth-scope metadata for publishing platforms
+(migration  039, 0038 -> 0039, CREATE-only, unique per
+(org_id, platform, account_ref), indexes on org+platform for fast
+filtering). Secrets live in a vault — only references appear in this
+table. POST /platform-accounts (idempotent, conflict on changed
+display/channel/scopes/metadata), GET /platform-accounts/{id}
+(404), GET /platform-accounts?org_id=&platform= (optional platform
+filter). Audited platform_accounts.registered.
+
+clipos_api.youtube_adapter (CLIP-059 adapter) registers
+YouTubePublishingAdapter under the "youtube" platform key at
+module import time via the CLIP-058 adapter-registry seam
+(publishing.register_adapter). The mock adapter is a deterministic
+stand-in: health_check returns ok with generic capabilities
+["upload", "metadata", "status", "resumable"], publish derives
+external_id = "yt-mock-{sha1(key)[:10]}" with SUCCEEDED status, and
+get_status always returns SUCCEEDED — no network, no youtube-dataapi
+SDK, no provider identifier. Real YouTube Data API / resumable-upload
+integration replaces this adapter when OAuth credentials are
+provisioned, registering under the same "youtube" key with no
+adapter-resolution code changes. The publishing route now selects
+the adapter per equest.platform via get_adapter(platform)
+(falling back to Mock for any unregistered platform), so TikTok/Meta
+adapters (CLIP-060/061) simply register at import time the same way.
+
+M14 progress: CLIP-058 contract/policy + CLIP-059 YouTube adapter
+done; CLIP-060 TikTok and CLIP-061 Meta remain.

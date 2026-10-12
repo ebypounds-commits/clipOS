@@ -136,6 +136,26 @@ class MockPublishingAdapter:
         return PublishStatus.SUCCEEDED
 
 
+# ---------------------------------------------------------------------------
+# Adapter registry — platform adapters register here via register_adapter.
+# MockPublishingAdapter is the fallback for any unregistered platform.
+# YouTube registers at module-import time in youtube_adapter.py.
+# TikTok/Meta follow in later M14 tickets.
+# ---------------------------------------------------------------------------
+
+_ADAPTERS: dict[str, PublishingAdapter] = {"_default": MockPublishingAdapter()}
+
+
+def register_adapter(platform: str, adapter: PublishingAdapter) -> None:
+    """Register a platform-specific adapter (replaces Mock for that platform)."""
+    _ADAPTERS[platform] = adapter
+
+
+def get_adapter(platform: str) -> PublishingAdapter:
+    """Return the adapter for a platform key, falling back to Mock."""
+    return _ADAPTERS.get(platform, _ADAPTERS["_default"])
+
+
 class PublishPolicy(BaseModel):
     """One org+platform publishing policy; public disabled by default."""
 
@@ -619,7 +639,7 @@ def submit_publication_route(
     reason — the attempt is recorded and the adapter never runs.
     """
     try:
-        return submit_publication(MockPublishingAdapter(), store, request)
+        return submit_publication(get_adapter(request.platform), store, request)
     except ValueError as exc:
         raise _map_error(exc) from exc
 
