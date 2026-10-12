@@ -52,6 +52,7 @@ from clipos_api.tool_policy import (
 from clipos_api.tool_registry import router as tool_registry_router
 from clipos_api.topics import router as topics_router
 from clipos_api.transcription import router as transcription_router
+from clipos_api.voice_assets import router as voice_assets_router
 from clipos_api.watchlists import router as watchlist_router
 
 try:
@@ -72,6 +73,7 @@ app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)
 app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(transcription_router.routes)
+app.router.routes.extend(voice_assets_router.routes)
 app.router.routes.extend(semantic_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)

@@ -58,6 +58,7 @@ _EXPECTED_TABLES = {
     "caption_tracks",
     "render_outputs",
     "qc_reports",
+    "voice_assets",
 }
 
 
