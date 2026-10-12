@@ -405,3 +405,28 @@ the record `EXPIRED`; an active license makes it `CLEAR`; otherwise the stored
 status stands. Listing and event reads are organization-scoped. The module
 exposes operator routes under `/rights-records` and `/licenses`, wired in
 `main.py`, following the same store/router pattern as the other registries.
+
+## Clip scoring (M10)
+
+clipos_api.clip_scores (CLIP-043) implements deterministic multi-factor scoring
+for clip candidates over the clip_scores table (migration  024, CREATE-only,
+unique per (org_id, candidate_id)). Four pure component scorers derive values in
+0..1 from data already in the database: length_fit (candidate duration against
+the caller's ideal window), hook_coverage and claim_coverage (union coverage
+of overlapping semantic_segments of that kind within the candidate window,
+merged so double-covered regions never count twice), and 	ranscript_density
+(words per second from overlapping 	ranscript_segments against a caller-supplied
+target rate). score_clip combines caller-supplied positive weights into a
+0..100 total — the same weighted-sum contract as CLIP-036 opportunity scoring;
+weights must name known factors (COMPONENT_FACTORS) and missing components count
+as zero. No LLM, network, or provider identifier is involved; the optional
+scorer_alias column records a registry-style alias for the scorer that produced
+the row, never a vendor/model string.
+
+ClipScoreStore.record_score is idempotent per candidate: an identical re-score
+returns the stored row; different components/total raise (409 via route). Scoring
+transitions the candidate NEW -> SCORED and audits clip_scores.recorded plus
+clip_candidate.scored; decided candidates (APPROVED/REJECTED) are frozen and
+reject further scoring. Routes follow the CLIP-033 pattern (real runtime imports,
+Depends providers before decorators): POST /clip-candidates/{candidate_id}/scores,
+GET /clip-candidates/{candidate_id}/scores, GET /clip-scores?org_id=.
