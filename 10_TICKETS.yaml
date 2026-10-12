@@ -1010,7 +1010,7 @@ tickets:
 - id: CLIP-045
   milestone: M10
   title: Implement review UI and benchmark eval set
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-044

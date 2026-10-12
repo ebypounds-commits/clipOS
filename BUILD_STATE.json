@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M10",
-  "current_ticket": "CLIP-045",
-  "status": "M10_IN_PROGRESS",
+  "current_milestone": "M11",
+  "current_ticket": "CLIP-046",
+  "status": "M11_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -19,7 +19,8 @@
     "M6",
     "M7",
     "M8",
-    "M9"
+    "M9",
+    "M10"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -71,7 +72,8 @@
     "CLIP-041",
     "CLIP-042",
     "CLIP-043",
-    "CLIP-044"
+    "CLIP-044",
+    "CLIP-045"
   ],
   "blocked": [],
   "human_gates": {
@@ -82,19 +84,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-044",
-    "at": "2026-10-12T10:49:00+00:00",
-    "facts": "CLIP-044 duplicate/content fingerprint checks complete: candidate_fingerprints table (org-scoped, unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256, no vendor strings), pure normalize_text / overlap_over_shorter (overlap over shorter window) / window_fingerprint (canonical window:asset:start-end sha256) / transcript_fingerprint (normalized text sha256, None on empty so absent content never collides), ClipDedupStore idempotent persist_fingerprint (identical re-persist no-op, different value conflict 409), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when primary-transcript window text exists, derives window dups (same asset, overlap_over_shorter >= caller threshold in (0..1] default 0.5) and content dups by hashing every other org candidate transcript window on the fly (corpus need not be pre-fingerprinted), audited candidate_fingerprints.persisted + clip_candidates.duplicate_check, migration 0025 CREATE-only (0024->0025 PG-verified idempotent, alembic current=0025 head), 2 routes Depends-before-decorator (POST duplicate-check 404/409/422, GET fingerprints 404 unknown), OpenAPI probe 83 paths, land 1fbf1bb merge 49084c0, 24 new tests, suite 637 passed CI-env full services (89.68% cov) and 626+11 SQLite-only, ruff format/check clean, mypy clean 53 files under CI invocation and --python-version 3.12, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 49/49 pre-advance"
+    "ticket": "CLIP-045",
+    "at": "2026-10-12T11:17:00+00:00",
+    "facts": "CLIP-045 review UI and benchmark eval set complete (M10 FINAL — milestone closed): candidate_decisions table (migration 0026 CREATE-only, 0025->0026 PG-verified idempotent, unique (candidate_id, decision), append-only), ClipReviewStore.record_decision idempotent per (kind, actor) identical-noop / different-actor conflict 409, status transition APPROVED/REJECTED audited clip_candidates.decided, reversal structurally allowed (CLIP-036 contract), routes POST/GET /clip-candidates/{id}/decisions (404/409), ClipCandidateView response extension (+candidate_id, +status on create/get/list/extract) enabling review surfaces, /reviews web page (server component, await searchParams, NEXT_PUBLIC_ORG_ID fallback, client ReviewBoard: equal-weight scoring, dup-check threshold input, approve/reject actor input, router.refresh) + home nav link, benchmark eval set tests/fixtures/clip_benchmark.json v1 (9 score cases hand-computed, 6 overlap cases, 5 fingerprint sha256 baselines from canonical hashlib) + test_clip_benchmark.py runner with minimum-count guard, latent bug fixed: Depends(get_engine) made candidate+semantic HTTP routes demand ?url= (422) — switched to CLIP-033-proven _database_engine late-import pattern, land 5a5ac3d merge e655077, 18 new tests (test_clip_review 14 + test_clip_benchmark 4; suite delta 637->655 CI-env), suite 655 passed CI-env full services (89.90% cov) and 644+11 SQLite-only, ruff format/check clean, mypy clean 54 files (CI invocation + --python-version 3.12), tsc --noEmit clean, next build green (routes /, /agents, /models, /reviews), npm audit 0 vulnerabilities, OpenAPI probe 84 paths, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 50/50 pre-advance. M10 complete: CLIP-042..045 landed (extraction, scoring, dedup, review)."
   },
-  "next_action": "Execute CLIP-045 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-046 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M10",
-  "tickets_completed": 50,
-  "updated_at": "2026-10-12T10:49:00+00:00",
+  "milestone": "M11",
+  "tickets_completed": 51,
+  "updated_at": "2026-10-12T11:17:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -155,6 +157,11 @@
       "ticket": "CLIP-044",
       "merge_sha": "49084c0",
       "summary": "Duplicate/content fingerprint checks: candidate_fingerprints (org-scoped unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256), pure normalize_text/overlap_over_shorter/window_fingerprint/transcript_fingerprint (None on empty), ClipDedupStore idempotent persist (identical no-op, different value conflict), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when text present, derives window dups (same asset, overlap >= caller threshold) and content dups (on-the-fly transcript hash of every other org candidate — corpus not pre-fingerprinted), audited (candidate_fingerprints.persisted + clip_candidates.duplicate_check); migration 0025 CREATE-only (0024->0025 PG-verified idempotent); 2 routes Depends-before-decorator 404/409/422; 24 tests; suite 637 passed CI-env (89.68% cov); ruff/mypy/secret_scan/arch_guard green; land 1fbf1bb, merge 49084c0"
+    },
+    {
+      "ticket": "CLIP-045",
+      "merge_sha": "e655077",
+      "summary": "Review UI + benchmark eval set (M10 final): candidate_decisions append-only (migration 0026, unique (candidate_id, decision)), ClipReviewStore idempotent per (kind, actor) with APPROVED/REJECTED status transition audited clip_candidates.decided, ClipCandidateView response (+candidate_id, +status), /reviews page (server + client board: equal-weight score, dup-check, approve/reject) + home nav, benchmark fixture clip_benchmark.json v1 (9 score + 6 overlap + 5 fingerprint cases) + runner with floor guard, fixed latent Depends(get_engine) ?url= 422 bug in candidates+semantic routers (_database_engine pattern); 18 tests (suite 637->655); suite 655 passed CI-env (89.90% cov); tsc + next build + npm audit green; land 5a5ac3d, merge e655077"
     }
   ],
   "tickets_total": 102,
@@ -173,6 +180,11 @@
       "ts": "2026-10-12T10:49:00+00:00",
       "event": "CLIP-044 landed via MiMo direct implementation (single orchestrator, no worker dispatch)",
       "sha": "49084c0"
+    },
+    {
+      "ts": "2026-10-12T11:17:00+00:00",
+      "event": "CLIP-045 landed via MiMo direct implementation; M10 COMPLETE (extraction, scoring, dedup, review); current -> CLIP-046 (M11)",
+      "sha": "e655077"
     }
   ]
 }
