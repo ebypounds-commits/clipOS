@@ -1190,7 +1190,7 @@ tickets:
 - id: CLIP-055
   milestone: M13
   title: Implement image/video generation adapters
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-054
