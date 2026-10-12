@@ -65,6 +65,7 @@ _EXPECTED_TABLES = {
     "publish_policies",
     "publication_jobs",
     "platform_accounts",
+    "analytics_metrics",
 }
 
 
