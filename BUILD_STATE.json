@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-058",
+  "current_ticket": "CLIP-059",
   "status": "M14_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -88,7 +88,8 @@
     "CLIP-054",
     "CLIP-055",
     "CLIP-056",
-    "CLIP-057"
+    "CLIP-057",
+    "CLIP-058"
   ],
   "blocked": [],
   "human_gates": {
@@ -99,9 +100,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-057",
-    "at": "2026-10-12T15:15:00+00:00",
-    "facts": "CLIP-057 generated-media provenance/AI-label metadata complete (M13 FINAL - milestone closed): ai_labels table (migration 0037 CREATE-only, 0036->0037 PG-verified idempotent, unique (org_id, label_id), ix (org_id, asset_kind)) — MediaAssetKind AUDIO/IMAGE/VIDEO reuse, required generator_alias Model Registry ref never defaulted, LabelValue AI_GENERATED/AI_ASSISTED, deterministic id {org}:ai-label:{sha1[:16]}; idempotent identical no-op / changed asset+generator+label+detail conflict 409, audited ai_labels.recorded; record_generated_media validates brief BEFORE persisting (no partial state), registers label, and for brief-linked generations appends CLIP-049 transformation row (deterministic {org}:gen:{sha1[:16]}, from gen-prompt:{sha1(prompt)[:16]} -> asset ref, method <kind>-generation) so synthetic outputs enter the 07 rights chain; AUTO-LABELING wired into all three generation routes (voice synthesize -> AUDIO label; image generation -> IMAGE label + transformation; video generation -> VIDEO label + transformation) with flows untouched; explicit POST /generated-media-metadata for workflow-side registration; routes GET /ai-labels (kind filter) + GET /ai-labels/{label_id} 404; migration 0037, OpenAPI probe 122 paths, land cc9ed61 merge 8a1f2c2, 15 new tests (incl. image auto-label + transformation route roundtrip), suite 921 passed CI-env full services (91.12% cov) and 910+11 SQLite-only, ruff format/check clean (dup future-import F401 I001 B008 fixes), mypy clean 66 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 62/62 pre-advance. M13 complete: CLIP-054 TTS, 055 image/video, 056 stock, 057 labels/provenance"
+    "ticket": "CLIP-058",
+    "at": "2026-10-12T18:50:00+00:00",
+    "facts": "CLIP-058 publishing adapter contract/private-test policy complete (M14 opener): PublishingAdapter Protocol (health_check with capabilities, publish normalized PublishRequest/PublishResult, get_status PublishStatus) + MockPublishingAdapter (deterministic external_id from sha1(idempotency_key)[:12], ok health with ['upload','status'] capabilities, no network/vendor ids); Visibility PRIVATE/UNLISTED/PUBLIC, OperatingMode PRD OBSERVE/DRAFT/PRIVATE_TEST/GUARDED_PUBLIC/AUTONOMOUS_PUBLIC; evaluate_publish_policy pure fail-closed: kill_switch denies everything, OBSERVE/DRAFT deny all publishing, visibility not in allowed_visibilities denies, PRIVATE_TEST forbids PUBLIC, PUBLIC requires public_enabled AND in allowed list; publish_policies table (migration 0038 CREATE-only, 0037->0038 PG-verified idempotent, unique (org_id, policy_id) + unique (org_id, platform) one policy per platform, public_enabled default FALSE, kill_switch default FALSE, audited publish_policies.registered); publication_jobs unique (org_id, idempotency_key) arbitration at row-insert time (repeat -> return stored without re-publishing, different content/platform/visibility -> 409), adapter called OUTSIDE DB transaction (SQLite nested-lock safety), DENIED -> audited DENIED row no adapter call, FAILED -> audited with error_ref; operating_mode request-carried until M23 binds server-side ops config, PUBLIC blocking and kill switch enforce regardless of claimed mode; 5 routes CLIP-033 pattern (policies register/get/list, publications submit+job get 404), OpenAPI probe 126 paths, land a1f7733 merge 062854f, 25 new tests (policy matrix 6 + mock 1 + store 4 + flow 6 incl adapter-failure + routes 7), suite 945 passed CI-env full services (91.24% cov) and 934+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 67 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 63/63 pre-advance"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -110,8 +111,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 63,
-  "updated_at": "2026-10-12T15:15:00+00:00",
+  "tickets_completed": 64,
+  "updated_at": "2026-10-12T18:50:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -237,6 +238,11 @@
       "ticket": "CLIP-057",
       "merge_sha": "8a1f2c2",
       "summary": "Generated-media provenance/AI-label metadata (M13 final): ai_labels (migration 0037, deterministic org-scoped ids, generator_alias required, idempotent + conflict 409, audited), record_generated_media (brief pre-validation, CLIP-049 transformation linkage for image/video), auto-labeling wired into all three generation routes, explicit metadata endpoint; 3 routes; 15 tests; suite 921 passed CI-env (91.12% cov); ruff/mypy/secret_scan/arch_guard green; land cc9ed61, merge 8a1f2c2"
+    },
+    {
+      "ticket": "CLIP-058",
+      "merge_sha": "062854f",
+      "summary": "Publishing adapter contract/private-test policy (M14 opener): PublishingAdapter Protocol + MockPublishingAdapter (deterministic, no network/vendor ids), Visibility/OperatingMode enums, evaluate_publish_policy pure fail-closed (kill_switch, mode denies, visibility policy), publish_policies table (migration 0038, one per org+platform, public disabled by default, kill switch), publication_jobs idempotent (org, idempotency_key) adapter outside txn; 5 routes; 25 tests; suite 945 passed CI-env (91.24% cov); ruff/mypy/secret_scan/arch_guard green; land a1f7733, merge 062854f"
     }
   ],
   "tickets_total": 102,
@@ -320,6 +326,11 @@
       "ts": "2026-10-12T15:15:00+00:00",
       "event": "CLIP-057 landed via MiMo direct implementation; M13 COMPLETE (TTS, image/video, stock, labels); current -> CLIP-058 (M14)",
       "sha": "8a1f2c2"
+    },
+    {
+      "ts": "2026-10-12T18:50:00+00:00",
+      "event": "CLIP-058 landed via MiMo direct implementation (publishing contract + private-test policy; M14 opener)",
+      "sha": "062854f"
     }
   ]
 }

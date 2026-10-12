@@ -1244,7 +1244,7 @@ tickets:
 - id: CLIP-058
   milestone: M14
   title: Implement publishing adapter contract/private-test policy
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-057
