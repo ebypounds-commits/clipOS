@@ -1082,7 +1082,7 @@ tickets:
 - id: CLIP-049
   milestone: M11
   title: Implement factuality/transformation evaluations
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-048
