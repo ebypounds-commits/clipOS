@@ -62,6 +62,8 @@ _EXPECTED_TABLES = {
     "image_assets",
     "source_items",
     "ai_labels",
+    "publish_policies",
+    "publication_jobs",
 }
 
 

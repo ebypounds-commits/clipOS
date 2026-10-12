@@ -901,3 +901,41 @@ brief-linked image/video) without any caller action. The explicit
 POST /generated-media-metadata endpoint covers workflow-side or manual
 registration. Routes also include GET /ai-labels (kind filter) and
 GET /ai-labels/{label_id} (404). No LLM.
+
+## Publishing adapter contract and private-test policy (M14)
+
+clipos_api.publishing (CLIP-058) is the M14 foundation from  8_INTEGRATIONS + PRD §7.
+
+**Adapter contract** — PublishingAdapter Protocol with health_check
+(capabilities list), publish (normalized request/result), and
+get_status; MockPublishingAdapter is the deterministic stand-in
+(external ids derived from the idempotency key sha1 — no network, no
+vendor identifier). Real platform adapters (CLIP-059/060/061) register
+behind the Protocol, selected by platform slug (youtube/tiktok are generic
+names, never provider credentials).
+
+**Publishing policy** — publish_policies (migration  038, 0037 ->
+0038, one per org+platform): llowed_visibilities (default PRIVATE +
+UNLISTED), public_enabled (default **FALSE** — PRD: public posting
+disabled by default), and kill_switch (PRD: globally disable without
+redeploy). evaluate_publish_policy is the pure fail-closed evaluator:
+kill switch denies everything; OBSERVE/DRAFT deny all publishing;
+PRIVATE_TEST allows only PRIVATE/UNLISTED; PUBLIC also requires
+public_enabled; anything outside allowed_visibilities denies; the
+**callersupplied operating_mode is the future ops-config seam**
+(currently request-carried; M23 binds it server-side) — but PUBLIC
+blocking and kill switch enforce regardless of claimed mode.
+
+**Submission flow** — submit_publication evaluates policy first:
+DENIED attempts persist an auditable **DENIED** job (decision reason
+recorded, adapter NEVER called — zero external side effect) and return it
+with status: DENIED; ALLOWED attempts call the adapter once outside
+any DB transaction (SQLite nested-lock safety for tests) and persist
+SUCCEEDED/FAILED with the external id. Unique (org, idempotency_key)
+arbitrates races at row-insert time; execute_idempotent from the M3
+idempotency module is the follow-up for real network adapters (CLIP-059).
+
+Routes (CLIP-033 pattern): policy register/get/list, publication
+submit, job get (404 when unknown). Audits:
+publish_policies.registered, publication_jobs.submitted,
+publication_jobs.denied. No LLM.
