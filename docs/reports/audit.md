@@ -186,3 +186,27 @@
 **Gates**: ruff format/check clean, mypy 70 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 65/65
 
 **M14 progress**: CLIP-058 contract/policy + 059 YouTube + 060 TikTok done; 061 Meta remains.
+
+## 2026-10-12 - CLIP-061 Meta publishing/status adapter
+
+**Ticket**: CLIP-061 (M14)
+**Merge SHA**: 016c45f
+**Status**: COMPLETE (67/102) — M14 MILESTONE CLOSED
+
+**What was built**:
+- MetaPublishingAdapter: deterministic mock implementing PublishingAdapter Protocol
+  - health_check: ok with capabilities [upload, page_publish, status, privacy]
+  - publish: external_id = "meta-mock-{sha1(key)[:10]}", SUCCEEDED status
+  - get_status: always SUCCEEDED
+  - No network, no facebook-business SDK, no provider identifier
+- Registered at module import via publishing.register_adapter("meta",...)
+- No new migration (platform_accounts table 0039 already covers Meta accounts)
+- Publishing route selects adapter per request.platform via get_adapter fallback Mock
+
+**M14 milestone CLOSED**: All three platform adapters (YouTube, TikTok, Meta) now registered at import with deterministic mocks.
+
+**Tests**: 9 new tests (adapter registration, health, publish determinism, platform isolation, route roundtrip, DENIED handling)
+**Suite**: 978 passed CI-env (91.25% cov), 967+11 SQLite-only
+**Gates**: ruff format/check clean, mypy 71 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 67/67
+
+**Note**: Meta developer documentation returned HTTP 400 at implementation time. Real adapter integration requires current-doc verification when credentials provisioned.

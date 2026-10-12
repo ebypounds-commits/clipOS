@@ -1302,7 +1302,7 @@ tickets:
 - id: CLIP-061
   milestone: M14
   title: Implement Meta publishing adapter after current-doc verification
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-060

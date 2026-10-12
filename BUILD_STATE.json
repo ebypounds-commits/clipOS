@@ -2,8 +2,8 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-061",
-  "status": "M14_IN_PROGRESS",
+  "current_ticket": "CLIP-062",
+  "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -23,7 +23,8 @@
     "M10",
     "M11",
     "M12",
-    "M13"
+    "M13",
+    "M14"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -91,7 +92,8 @@
     "CLIP-057",
     "CLIP-058",
     "CLIP-059",
-    "CLIP-060"
+    "CLIP-060",
+    "CLIP-061"
   ],
   "blocked": [],
   "human_gates": {
@@ -102,19 +104,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-060",
-    "at": "2026-10-12T19:30:29+00:00",
-    "facts": "CLIP-060 TikTok publishing/status adapter complete: TikTokPublishingAdapter deterministic mock (health_check ok [upload,privacy,status,creator_info], publish tt-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/tiktok-businessapi/vendor ids) registered at module import via publishing.register_adapter('tiktok',...); no new migration (platform_accounts 0039 covers tiktok accounts); publishing route selects adapter per request.platform via get_adapter fallback Mock; OpenAPI probe 171 paths, land 387f408 merge b6ee9c4, 15 new tests (adapter 5 + integration 2 + routes 2 + platform isolation 1 + fallback 1 + existing unbroken 4), suite 969 passed CI-env full services (91.27% cov) and 958+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 70 files (CI invocation), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 65/65 pre-advance. M14 progress: CLIP-058 contract/policy + 059 YouTube + 060 TikTok done; 061 Meta remains"
+    "ticket": "CLIP-061",
+    "at": "2026-10-12T20:06:12+00:00",
+    "facts": "CLIP-061 Meta publishing/status adapter complete: MetaPublishingAdapter deterministic mock (health_check ok [upload,page_publish,status,privacy], publish meta-mock-{sha1(key)[:10]} SUCCEEDED, get_status SUCCEEDED, no network/facebook-business/vendor ids) registered at module import via publishing.register_adapter('meta',...); no new migration (platform_accounts 0039 covers meta accounts); publishing route selects adapter per request.platform via get_adapter fallback Mock; M14 MILESTONE CLOSED (YouTube+TikTok+Meta all registered at import); OpenAPI probe 171 paths, land ee6e938 merge 016c45f, 9 new tests (adapter 4 + platform isolation 1 + integration 1 + routes 2 + fallback 1), suite 978 passed CI-env full services (91.25% cov) and 967+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 71 files (CI invocation), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 67/67 pre-advance. M14 COMPLETE"
   },
-  "next_action": "Execute CLIP-061 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-062 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 66,
-  "updated_at": "2026-10-12T19:30:29+00:00",
+  "tickets_completed": 67,
+  "updated_at": "2026-10-12T20:06:12+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -255,6 +257,11 @@
       "ticket": "CLIP-060",
       "merge_sha": "b6ee9c4",
       "summary": "TikTok publishing/status adapter: TikTokPublishingAdapter deterministic mock (health ok [upload,privacy,status,creator_info], publish tt-mock-{sha1[:10]}, get_status SUCCEEDED, no network/vendor ids) registered at import via publishing.register_adapter('tiktok',...); no new migration (platform_accounts 0039); publishing route adapter-aware via get_adapter; 15 tests; 969 CI-env (91.27% cov); CI green 8c32b97"
+    },
+    {
+      "ticket": "CLIP-061",
+      "merge_sha": "016c45f",
+      "summary": "Meta publishing/status adapter: MetaPublishingAdapter deterministic mock (health ok [upload,page_publish,status,privacy], publish meta-mock-{sha1[:10]}, get_status SUCCEEDED, no network/vendor ids) registered at import via publishing.register_adapter('meta',...); no new migration (platform_accounts 0039); M14 milestone CLOSED; 9 tests; 978 CI-env (91.25% cov)"
     }
   ],
   "tickets_total": 102,
@@ -354,6 +361,12 @@
       "ticket": "CLIP-060",
       "action": "completed",
       "evidence_ref": "8c32b97"
+    },
+    {
+      "at": "2026-10-12T20:06:12+00:00",
+      "ticket": "CLIP-061",
+      "action": "completed",
+      "evidence_ref": "016c45f"
     }
   ]
 }
