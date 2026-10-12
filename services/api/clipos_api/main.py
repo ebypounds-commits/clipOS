@@ -17,6 +17,7 @@ from clipos_api.clip_candidates_router import router as clip_candidates_router
 from clipos_api.clip_dedup import router as clip_dedup_router
 from clipos_api.clip_review import router as clip_review_router
 from clipos_api.clip_scores import router as clip_scores_router
+from clipos_api.content_planning import router as content_planning_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
@@ -77,6 +78,7 @@ app.router.routes.extend(clip_candidates_router.routes)
 app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_review_router.routes)
 app.router.routes.extend(clip_scores_router.routes)
+app.router.routes.extend(content_planning_router.routes)
 
 
 @app.get("/health")

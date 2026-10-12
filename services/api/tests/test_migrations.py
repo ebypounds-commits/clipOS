@@ -46,6 +46,8 @@ _EXPECTED_TABLES = {
     "research_packets",
     "claims",
     "claim_sources",
+    "content_briefs",
+    "content_plans",
 }
 
 

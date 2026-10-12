@@ -522,3 +522,30 @@ POST/GET /claims/{id}/sources, POST /claims/{id}/veracity. Claim
 creation always starts UNVERIFIED — verification must travel through the
 audited veracity route. No LLM, network, or provider identifier is
 involved.
+
+## Content briefs and the plan engine (M11)
+
+clipos_api.content_planning (CLIP-047) implements PRD domain E's brief
+and content-plan layer over the CLIP-046 research model. content_briefs
+(brief_id client natural id, idempotent per (org_id, brief_id), unique
+index) ground a production ask in one research packet — registration
+requires the packet to exist (404) — and carry 	itle, objective, and a
+platforms list (<= 16 entries, each 1..64 chars, generic slugs). The
+brief/plan engine itself is derive_plan_payload, a pure function: given a
+brief and its packet's **VERIFIED** claims it emits a stable payload
+(sorted claim_ids, claim_count, echoed objective/platforms/refs).
+
+Factuality is fail-closed: generate_plan refuses (422) when the linked
+packet yields no VERIFIED claims — UNVERIFIED and DISPUTED claims are
+never planned. Plans are append-versioned per brief
+(content_plans, unique (org_id, brief_id, version), migration  028,
+0027 -> 0028): identical re-derivation returns the latest version untouched;
+changed claim state mints the next version and audits
+content_plans.generated (version + claim_count). Brief registration
+audits content_briefs.registered.
+
+Routes (CLIP-033 pattern): POST/GET /content-briefs, POST
+/content-briefs/{brief_id}/plan (404 brief/packet, 422 no verified
+claims), GET /content-briefs/{brief_id}/plan (latest version or null).
+No LLM, network, or provider identifier participates — plan derivation is
+deterministic software.
