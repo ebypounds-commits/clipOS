@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M12",
-  "current_ticket": "CLIP-051",
+  "current_ticket": "CLIP-052",
   "status": "M12_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -79,7 +79,8 @@
     "CLIP-047",
     "CLIP-048",
     "CLIP-049",
-    "CLIP-050"
+    "CLIP-050",
+    "CLIP-051"
   ],
   "blocked": [],
   "human_gates": {
@@ -90,19 +91,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-050",
-    "at": "2026-10-12T12:44:00+00:00",
-    "facts": "CLIP-050 render project DSL complete (M12 opener): validate_render_spec pure side-effect-free validator (version must be 1, inputs.candidate_id 1..128, composition.aspect in {1:1,16:9,9:16}, duration_ms 1000..600000 int, captions {enabled bool, style_ref null|1..128}, audio_normalization {enabled bool, target_lufs -24..-5 required when enabled}, outputs 1..8 objects each platform 1..64 with duplicate detection, unknown top-level keys rejected, nested unknown tolerated), render_projects table (migration 0031 CREATE-only, 0030->0031 PG-verified idempotent, unique (org_id, render_project_id), ix (org_id, brief_id)): register validates spec BEFORE persistence (422 carrying first 5 validator errors), brief existence gate 404, idempotent identical re-register no-op / changed brief+name+spec conflict 409, audited render_projects.registered {spec_version, output_count}, dry-run POST /render-specs/validate returns {valid, errors} with NO database dependency, GET/POST routes CLIP-033 pattern (list brief-scoped 404, get 404), OpenAPI probe 101 paths, land 7136d51 merge 03daf19, 27 new tests, suite 777 passed CI-env full services (90.76% cov) and 766+11 SQLite-only, ruff format/check clean, mypy clean 59 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 55/55 pre-advance"
+    "ticket": "CLIP-051",
+    "at": "2026-10-12T13:00:00+00:00",
+    "facts": "CLIP-051 FFmpeg worker/render pipeline complete: spec_fingerprint sha256 over canonical sorted-key compact JSON (key order irrelevant), build_render_argv pure (trim -t seconds, ASPECT_FILTERS scale+pad chains for 9:16/16:9/1:1 with black bars, optional loudnorm=I= when audio normalization enabled, -movflags +faststart, argv list shell=False no injection surface, FFMPEG_BIN env default ffmpeg), RenderRunner protocol + SubprocessRenderRunner (timeout RENDER_FFMPEG_TIMEOUT_SECONDS default 120 -> failed job, stderr tail <=512), render_jobs (migration 0032 CREATE-only, 0031->0032 PG-verified idempotent, unique (org_id, job_id)): create gated on render project 404 with spec fingerprint capture, idempotent same project / cross-project conflict 409, audited render_jobs.created; execute lifecycle PENDING|FAILED executable, SUCCEEDED|RUNNING refuse 409, workdir confinement via RENDER_WORKDIR default /tmp/clipos-render (CLIP-039 path policy, escape 422, input must exist, output .mp4 only), deterministic manifest {spec_fingerprint, argv, paths, duration, aspect, captions_requested, audio_normalized, returncode, completed_at} persisted on success + audited render_jobs.succeeded, failure stores error_ref + audited render_jobs.failed, real-ffmpeg testsrc integration tests (store + route level, skipif no ffmpeg), OpenAPI probe 105 paths, land a27ddd3 merge 108397e, 31 new tests, suite 803 passed CI-env full services (90.82% cov) and 792+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 60 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 56/56 pre-advance"
   },
-  "next_action": "Execute CLIP-051 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M12",
-  "tickets_completed": 56,
-  "updated_at": "2026-10-12T12:44:00+00:00",
+  "tickets_completed": 57,
+  "updated_at": "2026-10-12T13:00:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -193,6 +194,11 @@
       "ticket": "CLIP-050",
       "merge_sha": "03daf19",
       "summary": "Render project DSL (M12 opener): validate_render_spec pure validator (version=1, aspect in {1:1,16:9,9:16}, duration 1000..600000, captions/audio shapes with LUFS -24..-5, outputs 1..8 unique slugs, unknown top keys rejected), render_projects (migration 0031, unique (org, render_project), brief gate 404, validate-before-persist 422 with error list, idempotent, conflict 409, audited render_projects.registered), dry-run POST /render-specs/validate pure no-DB; 4 routes CLIP-033 pattern; 27 tests; suite 777 passed CI-env (90.76% cov); ruff/mypy/secret_scan/arch_guard green; land 7136d51, merge 03daf19"
+    },
+    {
+      "ticket": "CLIP-051",
+      "merge_sha": "108397e",
+      "summary": "FFmpeg worker/render pipeline: spec_fingerprint (sha256 canonical JSON), build_render_argv pure (trim + aspect scale/pad chains + optional loudnorm + faststart, shell=False), RenderRunner protocol + SubprocessRenderRunner (timeout, stderr tail), render_jobs lifecycle (migration 0032, idempotent create with fingerprint capture, workdir-confined execute per CLIP-039 policy, deterministic manifest, FAILED retry, SUCCEEDED refuse), audits created/succeeded/failed; 4 routes CLIP-033 pattern; 31 tests incl. real-ffmpeg testsrc integration; suite 803 passed CI-env (90.82% cov); ruff/mypy/secret_scan/arch_guard green; land a27ddd3, merge 108397e"
     }
   ],
   "tickets_total": 102,
@@ -241,6 +247,11 @@
       "ts": "2026-10-12T12:44:00+00:00",
       "event": "CLIP-050 landed via MiMo direct implementation (render project DSL + pure validator)",
       "sha": "03daf19"
+    },
+    {
+      "ts": "2026-10-12T13:00:00+00:00",
+      "event": "CLIP-051 landed via MiMo direct implementation (FFmpeg render pipeline, workdir-confined)",
+      "sha": "108397e"
     }
   ]
 }
