@@ -1154,7 +1154,7 @@ tickets:
 - id: CLIP-053
   milestone: M12
   title: Implement platform aspect variants/QC/render manifests
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-052
