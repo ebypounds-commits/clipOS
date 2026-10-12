@@ -126,6 +126,7 @@ def test_router_meta() -> None:
 @pytest.fixture()
 def client(engine: Engine, audit_log: Path, monkeypatch: pytest.MonkeyPatch):
     from fastapi.testclient import TestClient
+
     from clipos_api import main as main_mod
 
     monkeypatch.setattr(main_mod, "database_engine", lambda: engine)
@@ -192,10 +193,7 @@ def test_youtube_adapter_registered() -> None:
 
 
 def test_youtube_adapter_publish_deterministic() -> None:
-    from clipos_api.publishing import PublishRequest
-    from clipos_api.publishing import Visibility
-
-    from clipos_api.publishing import get_adapter
+    from clipos_api.publishing import PublishRequest, Visibility, get_adapter
 
     adapter = get_adapter("youtube")
     request = PublishRequest(

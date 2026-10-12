@@ -9,7 +9,7 @@ from typing import Annotated
 import sqlalchemy as sa
 from fastapi import Depends, FastAPI, HTTPException
 
-import clipos_api.tiktok_adapter  # noqa: F401  # registers TikTok adapter at import
+import clipos_api.tiktok_adapter  # registers TikTok adapter at import
 import clipos_api.youtube_adapter  # noqa: F401  # registers YouTube adapter at import
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
