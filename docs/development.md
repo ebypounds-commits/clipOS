@@ -460,3 +460,34 @@ persist as candidate_fingerprints.persisted. GET
 unknown candidate). This is candidate-level dedup and does not duplicate the
 manifest-level content_fingerprints from CLIP-032 (provenance scope).
 No LLM, network, or provider identifier is involved.
+
+## Review tooling and benchmark eval set (M10)
+
+clipos_api.clip_review (CLIP-045) implements the operator review half of
+M10: append-only APPROVE/REJECT decisions for clip candidates over the
+candidate_decisions table (migration  026, CREATE-only, unique
+(candidate_id, decision) — one row per kind, mirroring CLIP-036
+opportunity_decisions). ClipReviewStore.record_decision is idempotent per
+(kind, actor): identical re-record returns the stored row, a different actor
+raises (409). Recording transitions the candidate to APPROVED/REJECTED
+(CLIP-043 scoring treats decided candidates as frozen) and audits
+clip_candidates.decided. Routes: POST /clip-candidates/{candidate_id}/decisions
+(404/409) and GET /clip-candidates/{candidate_id}/decisions.
+
+Candidate responses now use ClipCandidateView (adds candidate_id and
+status to the CLIP-042 fields) so review surfaces can reference rows and
+render lifecycle state; the create request body remains
+ClipCandidateCreate. The web eviews page (/reviews?org=...) is a
+server component that loads candidates and scores, with a client board
+(ReviewBoard) for scoring (equal weights), duplicate checks
+(threshold input), and APPROVE/REJECT decisions (actor input) — organization
+comes from ?org= or NEXT_PUBLIC_ORG_ID.
+
+The benchmark eval set is services/api/tests/fixtures/clip_benchmark.json
+(version 1): frozen expectations for the deterministic helpers — 9 score
+cases (hand-computed components + totals), 6 overlap cases, and 5
+fingerprint cases (canonical hashlib sha256 outputs).
+	ests/test_clip_benchmark.py executes every case and fails on any behavior
+regression, with a floor assertion so the set cannot silently shrink to
+nothing. No LLM, network, or provider identifier is involved anywhere in
+this ticket.

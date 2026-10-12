@@ -8,6 +8,7 @@ export default function HomePage() {
       <nav>
         <Link href="/agents">Agent Registry</Link>
         <Link href="/models">Model Registry</Link>
+        <Link href="/reviews">Clip Review</Link>
       </nav>
     </main>
   );

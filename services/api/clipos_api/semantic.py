@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Mapped, mapped_column
 
 from clipos_api import audit
-from clipos_api.repository import Base, get_engine
+from clipos_api.repository import Base
 
 # ----------------------------------------------------------------------
 # Enums
@@ -559,8 +559,14 @@ router = APIRouter(tags=["semantic"])
 # ----------------------------------------------------------------------
 
 
-def _semantic_store(engine: Annotated[sa.Engine, Depends(get_engine)]) -> SemanticStore:
+def _semantic_store(engine: Annotated[sa.Engine, Depends(_database_engine)]) -> SemanticStore:
     return SemanticStore.from_engine(engine)
+
+
+def _database_engine() -> sa.Engine:
+    from clipos_api.main import database_engine
+
+    return database_engine()
 
 
 @router.post(
