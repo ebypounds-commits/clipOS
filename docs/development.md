@@ -477,7 +477,8 @@ clip_candidates.decided. Routes: POST /clip-candidates/{candidate_id}/decisions
 Candidate responses now use ClipCandidateView (adds candidate_id and
 status to the CLIP-042 fields) so review surfaces can reference rows and
 render lifecycle state; the create request body remains
-ClipCandidateCreate. The web eviews page (/reviews?org=...) is a
+ClipCandidateCreate. The web 
+eviews page (/reviews?org=...) is a
 server component that loads candidates and scores, with a client board
 (ReviewBoard) for scoring (equal weights), duplicate checks
 (threshold input), and APPROVE/REJECT decisions (actor input) — organization
@@ -495,7 +496,8 @@ this ticket.
 ## Research packets, claims, and claim sources (M11)
 
 clipos_api.research (CLIP-046) implements the first M11 content-planning
-model from  3_DOMAIN_DATA_MODEL.md: esearch_packets group findings for
+model from  3_DOMAIN_DATA_MODEL.md: 
+esearch_packets group findings for
 a topic (optional 	opic_id reference to the M8 topics table), claims
 carry statement rows inside a packet with an UNVERIFIED -> VERIFIED /
 DISPUTED veracity lifecycle, and claim_sources link each claim to source
@@ -512,7 +514,8 @@ stored row; different fields raise -> 409); source links are idempotent per
 quote_ref -> 409). Claims require an existing packet in the same org
 (404); veracity changes are audited as claims.veracity_changed with
 actor/reason references, same-value sets are no-ops, and reopening to
-UNVERIFIED is allowed. Registration audits: esearch_packets.registered,
+UNVERIFIED is allowed. Registration audits: 
+esearch_packets.registered,
 claims.registered, claim_sources.linked.
 
 Routes (CLIP-033 pattern: real runtime imports, providers before
@@ -581,7 +584,8 @@ claim, idempotent per (org_id, eval_id) (identical re-record no-op,
 different fields -> 409; unknown claim -> 404). Recording applies the
 deterministic veracity mapping **in the same transaction**: PASS ->
 VERIFIED, FAIL -> DISPUTED, INCONCLUSIVE -> unchanged (fail-safe), auditing
-claims.veracity_changed with eason_ref equal to the evaluation id so
+claims.veracity_changed with 
+eason_ref equal to the evaluation id so
 every veracity move points at its evidence; a second PASS after the claim
 is already VERIFIED records the evaluation without re-transitioning.
 method_ref is a free reference — a manual-review label or a Model
@@ -619,10 +623,12 @@ compatibility.
 validator — the single source of truth for spec validity, exercised both
 by registration (invalid spec -> 422 carrying the error list, nothing
 persisted) and by the dry-run route POST /render-specs/validate (returns
-{valid, errors} with no database access at all). ender_projects
+{valid, errors} with no database access at all). 
+ender_projects
 (migration  031, 0030 -> 0031) stores the validated document, idempotent
 per (org_id, render_project_id), brief-gated (404), conflict on changed
-fields (409), audited ender_projects.registered with spec version and
+fields (409), audited 
+ender_projects.registered with spec version and
 output count. Platform entries are generic slugs — no provider
 identifiers. Routes: POST/GET /render-projects, GET
 /render-projects/{render_project_id} (404), plus the pure validator
@@ -644,7 +650,8 @@ records captions_requested so the next ticket can act on it. argv lists
 are executed with shell=False — there is no injection surface; the
 ffmpeg binary is FFMPEG_BIN (default fmpeg), never a provider id.
 
-ender_jobs (migration  032, 0031 -> 0032) run the lifecycle
+
+ender_jobs (migration  032, 0031 -> 0032) run the lifecycle
 PENDING -> RUNNING -> SUCCEEDED / FAILED, idempotent per
 (org_id, job_id) at creation (bound to one project + spec fingerprint;
 same id for a different project -> 409). Execution
@@ -654,9 +661,12 @@ RENDER_WORKDIR (default /tmp/clipos-render) — escapes are 422 — the
 input must exist, the output must be .mp4, SUCCEEDED/RUNNING jobs
 refuse re-execution (409), FAILED jobs may retry. Success stores the
 manifest (fingerprint, argv, paths, flags, timestamps) and audits
-ender_jobs.succeeded; failure stores the stderr tail (<=512) as
-error_ref and audits ender_jobs.failed. Creation audits
-ender_jobs.created.
+
+ender_jobs.succeeded; failure stores the stderr tail (<=512) as
+error_ref and audits 
+ender_jobs.failed. Creation audits
+
+ender_jobs.created.
 
 SubprocessRenderRunner is the real backend (timeout
 RENDER_FFMPEG_TIMEOUT_SECONDS, default 120s, timeout -> failed job);
@@ -679,7 +689,8 @@ changed fields (409); audited caption_tracks.registered with segment
 count and language. segments_to_srt deterministically renders SubRip
 (HH:MM:SS,mmm cues, stable ordering) — the burn-in source.
 
-Pipeline integration in ender_pipeline.py (CLIP-051 module, extended):
+Pipeline integration in 
+ender_pipeline.py (CLIP-051 module, extended):
 
 - escape_filter_path escapes ffmpeg filter-argument metacharacters.
 - uild_render_argv gained srt_path / logo_path keywords: SRT cues
@@ -714,7 +725,8 @@ PENDING) produces workdir/<job_id>/<platform>.mp4, with platform slugs
 restricted to [A-Za-z0-9._-]+ (unsafe slug -> 422) and every path
 workdir-confined (CLIP-039 policy). Execution honors the CLIP-051 gates
 (input confined, job 404, SUCCEEDED/RUNNING 409, CLIP-052 prep
-failures 422) and clears the job's previous ender_outputs /
+failures 422) and clears the job's previous 
+ender_outputs /
 qc_reports rows first so retries never leave orphans.
 
 **QC** runs after each variant: ffprobe (env FFMPEG_BIN sibling
@@ -727,12 +739,16 @@ FAILED reports, never crashes. Any ffmpeg or QC failure marks the job
 FAILED (error_ref) while keeping completed rows for diagnosis.
 
 **Render manifests**: every successful variant stores a deterministic
-per-output manifest on ender_outputs (fingerprint, argv, paths,
+per-output manifest on 
+ender_outputs (fingerprint, argv, paths,
 captions/logo flags, timestamps); the job manifest aggregates
 {variant_count, outputs:[{platform, aspect, output_path, qc_status}]}.
-Tables: ender_outputs + qc_reports (migration  034, 0033 ->
-0034, CREATE-only). Audits: ender_outputs.rendered,
-qc_reports.recorded, plus ender_jobs.succeeded/failed.
+Tables: 
+ender_outputs + qc_reports (migration  034, 0033 ->
+0034, CREATE-only). Audits: 
+ender_outputs.rendered,
+qc_reports.recorded, plus 
+ender_jobs.succeeded/failed.
 
 Also in this ticket: uild_render_argv gained spect_override;
 shared CLIP-052 prep extracted to prep_job_assets (used by both
@@ -795,7 +811,8 @@ RENDER_WORKDIR (escape -> 422), audited image_assets.generated.
 
 generate_video writes through the CLIP-038 chain instead: confined
 output, then MediaIngestionStore.register_asset (kind=VIDEO,
-status=READY) + ecord_version v1 carrying the workdir-relative
+status=READY) + 
+ecord_version v1 carrying the workdir-relative
 storage_ref, byte count, and sha256 checksum (store enforces
 idempotency and monotonic max+1; conflict on changed title/storage_ref
 -> 409), audited ideo_generations.generated. Both flows gate on the
@@ -864,7 +881,8 @@ the CLIP-038 IngestionGate still governs any later media ingestion
 
 Audits: stock_searches.completed per run (org, alias, source_id, query
 prefix, count) plus the rights store's own
-ights_entities.creator_registered/source_registered/item_registered.
+
+ights_entities.creator_registered/source_registered/item_registered.
 Routes (CLIP-033 pattern): POST /stock-searches (returns persisted
 items), GET /stock-items?org_id=&provider_alias= (404 when the
 provider source has never been searched). Search query 1..200 chars,
@@ -884,7 +902,8 @@ edits). Idempotent per (org_id, label_id) via deterministic ids
 ({org}:ai-label:{sha1[:16]}); changed asset/generator/label ->
 409. Audited i_labels.recorded.
 
-ecord_generated_media is the single registration helper: it
+
+ecord_generated_media is the single registration helper: it
 **validates the brief before persisting anything** (no partial state),
 always registers the label, and — when a brief is present — appends a
 CLIP-049 	ransformation_records row (deterministic
@@ -964,9 +983,28 @@ SDK, no provider identifier. Real YouTube Data API / resumable-upload
 integration replaces this adapter when OAuth credentials are
 provisioned, registering under the same "youtube" key with no
 adapter-resolution code changes. The publishing route now selects
-the adapter per equest.platform via get_adapter(platform)
+the adapter per 
+equest.platform via get_adapter(platform)
 (falling back to Mock for any unregistered platform), so TikTok/Meta
 adapters (CLIP-060/061) simply register at import time the same way.
 
 M14 progress: CLIP-058 contract/policy + CLIP-059 YouTube adapter
 done; CLIP-060 TikTok and CLIP-061 Meta remain.
+
+## TikTok publishing/status adapter (M14)
+
+clipos_api.tiktok_adapter (CLIP-060) registers TikTokPublishingAdapter
+under the "tiktok" platform key at module import time via the CLIP-058
+adapter-registry seam (publishing.register_adapter). The mock adapter is
+a deterministic stand-in: health_check returns ok with generic
+capabilities ["upload", "privacy", "status", "creator_info"], publish
+derives external_id = "tt-mock-{sha1(key)[:10]}" with SUCCEEDED status,
+and get_status always returns SUCCEEDED — no network, no
+tiktok-businessapi SDK, no provider identifier. Real TikTok Content
+Posting API / video-upload integration replaces this adapter when OAuth
+credentials are provisioned, registering under the same "tiktok" key
+with no adapter-resolution code changes. No new migration —
+platform_accounts table (0039) already covers TikTok accounts.
+
+M14 progress: CLIP-058 contract/policy + CLIP-059 YouTube adapter +
+CLIP-060 TikTok adapter done; CLIP-061 Meta remains.
