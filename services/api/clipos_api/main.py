@@ -30,6 +30,7 @@ from clipos_api.opportunities import router as opportunity_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.repository import get_engine
+from clipos_api.research import router as research_router
 from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.rights_gate import router as rights_gate_router
 from clipos_api.rights_ledger import router as rights_ledger_router
@@ -68,6 +69,7 @@ app.router.routes.extend(semantic_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
+app.router.routes.extend(research_router.routes)
 app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)

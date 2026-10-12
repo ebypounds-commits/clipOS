@@ -43,6 +43,9 @@ _EXPECTED_TABLES = {
     "clip_scores",
     "candidate_fingerprints",
     "candidate_decisions",
+    "research_packets",
+    "claims",
+    "claim_sources",
 }
 
 
