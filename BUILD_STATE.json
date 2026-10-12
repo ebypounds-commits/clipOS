@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M12",
-  "current_ticket": "CLIP-052",
+  "current_ticket": "CLIP-053",
   "status": "M12_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -80,7 +80,8 @@
     "CLIP-048",
     "CLIP-049",
     "CLIP-050",
-    "CLIP-051"
+    "CLIP-051",
+    "CLIP-052"
   ],
   "blocked": [],
   "human_gates": {
@@ -91,9 +92,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-051",
-    "at": "2026-10-12T13:00:00+00:00",
-    "facts": "CLIP-051 FFmpeg worker/render pipeline complete: spec_fingerprint sha256 over canonical sorted-key compact JSON (key order irrelevant), build_render_argv pure (trim -t seconds, ASPECT_FILTERS scale+pad chains for 9:16/16:9/1:1 with black bars, optional loudnorm=I= when audio normalization enabled, -movflags +faststart, argv list shell=False no injection surface, FFMPEG_BIN env default ffmpeg), RenderRunner protocol + SubprocessRenderRunner (timeout RENDER_FFMPEG_TIMEOUT_SECONDS default 120 -> failed job, stderr tail <=512), render_jobs (migration 0032 CREATE-only, 0031->0032 PG-verified idempotent, unique (org_id, job_id)): create gated on render project 404 with spec fingerprint capture, idempotent same project / cross-project conflict 409, audited render_jobs.created; execute lifecycle PENDING|FAILED executable, SUCCEEDED|RUNNING refuse 409, workdir confinement via RENDER_WORKDIR default /tmp/clipos-render (CLIP-039 path policy, escape 422, input must exist, output .mp4 only), deterministic manifest {spec_fingerprint, argv, paths, duration, aspect, captions_requested, audio_normalized, returncode, completed_at} persisted on success + audited render_jobs.succeeded, failure stores error_ref + audited render_jobs.failed, real-ffmpeg testsrc integration tests (store + route level, skipif no ffmpeg), OpenAPI probe 105 paths, land a27ddd3 merge 108397e, 31 new tests, suite 803 passed CI-env full services (90.82% cov) and 792+11 SQLite-only, ruff format/check clean (I001 auto-fixes), mypy clean 60 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 56/56 pre-advance"
+    "ticket": "CLIP-052",
+    "at": "2026-10-12T13:21:00+00:00",
+    "facts": "CLIP-052 captions/audio normalization/branding complete: caption_tracks table (migration 0033 CREATE-only, 0032->0033 PG-verified idempotent, unique (org_id, track_id), ix (org_id, render_project_id)): register gates on render project 404, runs pure validate_caption_segments against the project spec duration_ms (non-empty, <=200 cues, each 1..200 chars, start<end within window, sorted non-overlap -> 422 with first 5 errors), idempotent identical re-register / changed segments+style+language conflict 409, audited caption_tracks.registered {segment_count, language}; CaptionSegment ordered-window pydantic validator; segments_to_srt deterministic SubRip (HH:MM:SS,mmm, stable numbering). render_pipeline extended: escape_filter_path (backslash/colon/quote), build_render_argv srt_path/logo_path kwargs — SRT merges into video chain (aspect,subtitles=filename='...'), logo switches to -filter_complex [0:v]<chain>,format=yuv420p[base];[base][1:v]overlay=W-w-16:16[v] with -map [v] -map 0:a? (top-right 16px inset); execute_job prep runs pre-RUNNING so failures stay retryable 422s: latest caption track written to workdir/<job_id>.srt and burned when captions enabled (absent track -> clean render, manifest captions_burned=false), inputs.logo_ref workdir-relative confined+must-exist (missing/escape -> 422, job stays PENDING); manifest += captions_burned, logo_overlaid; loudnorm continues to execute (CLIP-051) tested alongside captions/branding; 3 routes CLIP-033 pattern (path/body render_project_id match -> 422); real-ffmpeg caption burn-in test (skipif no ffmpeg); OpenAPI probe 107 paths, land c5154b0 merge 8d35894, 27 new tests, suite 830 passed CI-env full services (90.89% cov) and 819+11 SQLite-only, ruff format/check clean (TRY004 condition rewrite + F821 import fix), mypy clean 61 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 57/57 pre-advance"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -102,8 +103,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M12",
-  "tickets_completed": 57,
-  "updated_at": "2026-10-12T13:00:00+00:00",
+  "tickets_completed": 58,
+  "updated_at": "2026-10-12T13:21:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -199,6 +200,11 @@
       "ticket": "CLIP-051",
       "merge_sha": "108397e",
       "summary": "FFmpeg worker/render pipeline: spec_fingerprint (sha256 canonical JSON), build_render_argv pure (trim + aspect scale/pad chains + optional loudnorm + faststart, shell=False), RenderRunner protocol + SubprocessRenderRunner (timeout, stderr tail), render_jobs lifecycle (migration 0032, idempotent create with fingerprint capture, workdir-confined execute per CLIP-039 policy, deterministic manifest, FAILED retry, SUCCEEDED refuse), audits created/succeeded/failed; 4 routes CLIP-033 pattern; 31 tests incl. real-ffmpeg testsrc integration; suite 803 passed CI-env (90.82% cov); ruff/mypy/secret_scan/arch_guard green; land a27ddd3, merge 108397e"
+    },
+    {
+      "ticket": "CLIP-052",
+      "merge_sha": "8d35894",
+      "summary": "Captions/branding: caption_tracks (migration 0033, project gate, pure duration-bounded segment validation -> 422, idempotent, conflict 409, audited), segments_to_srt deterministic SubRip, build_render_argv srt/logo kwargs (merged subtitles chain, filter_complex overlay W-w-16:16 + explicit maps), execute_job pre-RUNNING prep (latest track -> SRT burn, logo_ref confined 422 leaves PENDING), manifest captions_burned/logo_overlaid; 3 routes; 27 tests incl real-ffmpeg burn-in; suite 830 passed CI-env (90.89% cov); ruff/mypy/secret_scan/arch_guard green; land c5154b0, merge 8d35894"
     }
   ],
   "tickets_total": 102,
@@ -252,6 +258,11 @@
       "ts": "2026-10-12T13:00:00+00:00",
       "event": "CLIP-051 landed via MiMo direct implementation (FFmpeg render pipeline, workdir-confined)",
       "sha": "108397e"
+    },
+    {
+      "ts": "2026-10-12T13:21:00+00:00",
+      "event": "CLIP-052 landed via MiMo direct implementation (caption tracks, SRT burn-in, logo overlay)",
+      "sha": "8d35894"
     }
   ]
 }

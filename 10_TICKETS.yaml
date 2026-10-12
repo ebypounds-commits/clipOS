@@ -1136,7 +1136,7 @@ tickets:
 - id: CLIP-052
   milestone: M12
   title: Implement captions/audio normalization/branding
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-051
