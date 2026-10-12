@@ -1323,7 +1323,7 @@ tickets:
 - id: CLIP-062
   milestone: M15
   title: Implement analytics provider contract
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-061

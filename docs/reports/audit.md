@@ -210,3 +210,21 @@
 **Gates**: ruff format/check clean, mypy 71 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 67/67
 
 **Note**: Meta developer documentation returned HTTP 400 at implementation time. Real adapter integration requires current-doc verification when credentials provisioned.
+
+## 2026-10-12 - CLIP-062 Analytics provider contract
+
+**Ticket**: CLIP-062 (M15)
+**Merge SHA**: e1dd57f
+**Status**: COMPLETE (68/102)
+
+**What was built**:
+- AnalyticsAdapter Protocol: provider-neutral analytics backend (health_check, collect_metrics)
+- MockAnalyticsAdapter: deterministic stand-in returning VIEW/LIKE/COMMENT metrics
+- MetricKind enum: VIEW, LIKE, COMMENT, SHARE, WATCH_TIME_MINUTES, IMPRESSION, CLICK_THROUGH
+- analytics_metrics table (migration 0040, CREATE-only, idempotent per (org, content, kind, collected_at window))
+- collect_analytics flow: calls adapter, persists normalized metrics, audited
+- 2 routes: POST /analytics/collect, GET /analytics/metrics?org_id=&content_ref=&kind=
+
+**Tests**: 13 new tests (mock adapter, store idempotency, collect flow, routes)
+**Suite**: 991 passed CI-env (91.35% cov), 980+11 SQLite-only
+**Gates**: ruff format/check clean, mypy 72 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 68/68, PG migration 0039->0040 verified
