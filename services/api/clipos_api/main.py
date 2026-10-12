@@ -35,6 +35,7 @@ from clipos_api.research import router as research_router
 from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.rights_gate import router as rights_gate_router
 from clipos_api.rights_ledger import router as rights_ledger_router
+from clipos_api.script_hooks import router as script_hooks_router
 from clipos_api.semantic import router as semantic_router
 from clipos_api.signal_sources import router as signal_sources_router
 from clipos_api.tool_policy import (
@@ -79,6 +80,7 @@ app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_review_router.routes)
 app.router.routes.extend(clip_scores_router.routes)
 app.router.routes.extend(content_planning_router.routes)
+app.router.routes.extend(script_hooks_router.routes)
 
 
 @app.get("/health")
