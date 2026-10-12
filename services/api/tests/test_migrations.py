@@ -41,6 +41,7 @@ _EXPECTED_TABLES = {
     "segment_embeddings",
     "clip_candidates",
     "clip_scores",
+    "candidate_fingerprints",
 }
 
 

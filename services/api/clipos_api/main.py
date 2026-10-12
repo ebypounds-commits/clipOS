@@ -14,6 +14,7 @@ from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.asset_validation import router as asset_validation_router
 from clipos_api.clip_candidates_router import router as clip_candidates_router
+from clipos_api.clip_dedup import router as clip_dedup_router
 from clipos_api.clip_scores import router as clip_scores_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
@@ -70,6 +71,7 @@ app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)
 app.router.routes.extend(clip_candidates_router.routes)
+app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_scores_router.routes)
 
 

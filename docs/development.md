@@ -430,3 +430,33 @@ clip_candidate.scored; decided candidates (APPROVED/REJECTED) are frozen and
 reject further scoring. Routes follow the CLIP-033 pattern (real runtime imports,
 Depends providers before decorators): POST /clip-candidates/{candidate_id}/scores,
 GET /clip-candidates/{candidate_id}/scores, GET /clip-scores?org_id=.
+
+## Candidate dedup and fingerprints (M10)
+
+clipos_api.clip_dedup (CLIP-044) implements deterministic duplicate/content
+fingerprint checks for clip candidates over the candidate_fingerprints table
+(migration  025, CREATE-only, unique per (org_id, candidate_id, kind)).
+Two independent signals: a **WINDOW** sha256 over the canonical
+window:asset:start-end identity (always persisted), and a **TRANSCRIPT**
+sha256 over the normalized (lowercased, whitespace-collapsed) transcript text
+inside the candidate window from the primary transcript (earliest
+created_at, segments ordered by seq so the hash is byte-stable; never
+persisted when the window has no text, so absent content can never collide).
+Pure helpers 
+ormalize_text, overlap_over_shorter (overlap / shorter
+window length), window_fingerprint, and 	ranscript_fingerprint are
+side-effect free and fully unit-tested.
+
+Fingerprints are persisted facts; duplicate relations are derived on demand:
+POST /clip-candidates/{candidate_id}/duplicate-check persists fingerprints
+idempotent per key (identical re-run no-op, different value -> 409),
+compares the window against other candidates on the same asset
+(overlap_over_shorter >= threshold, threshold caller-supplied in (0..1],
+default 0.5), and looks up org-wide TRANSCRIPT collisions held by other
+candidates. The report returns both fingerprint rows and window/content
+findings; the run is audited as clip_candidates.duplicate_check and each
+persist as candidate_fingerprints.persisted. GET
+/clip-candidates/{candidate_id}/fingerprints lists stored facts (404 on
+unknown candidate). This is candidate-level dedup and does not duplicate the
+manifest-level content_fingerprints from CLIP-032 (provenance scope).
+No LLM, network, or provider identifier is involved.
