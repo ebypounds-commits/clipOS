@@ -54,6 +54,7 @@ _EXPECTED_TABLES = {
     "factuality_evaluations",
     "transformation_records",
     "render_projects",
+    "render_jobs",
 }
 
 
