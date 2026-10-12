@@ -1028,7 +1028,7 @@ tickets:
 - id: CLIP-046
   milestone: M11
   title: Implement research packet and claim/source model
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-045

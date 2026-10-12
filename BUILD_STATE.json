@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M11",
-  "current_ticket": "CLIP-046",
+  "current_ticket": "CLIP-047",
   "status": "M11_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -73,7 +73,8 @@
     "CLIP-042",
     "CLIP-043",
     "CLIP-044",
-    "CLIP-045"
+    "CLIP-045",
+    "CLIP-046"
   ],
   "blocked": [],
   "human_gates": {
@@ -84,19 +85,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-045",
-    "at": "2026-10-12T11:17:00+00:00",
-    "facts": "CLIP-045 review UI and benchmark eval set complete (M10 FINAL — milestone closed): candidate_decisions table (migration 0026 CREATE-only, 0025->0026 PG-verified idempotent, unique (candidate_id, decision), append-only), ClipReviewStore.record_decision idempotent per (kind, actor) identical-noop / different-actor conflict 409, status transition APPROVED/REJECTED audited clip_candidates.decided, reversal structurally allowed (CLIP-036 contract), routes POST/GET /clip-candidates/{id}/decisions (404/409), ClipCandidateView response extension (+candidate_id, +status on create/get/list/extract) enabling review surfaces, /reviews web page (server component, await searchParams, NEXT_PUBLIC_ORG_ID fallback, client ReviewBoard: equal-weight scoring, dup-check threshold input, approve/reject actor input, router.refresh) + home nav link, benchmark eval set tests/fixtures/clip_benchmark.json v1 (9 score cases hand-computed, 6 overlap cases, 5 fingerprint sha256 baselines from canonical hashlib) + test_clip_benchmark.py runner with minimum-count guard, latent bug fixed: Depends(get_engine) made candidate+semantic HTTP routes demand ?url= (422) — switched to CLIP-033-proven _database_engine late-import pattern, land 5a5ac3d merge e655077, 18 new tests (test_clip_review 14 + test_clip_benchmark 4; suite delta 637->655 CI-env), suite 655 passed CI-env full services (89.90% cov) and 644+11 SQLite-only, ruff format/check clean, mypy clean 54 files (CI invocation + --python-version 3.12), tsc --noEmit clean, next build green (routes /, /agents, /models, /reviews), npm audit 0 vulnerabilities, OpenAPI probe 84 paths, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 50/50 pre-advance. M10 complete: CLIP-042..045 landed (extraction, scoring, dedup, review)."
+    "ticket": "CLIP-046",
+    "at": "2026-10-12T11:35:00+00:00",
+    "facts": "CLIP-046 research packet and claim/source model complete (M11 opener): research_packets (client-supplied natural id, idempotent per (org_id, research_packet_id), identical re-register no-op / different fields conflict 409, optional topic_id soft ref to M8 topics, audited research_packets.registered), claims (idempotent per (org_id, claim_id), requires existing packet in org -> 404, statement <=2048, veracity always created UNVERIFIED — verification only via audited route, audited claims.registered), claim_sources (idempotent per (claim_id, source_ref), SUPPORTS/CONTRADICTS, source_ref <=512 refs-only + quote_ref, identical re-link no-op / different fields conflict 409, audited claim_sources.linked), set_veracity (any transition incl. reopen to UNVERIFIED, same-value no-op, audited claims.veracity_changed with actor_ref+reason_ref), migration 0027 CREATE-only (0026->0027 PG-verified idempotent, 3 tables: research_packets/claims/claim_sources with unique (org,packet)/(org,claim)/(claim,ref) indexes), 8 routes CLIP-033 pattern (providers before decorators, _database_engine late import, path/body id match -> 422, _map_error 404/409/422), OpenAPI probe 89 paths, land cb2694c merge 1e90691, 31 new tests, suite 686 passed CI-env full services (90.12% cov) and 675+11 SQLite-only, ruff format/check clean (I001 auto-fixed in main.py), mypy clean 55 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 51/51 pre-advance"
   },
-  "next_action": "Execute CLIP-046 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-047 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M11",
-  "tickets_completed": 51,
-  "updated_at": "2026-10-12T11:17:00+00:00",
+  "tickets_completed": 52,
+  "updated_at": "2026-10-12T11:35:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -162,6 +163,11 @@
       "ticket": "CLIP-045",
       "merge_sha": "e655077",
       "summary": "Review UI + benchmark eval set (M10 final): candidate_decisions append-only (migration 0026, unique (candidate_id, decision)), ClipReviewStore idempotent per (kind, actor) with APPROVED/REJECTED status transition audited clip_candidates.decided, ClipCandidateView response (+candidate_id, +status), /reviews page (server + client board: equal-weight score, dup-check, approve/reject) + home nav, benchmark fixture clip_benchmark.json v1 (9 score + 6 overlap + 5 fingerprint cases) + runner with floor guard, fixed latent Depends(get_engine) ?url= 422 bug in candidates+semantic routers (_database_engine pattern); 18 tests (suite 637->655); suite 655 passed CI-env (89.90% cov); tsc + next build + npm audit green; land 5a5ac3d, merge e655077"
+    },
+    {
+      "ticket": "CLIP-046",
+      "merge_sha": "1e90691",
+      "summary": "Research packet and claim/source model (M11 opener): research_packets (client natural id, idempotent per (org, packet), optional topic_id ref, audited registered), claims (idempotent per (org, claim), packet must exist 404, always created UNVERIFIED, audited registered), claim_sources (idempotent per (claim, source_ref), SUPPORTS/CONTRADICTS, refs-only <=512, audited linked), set_veracity (audited claims.veracity_changed with actor/reason, same-value no-op, reopen allowed); migration 0027 CREATE-only (0026->0027 PG-verified, 3 tables); 8 routes CLIP-033 pattern (404/409/422, path/body id match 422); 31 tests; suite 686 passed CI-env (90.12% cov); ruff/mypy/secret_scan/arch_guard green; land cb2694c, merge 1e90691"
     }
   ],
   "tickets_total": 102,
@@ -185,6 +191,11 @@
       "ts": "2026-10-12T11:17:00+00:00",
       "event": "CLIP-045 landed via MiMo direct implementation; M10 COMPLETE (extraction, scoring, dedup, review); current -> CLIP-046 (M11)",
       "sha": "e655077"
+    },
+    {
+      "ts": "2026-10-12T11:35:00+00:00",
+      "event": "CLIP-046 landed via MiMo direct implementation (M11 opener: research packets + claims + claim sources)",
+      "sha": "1e90691"
     }
   ]
 }
