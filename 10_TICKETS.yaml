@@ -1208,7 +1208,7 @@ tickets:
 - id: CLIP-056
   milestone: M13
   title: Implement licensed stock/b-roll adapter interface
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-055

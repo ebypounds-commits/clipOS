@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M13",
-  "current_ticket": "CLIP-056",
+  "current_ticket": "CLIP-057",
   "status": "M13_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -85,7 +85,8 @@
     "CLIP-052",
     "CLIP-053",
     "CLIP-054",
-    "CLIP-055"
+    "CLIP-055",
+    "CLIP-056"
   ],
   "blocked": [],
   "human_gates": {
@@ -96,9 +97,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-055",
-    "at": "2026-10-12T14:28:00+00:00",
-    "facts": "CLIP-055 image/video generation adapters complete: ImageGenAdapter/VideoGenAdapter Protocols + Mocks — MockImageGenAdapter emits valid solid-color PNG via stdlib struct/zlib only (RGB from sha256(prompt), byte-identical per prompt, IHDR verified by struct.unpack in tests), MockVideoGenAdapter renders 1..30s black lavfi clip via ffmpeg argv-only 60s timeout (unavailable/failing -> ValueError -> 422); model_alias accepted as provenance reference only — no dispatch, no provider identifier anywhere; image_assets (migration 0036 CREATE-only, 0035->0036 PG-verified idempotent, unique (org_id, image_asset_id)): brief gate 404, prompt <=4000, model_alias required never defaulted, dims 64..2048, workdir-RELATIVE output_path, idempotent identical row returns without regenerating / changed brief+prompt+alias+dims+path conflict 409, audited image_assets.generated; generate_video writes CLIP-038 chain: confined output, MediaIngestionStore.register_asset (kind=VIDEO, status=READY) + record_version v1 (storage_ref relative, bytes, sha256 checksum) with store-enforced idempotency + monotonic max+1, conflict on changed title/storage_ref 409, audited video_generations.generated; both flows RENDER_WORKDIR-confined (escape 422); 5 routes CLIP-033 pattern (image list brief-gated 404, video get 404 without asset/version); OpenAPI probe 117 paths, land c9f99c9 merge 59be560, 20 new tests (struct PNG validity, prompt-color determinism, real-ffmpeg mp4 + checksum roundtrip, media-chain persistence, idempotency/conflicts, route probes), suite 889 passed CI-env full services (91.05% cov) and 878+11 SQLite-only, ruff format/check clean, mypy clean 64 files (CI invocation + --python-version 3.12; fixed list_versions call-arg against CLIP-038 signature), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 60/60 pre-advance. M13 progress: CLIP-054+055 done (056, 057 remain)"
+    "ticket": "CLIP-056",
+    "at": "2026-10-12T14:53:00+00:00",
+    "facts": "CLIP-056 licensed stock/b-roll adapter interface complete: StockClipAdapter Protocol + MockStockClipAdapter (sha1(provider_alias:normalized-query) deterministic, exactly 3 CC0-1.0 1920x1080 candidates, limit clamp 1..10, no network; provider addressed ONLY via required provider_alias registry ref — no vendor identifier anywhere); integrated onto the EXISTING M7 rights-entity chain with ZERO new tables — first draft defining a duplicate source_items table was caught at collection (sqlalchemy InvalidRequestError, M7 owns content_sources+source_items since migration 0011) and redesigned: deterministic org-embedded ids ({org}:stock-provider:{alias} / {org}:stock-feed:{alias} clipped 128) prevent cross-tenant collisions on bare-id keys, flow ensures Creator (contact_ref vault://stock/{alias} matching secrets-ref pattern) + PARTNER_FEED ContentSource, then RightsEntitiesStore.register_item idempotent on (source_id, external_ref) — repeat search no-op, changed title/license/dims/content_ref conflict 409, content_ref stock://{alias}/{provider_ref}, license evidence (license_ref, title, duration, dims, provider_alias) in item metadata for the M7 rights chain; IngestionGate still governs any later media download (out of scope, interface ticket only); audits stock_searches.completed per run + rights store creator/source/item audits; 2 routes CLIP-033 pattern (POST /stock-searches, GET /stock-items?org_id&provider_alias 404 when never searched); test_migrations gained a valid source_items assertion (table exists since 0011); OpenAPI probe 119 paths, land 384d911 merge c847692, 14 new tests, suite 906 passed CI-env full services (91.09% cov) and 895+11 SQLite-only, ruff format/check clean, mypy clean 65 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 61/61 pre-advance. M13 progress: CLIP-054/055/056 done (057 remains)"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -107,8 +108,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M13",
-  "tickets_completed": 61,
-  "updated_at": "2026-10-12T14:28:00+00:00",
+  "tickets_completed": 62,
+  "updated_at": "2026-10-12T14:53:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -224,6 +225,11 @@
       "ticket": "CLIP-055",
       "merge_sha": "59be560",
       "summary": "Image/video generation adapters: Protocols + Mocks (stdlib PNG from sha256(prompt), ffmpeg lavfi mp4; model_alias provenance-only no vendor ids), image_assets (migration 0036, brief gate, idempotent + conflict 409, relative output_path, audited generated), generate_video via CLIP-038 chain (READY VIDEO asset + v1 version storage_ref/bytes/sha256), workdir confinement both flows; 5 routes; 20 tests incl real-ffmpeg checksum roundtrip; suite 889 passed CI-env (91.05% cov); ruff/mypy/secret_scan/arch_guard green; land c9f99c9, merge 59be560"
+    },
+    {
+      "ticket": "CLIP-056",
+      "merge_sha": "c847692",
+      "summary": "Licensed stock/b-roll adapter interface: StockClipAdapter Protocol + Mock (deterministic CC0 candidates, provider via registry alias only), zero-migration integration onto M7 content_sources/source_items with org-embedded ids (cross-tenant safe), register_item idempotent/conflict, neutral stock:// content_ref, license evidence in metadata, audited stock_searches.completed; 2 routes; 14 tests; suite 906 passed CI-env (91.09% cov); ruff/mypy/secret_scan/arch_guard green; land 384d911, merge c847692"
     }
   ],
   "tickets_total": 102,
@@ -297,6 +303,11 @@
       "ts": "2026-10-12T14:28:00+00:00",
       "event": "CLIP-055 landed via MiMo direct implementation (image/video generation adapters)",
       "sha": "59be560"
+    },
+    {
+      "ts": "2026-10-12T14:53:00+00:00",
+      "event": "CLIP-056 landed via MiMo direct implementation (stock adapter on M7 rights chain, zero migrations)",
+      "sha": "c847692"
     }
   ]
 }
