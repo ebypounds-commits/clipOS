@@ -69,6 +69,13 @@ ASPECT_FILTERS: dict[str, str] = {
     ),
 }
 
+#: Aspect -> exact rendered resolution (QC expectations for CLIP-053).
+EXPECTED_RESOLUTIONS: dict[str, tuple[int, int]] = {
+    "9:16": (1080, 1920),
+    "16:9": (1920, 1080),
+    "1:1": (1080, 1080),
+}
+
 
 class RenderJobStatus(str, Enum):
     """Lifecycle status of one render job."""
@@ -97,6 +104,7 @@ def build_render_argv(
     *,
     srt_path: str | None = None,
     logo_path: str | None = None,
+    aspect_override: str | None = None,
 ) -> list[str]:
     """Pure deterministic ffmpeg argv for one render spec (no shell).
 
@@ -108,7 +116,7 @@ def build_render_argv(
     tracks); logo is the workdir-confined ``inputs.logo_ref`` file.
     """
     composition = spec.get("composition", {})
-    aspect = composition.get("aspect")
+    aspect = aspect_override if aspect_override is not None else composition.get("aspect")
     if aspect not in ALLOWED_ASPECTS:
         raise ValueError(f"unsupported aspect: {aspect}")
     duration_ms = composition.get("duration_ms")
@@ -148,6 +156,58 @@ def build_render_argv(
 
     argv.extend(["-movflags", "+faststart", str(output_path)])
     return argv
+
+
+def prep_job_assets(
+    session: Session,
+    *,
+    job_id: str,
+    org_id: str,
+    render_project_id: str,
+    spec: dict[str, Any],
+) -> tuple[str | None, str | None]:
+    """CLIP-052 asset prep shared by all execute paths.
+
+    Renders the latest caption track (when enabled) to a workdir-confined
+    SRT and resolves inputs.logo_ref inside the workdir. Must run BEFORE
+    the RUNNING stamp: every failure raises ValueError -> route 422 with
+    the job left untouched (retryable). Returns (srt_path, logo_path).
+    """
+    composition = spec.get("composition", {})
+    srt_path: str | None = None
+    captions = composition.get("captions")
+    if isinstance(captions, dict) and captions.get("enabled") is True:
+        track = session.scalars(
+            sa.select(CaptionTrackRecord)
+            .where(
+                CaptionTrackRecord.org_id == org_id,
+                CaptionTrackRecord.render_project_id == render_project_id,
+            )
+            .order_by(CaptionTrackRecord.created_at.desc(), CaptionTrackRecord.id.desc())
+        ).first()
+        if track is not None:
+            # confine: job ids are slug-patterned at request time, and the
+            # resolve() guard also blocks legacy traversal-shaped ids.
+            srt_file = confine_path(str(render_workdir() / f"{job_id}.srt"))
+            try:
+                srt_file.write_text(
+                    segments_to_srt(
+                        [CaptionSegment(**segment) for segment in (track.segments or [])]
+                    ),
+                    encoding="utf-8",
+                )
+            except OSError as exc:
+                raise ValueError(f"caption write failed: {exc}") from exc
+            srt_path = str(srt_file)
+
+    logo_path: str | None = None
+    inputs = spec.get("inputs")
+    logo_ref = inputs.get("logo_ref") if isinstance(inputs, dict) else None
+    if logo_ref is not None:
+        if not isinstance(logo_ref, str) or not (1 <= len(logo_ref) <= 256):
+            raise ValueError("inputs.logo_ref must be a string of 1..256 chars")
+        logo_path = str(confine_path(str(render_workdir() / logo_ref), must_exist=True))
+    return srt_path, logo_path
 
 
 @dataclass(frozen=True)
@@ -190,7 +250,7 @@ class RenderJobRequest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     org_id: str = Field(min_length=1, max_length=64)
-    job_id: str = Field(min_length=1, max_length=128)
+    job_id: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._-]+$")
 
 
 class RenderExecuteRequest(BaseModel):
@@ -422,41 +482,16 @@ class RenderJobStore:
 
             spec = dict(project.spec or {})
             composition = spec.get("composition", {})
-
-            # --- CLIP-052 prep: captions SRT + logo confinement.
-            # Runs BEFORE the RUNNING stamp: prep failures propagate as
-            # ValueErrors -> route 422 with the job left PENDING (retryable).
-            srt_path: str | None = None
             captions = composition.get("captions")
-            if isinstance(captions, dict) and captions.get("enabled") is True:
-                track = session.scalars(
-                    sa.select(CaptionTrackRecord)
-                    .where(
-                        CaptionTrackRecord.org_id == org_id,
-                        CaptionTrackRecord.render_project_id == job.render_project_id,
-                    )
-                    .order_by(CaptionTrackRecord.created_at.desc(), CaptionTrackRecord.id.desc())
-                ).first()
-                if track is not None:
-                    srt_file = render_workdir() / f"{job_id}.srt"
-                    try:
-                        srt_file.write_text(
-                            segments_to_srt(
-                                [CaptionSegment(**segment) for segment in (track.segments or [])]
-                            ),
-                            encoding="utf-8",
-                        )
-                    except OSError as exc:
-                        raise ValueError(f"caption write failed: {exc}") from exc
-                    srt_path = str(srt_file)
 
-            logo_path: str | None = None
-            inputs = spec.get("inputs")
-            logo_ref = inputs.get("logo_ref") if isinstance(inputs, dict) else None
-            if logo_ref is not None:
-                if not isinstance(logo_ref, str) or not (1 <= len(logo_ref) <= 256):
-                    raise ValueError("inputs.logo_ref must be a string of 1..256 chars")
-                logo_path = str(confine_path(str(render_workdir() / logo_ref), must_exist=True))
+            # --- CLIP-052 prep (shared): failures -> 422, job stays PENDING.
+            srt_path, logo_path = prep_job_assets(
+                session,
+                job_id=job_id,
+                org_id=org_id,
+                render_project_id=job.render_project_id,
+                spec=spec,
+            )
 
             job.status = RenderJobStatus.RUNNING.value
             job.updated_at = now
