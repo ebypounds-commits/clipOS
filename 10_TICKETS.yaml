@@ -1226,7 +1226,7 @@ tickets:
 - id: CLIP-057
   milestone: M13
   title: Implement generated-media provenance/AI-label metadata
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-056

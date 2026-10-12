@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M13",
-  "current_ticket": "CLIP-057",
-  "status": "M13_IN_PROGRESS",
+  "current_milestone": "M14",
+  "current_ticket": "CLIP-058",
+  "status": "M14_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -22,7 +22,8 @@
     "M9",
     "M10",
     "M11",
-    "M12"
+    "M12",
+    "M13"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -86,7 +87,8 @@
     "CLIP-053",
     "CLIP-054",
     "CLIP-055",
-    "CLIP-056"
+    "CLIP-056",
+    "CLIP-057"
   ],
   "blocked": [],
   "human_gates": {
@@ -97,9 +99,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-056",
-    "at": "2026-10-12T14:53:00+00:00",
-    "facts": "CLIP-056 licensed stock/b-roll adapter interface complete: StockClipAdapter Protocol + MockStockClipAdapter (sha1(provider_alias:normalized-query) deterministic, exactly 3 CC0-1.0 1920x1080 candidates, limit clamp 1..10, no network; provider addressed ONLY via required provider_alias registry ref — no vendor identifier anywhere); integrated onto the EXISTING M7 rights-entity chain with ZERO new tables — first draft defining a duplicate source_items table was caught at collection (sqlalchemy InvalidRequestError, M7 owns content_sources+source_items since migration 0011) and redesigned: deterministic org-embedded ids ({org}:stock-provider:{alias} / {org}:stock-feed:{alias} clipped 128) prevent cross-tenant collisions on bare-id keys, flow ensures Creator (contact_ref vault://stock/{alias} matching secrets-ref pattern) + PARTNER_FEED ContentSource, then RightsEntitiesStore.register_item idempotent on (source_id, external_ref) — repeat search no-op, changed title/license/dims/content_ref conflict 409, content_ref stock://{alias}/{provider_ref}, license evidence (license_ref, title, duration, dims, provider_alias) in item metadata for the M7 rights chain; IngestionGate still governs any later media download (out of scope, interface ticket only); audits stock_searches.completed per run + rights store creator/source/item audits; 2 routes CLIP-033 pattern (POST /stock-searches, GET /stock-items?org_id&provider_alias 404 when never searched); test_migrations gained a valid source_items assertion (table exists since 0011); OpenAPI probe 119 paths, land 384d911 merge c847692, 14 new tests, suite 906 passed CI-env full services (91.09% cov) and 895+11 SQLite-only, ruff format/check clean, mypy clean 65 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 61/61 pre-advance. M13 progress: CLIP-054/055/056 done (057 remains)"
+    "ticket": "CLIP-057",
+    "at": "2026-10-12T15:15:00+00:00",
+    "facts": "CLIP-057 generated-media provenance/AI-label metadata complete (M13 FINAL - milestone closed): ai_labels table (migration 0037 CREATE-only, 0036->0037 PG-verified idempotent, unique (org_id, label_id), ix (org_id, asset_kind)) — MediaAssetKind AUDIO/IMAGE/VIDEO reuse, required generator_alias Model Registry ref never defaulted, LabelValue AI_GENERATED/AI_ASSISTED, deterministic id {org}:ai-label:{sha1[:16]}; idempotent identical no-op / changed asset+generator+label+detail conflict 409, audited ai_labels.recorded; record_generated_media validates brief BEFORE persisting (no partial state), registers label, and for brief-linked generations appends CLIP-049 transformation row (deterministic {org}:gen:{sha1[:16]}, from gen-prompt:{sha1(prompt)[:16]} -> asset ref, method <kind>-generation) so synthetic outputs enter the 07 rights chain; AUTO-LABELING wired into all three generation routes (voice synthesize -> AUDIO label; image generation -> IMAGE label + transformation; video generation -> VIDEO label + transformation) with flows untouched; explicit POST /generated-media-metadata for workflow-side registration; routes GET /ai-labels (kind filter) + GET /ai-labels/{label_id} 404; migration 0037, OpenAPI probe 122 paths, land cc9ed61 merge 8a1f2c2, 15 new tests (incl. image auto-label + transformation route roundtrip), suite 921 passed CI-env full services (91.12% cov) and 910+11 SQLite-only, ruff format/check clean (dup future-import F401 I001 B008 fixes), mypy clean 66 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 62/62 pre-advance. M13 complete: CLIP-054 TTS, 055 image/video, 056 stock, 057 labels/provenance"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -107,9 +109,9 @@
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M13",
-  "tickets_completed": 62,
-  "updated_at": "2026-10-12T14:53:00+00:00",
+  "milestone": "M14",
+  "tickets_completed": 63,
+  "updated_at": "2026-10-12T15:15:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -230,6 +232,11 @@
       "ticket": "CLIP-056",
       "merge_sha": "c847692",
       "summary": "Licensed stock/b-roll adapter interface: StockClipAdapter Protocol + Mock (deterministic CC0 candidates, provider via registry alias only), zero-migration integration onto M7 content_sources/source_items with org-embedded ids (cross-tenant safe), register_item idempotent/conflict, neutral stock:// content_ref, license evidence in metadata, audited stock_searches.completed; 2 routes; 14 tests; suite 906 passed CI-env (91.09% cov); ruff/mypy/secret_scan/arch_guard green; land 384d911, merge c847692"
+    },
+    {
+      "ticket": "CLIP-057",
+      "merge_sha": "8a1f2c2",
+      "summary": "Generated-media provenance/AI-label metadata (M13 final): ai_labels (migration 0037, deterministic org-scoped ids, generator_alias required, idempotent + conflict 409, audited), record_generated_media (brief pre-validation, CLIP-049 transformation linkage for image/video), auto-labeling wired into all three generation routes, explicit metadata endpoint; 3 routes; 15 tests; suite 921 passed CI-env (91.12% cov); ruff/mypy/secret_scan/arch_guard green; land cc9ed61, merge 8a1f2c2"
     }
   ],
   "tickets_total": 102,
@@ -308,6 +315,11 @@
       "ts": "2026-10-12T14:53:00+00:00",
       "event": "CLIP-056 landed via MiMo direct implementation (stock adapter on M7 rights chain, zero migrations)",
       "sha": "c847692"
+    },
+    {
+      "ts": "2026-10-12T15:15:00+00:00",
+      "event": "CLIP-057 landed via MiMo direct implementation; M13 COMPLETE (TTS, image/video, stock, labels); current -> CLIP-058 (M14)",
+      "sha": "8a1f2c2"
     }
   ]
 }
