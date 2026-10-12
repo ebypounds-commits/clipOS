@@ -56,3 +56,12 @@
 - Routes (5, CLIP-033 pattern, _map_error 404/409/422): POST/GET /content-briefs, POST /content-briefs/{id}/plan, GET /content-briefs/{id}/plan (ContentPlan | null).
 - Gates (observed): ruff format/check clean (2 I001 auto-fixes); mypy clean 56 files (CI + --python-version 3.12); pytest SQLite 696+11 (89.86% cov); pytest CI-env full services 707 passed (90.29% cov); PG upgrade 0027->0028 idempotent (current=0028 head); OpenAPI probe 92 paths; secret_scan clean; architecture_guard 6/6; state_audit verify 52/52; 21 new tests in test_content_planning.py (suite delta 686->707 CI-env).
 - Land: worktree commit d00c010, merge 29cfa73 into main; state advance 53/102, current -> CLIP-048 (hooks/scripts/versioning; next free migration 0029).
+
+## 2026-10-12 - CLIP-048 hooks/scripts/versioning (single-orchestrator direct implementation)
+- script_hooks.py: HookCreate/Hook (semantic idempotent key (org_id, brief_id, text) unique index, server uuid hook_id, brief existence gate), Script (client script_id, idempotent per (org, script_id), conflict on different brief/title, current_version starts 0), ScriptVersionRequest/ScriptVersion (append-only bodies <=8192).
+- Versioning semantics: save_version — latest body == request body => return latest untouched (no-op regardless of author); changed body => mint version N+1, bump scripts.current_version, audit scripts.version_appended {version, author_ref}; list_versions ordered asc, 404 unknown script.
+- Migration 0029 (0028->0029 PG idempotent): hooks uq (org, brief, text) + ix (org, brief); scripts uq (org, script_id) + ix (org, brief); script_versions uq (org, script_id, version) + ix (org, script_id).
+- Routes (7, CLIP-033 pattern, _map_error 404/409/422): POST /hooks, GET /hooks (404 unknown brief), POST/GET /scripts, GET /scripts/{id}, POST /scripts/{id}/versions, GET /scripts/{id}/versions.
+- Audits: hooks.registered (text as 64-char prefix), scripts.registered, scripts.version_appended.
+- Gates (observed): ruff format/check clean (2 I001 auto-fixes); mypy clean 57 files (CI + --python-version 3.12); pytest SQLite 718+11 (90.09% cov); pytest CI-env full services 729 passed (90.51% cov); PG upgrade 0028->0029 idempotent (current=0029 head); OpenAPI probe 96 paths; secret_scan clean; architecture_guard 6/6; state_audit verify 53/53; 22 new tests in test_script_hooks.py (suite delta 707->729 CI-env).
+- Land: worktree commit b52f670, merge 8f792ad into main; state advance 54/102, current -> CLIP-049 (factuality/transformation evals — FINAL M11 ticket; next free migration 0030).

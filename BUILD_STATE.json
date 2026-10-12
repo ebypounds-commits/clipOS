@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M11",
-  "current_ticket": "CLIP-048",
+  "current_ticket": "CLIP-049",
   "status": "M11_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -75,7 +75,8 @@
     "CLIP-044",
     "CLIP-045",
     "CLIP-046",
-    "CLIP-047"
+    "CLIP-047",
+    "CLIP-048"
   ],
   "blocked": [],
   "human_gates": {
@@ -86,19 +87,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-047",
-    "at": "2026-10-12T11:48:00+00:00",
-    "facts": "CLIP-047 brief/content-plan engine complete: content_briefs (client natural id, idempotent per (org_id, brief_id), identical re-register no-op / different fields conflict 409, requires existing research packet 404, platforms <=16 entries each 1..64 chars via pydantic validator, audited content_briefs.registered), derive_plan_payload pure deterministic (sorted claim_ids for byte-stable payloads, claim_count, echoed objective/platforms/refs — no content blobs), generate_plan factuality-gated fail-closed (422 'no verified claims available for planning' when packet yields zero VERIFIED claims; UNVERIFIED/DISPUTED never planned), append-versioned content_plans (migration 0028 CREATE-only, 0027->0028 PG-verified idempotent, unique (org_id, brief_id, version), identical re-derive returns latest untouched, changed claim state mints next version + audits content_plans.generated with version/claim_count), get_latest_plan (null when none), 5 routes CLIP-033 pattern (_map_error 404/409/422, POST plan body org_id + GET plan query), OpenAPI probe 92 paths, land d00c010 merge 29cfa73, 21 new tests, suite 707 passed CI-env full services (90.29% cov) and 696+11 SQLite-only, ruff format/check clean (2 I001 auto-fixes), mypy clean 56 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 52/52 pre-advance"
+    "ticket": "CLIP-048",
+    "at": "2026-10-12T12:16:00+00:00",
+    "facts": "CLIP-048 hooks/scripts/versioning complete: hooks (semantic idempotent per (org_id, brief_id, text) unique index, brief existence gate 404, server uuid hook_id, text <=512, audited hooks.registered), scripts (client script_id idempotent per (org_id, script_id), brief existence gate, conflict on different brief/title 409, current_version starts 0, audited scripts.registered), script_versions append-only (migration 0029 CREATE-only, 0028->0029 PG-verified idempotent, unique (org_id, script_id, version)): save_version identical body re-save no-op regardless of author, changed body mints N+1 + bumps scripts.current_version + audits scripts.version_appended {version, author_ref}, body <=8192, list_versions ordered, 7 routes CLIP-033 pattern (_map_error 404/409/422, GET list routes 404 on unknown brief/script), OpenAPI probe 96 paths, land b52f670 merge 8f792ad, 22 new tests, suite 729 passed CI-env full services (90.51% cov) and 718+11 SQLite-only, ruff format/check clean (2 I001 auto-fixes), mypy clean 57 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 53/53 pre-advance"
   },
-  "next_action": "Execute CLIP-048 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-049 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M11",
-  "tickets_completed": 53,
-  "updated_at": "2026-10-12T11:48:00+00:00",
+  "tickets_completed": 54,
+  "updated_at": "2026-10-12T12:16:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -174,6 +175,11 @@
       "ticket": "CLIP-047",
       "merge_sha": "29cfa73",
       "summary": "Brief/content-plan engine: content_briefs (client natural id, idempotent per (org, brief), requires research packet, platforms validated 1..64 x <=16, audited content_briefs.registered), derive_plan_payload pure (sorted claim_ids byte-stable, claim_count, refs-only payload), generate_plan fail-closed factuality gate (422 when zero VERIFIED claims; UNVERIFIED/DISPUTED never planned), append-versioned content_plans (migration 0028, unique (org, brief, version), identical re-derive no-op, changed claims mint next version + audited content_plans.generated); 5 routes CLIP-033 pattern; 21 tests; suite 707 passed CI-env (90.29% cov); ruff/mypy/secret_scan/arch_guard green; land d00c010, merge 29cfa73"
+    },
+    {
+      "ticket": "CLIP-048",
+      "merge_sha": "8f792ad",
+      "summary": "Hooks/scripts/versioning: hooks (semantic idempotent per (org, brief, text), brief gate 404, audited hooks.registered), scripts (client id, idempotent per (org, script_id), conflict 409, current_version 0, audited scripts.registered), script_versions append-only (migration 0029, unique (org, script, version), identical body no-op, changed body N+1 + current_version bump + audited scripts.version_appended, body <=8192); 7 routes CLIP-033 pattern; 22 tests; suite 729 passed CI-env (90.51% cov); ruff/mypy/secret_scan/arch_guard green; land b52f670, merge 8f792ad"
     }
   ],
   "tickets_total": 102,
@@ -207,6 +213,11 @@
       "ts": "2026-10-12T11:48:00+00:00",
       "event": "CLIP-047 landed via MiMo direct implementation (brief/content-plan engine, factuality-gated)",
       "sha": "29cfa73"
+    },
+    {
+      "ts": "2026-10-12T12:16:00+00:00",
+      "event": "CLIP-048 landed via MiMo direct implementation (hooks + scripts + append-only versioning)",
+      "sha": "8f792ad"
     }
   ]
 }

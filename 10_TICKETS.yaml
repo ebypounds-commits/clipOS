@@ -1064,7 +1064,7 @@ tickets:
 - id: CLIP-048
   milestone: M11
   title: Implement hooks/scripts/versioning
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-047
