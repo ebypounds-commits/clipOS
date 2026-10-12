@@ -571,3 +571,33 @@ GET /hooks?org_id=&brief_id= (404 unknown brief), POST/GET /scripts,
 GET /scripts/{script_id}, POST /scripts/{script_id}/versions,
 GET /scripts/{script_id}/versions (404 unknown script). No LLM,
 network, or provider identifier is involved.
+
+## Factuality evaluations and transformation records (M11 final)
+
+clipos_api.content_evals (CLIP-049) closes M11 with the two evaluation
+artifacts. **Factuality evaluations** (actuality_evaluations, migration
+ 030) are append-only PASS/FAIL/INCONCLUSIVE rows against a CLIP-046
+claim, idempotent per (org_id, eval_id) (identical re-record no-op,
+different fields -> 409; unknown claim -> 404). Recording applies the
+deterministic veracity mapping **in the same transaction**: PASS ->
+VERIFIED, FAIL -> DISPUTED, INCONCLUSIVE -> unchanged (fail-safe), auditing
+claims.veracity_changed with eason_ref equal to the evaluation id so
+every veracity move points at its evidence; a second PASS after the claim
+is already VERIFIED records the evaluation without re-transitioning.
+method_ref is a free reference — a manual-review label or a Model
+Registry alias for model-assisted runs — never a hard-coded provider
+string; evidence_ref stores a reference only.
+
+**Transformation records** (	ransformation_records, same migration)
+implement the 07 rights-chain row: rom_ref -> 	o_ref -> method for
+one brief (refs <= 255 chars to keep the unique index under the PG btree
+entry limit), idempotent per (org_id, transformation_id), brief
+existence gated (404), audited 	ransformation_records.registered.
+Together they maintain the source -> transcript -> script -> render chain
+mandated by 07_SECURITY.
+
+Routes (CLIP-033 pattern): POST/GET /factuality-evaluations
+(claim-scoped GET 404s) and POST/GET /transformation-records
+(brief-scoped GET 404s). Audits: actuality_evaluations.recorded,
+claims.veracity_changed, 	ransformation_records.registered. No LLM,
+network, or provider identifier participates.

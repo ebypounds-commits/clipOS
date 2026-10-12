@@ -51,6 +51,8 @@ _EXPECTED_TABLES = {
     "hooks",
     "scripts",
     "script_versions",
+    "factuality_evaluations",
+    "transformation_records",
 }
 
 
