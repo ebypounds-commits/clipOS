@@ -1032,3 +1032,26 @@ M14 COMPLETE: CLIP-058 contract/policy + CLIP-059 YouTube adapter +
 CLIP-060 TikTok adapter + CLIP-061 Meta adapter done. All three
 platform adapters (YouTube, TikTok, Meta) registered at import with
 deterministic mocks.
+
+## Analytics provider contract (M15)
+
+clipos_api.analytics (CLIP-062) opens M15 with the PRD §H analytics
+foundation. AnalyticsAdapter is the provider-neutral Protocol
+(health_check with capabilities, collect_metrics returning normalized
+metrics from a published asset); MockAnalyticsAdapter is the
+deterministic stand-in that returns three metrics (VIEW, LIKE, COMMENT
+with value=100/10/5) — no network, no vendor SDK, no provider
+identifier.
+
+MetricKind enum covers platform-generic types: VIEW, LIKE, COMMENT,
+SHARE, WATCH_TIME_MINUTES, IMPRESSION, CLICK_THROUGH. AnalyticsMetric
+carries kind, value (float), unit, collected_at. AnalyticsSnapshot
+bundles metrics for one content_ref from one collection run.
+
+analytics_metrics (migration 0040, 0039 -> 0040, CREATE-only) stores
+normalized measurements idempotent per (org_id, content_ref, kind,
+collected_at window) — same window, same kind, same value is a no-op.
+collect_analytics flow calls the adapter then persists. Routes
+(CLIP-033 pattern): POST /analytics/collect, GET
+/analytics/metrics?org_id=&content_ref=&kind=. Audited
+analytics_metrics.collected. No LLM.
