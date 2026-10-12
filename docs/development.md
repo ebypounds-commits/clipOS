@@ -1008,3 +1008,27 @@ platform_accounts table (0039) already covers TikTok accounts.
 
 M14 progress: CLIP-058 contract/policy + CLIP-059 YouTube adapter +
 CLIP-060 TikTok adapter done; CLIP-061 Meta remains.
+
+## Meta (Facebook/Instagram) publishing/status adapter (M14)
+
+clipos_api.meta_adapter (CLIP-061) registers MetaPublishingAdapter
+under the "meta" platform key at module import time via the CLIP-058
+adapter-registry seam (publishing.register_adapter). The mock adapter is
+a deterministic stand-in: health_check returns ok with generic
+capabilities ["upload", "page_publish", "status", "privacy"], publish
+derives external_id = "meta-mock-{sha1(key)[:10]}" with SUCCEEDED
+status, and get_status always returns SUCCEEDED — no network, no
+facebook-business SDK, no provider identifier. Real Meta Graph API /
+video-upload integration replaces this adapter when App credentials are
+provisioned, registering under the same "meta" key with no
+adapter-resolution code changes. No new migration — platform_accounts
+table (0039) already covers Meta accounts.
+
+Meta developer documentation returned HTTP 400 at time of implementation
+(2026-10-12). Real adapter integration requires current-doc verification
+when credentials are provisioned.
+
+M14 COMPLETE: CLIP-058 contract/policy + CLIP-059 YouTube adapter +
+CLIP-060 TikTok adapter + CLIP-061 Meta adapter done. All three
+platform adapters (YouTube, TikTok, Meta) registered at import with
+deterministic mocks.
