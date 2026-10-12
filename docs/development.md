@@ -771,3 +771,40 @@ asset (404), confines output_path under RENDER_WORKDIR (escape ->
 /voice-assets/{voice_asset_id} (404), POST
 /voice-assets/{voice_asset_id}/synthesize (Mock adapter; the injectable
 TTSAdapter parameter is the future provider seam). No LLM involved.
+
+## Image/video generation adapters (M13)
+
+clipos_api.generation_adapters (CLIP-055) extends the CLIP-040/054
+adapter discipline to media generation. ImageGenAdapter and
+VideoGenAdapter are provider-neutral Protocols; both mocks take the
+caller's Model Registry alias as a **provenance reference only** (no
+dispatch, no provider identifier anywhere): MockImageGenAdapter
+emits a valid solid-color PNG purely from stdlib struct/zlib with the
+RGB derived from sha256(prompt) (byte-identical per prompt),
+MockVideoGenAdapter renders a 1..30s black lavfi clip via ffmpeg
+(argv-only, 60s timeout; unavailable/failing ffmpeg -> ValueError ->
+422).
+
+Persistence: image_assets (migration  036, 0035 -> 0036) — unique
+(org_id, image_asset_id), content-brief gate (404), prompt <=4000,
+required model_alias (never defaulted), dimensions 64..2048, and a
+workdir-**relative** output_path. generate_image is idempotent: an
+identical existing row returns without regenerating (brief/prompt/alias/
+dimensions/path are the conflict key -> 409), output confined under
+RENDER_WORKDIR (escape -> 422), audited image_assets.generated.
+
+generate_video writes through the CLIP-038 chain instead: confined
+output, then MediaIngestionStore.register_asset (kind=VIDEO,
+status=READY) + ecord_version v1 carrying the workdir-relative
+storage_ref, byte count, and sha256 checksum (store enforces
+idempotency and monotonic max+1; conflict on changed title/storage_ref
+-> 409), audited ideo_generations.generated. Both flows gate on the
+brief and are idempotent end-to-end.
+
+Routes (CLIP-033 pattern): POST/GET /image-generations (list 404 on
+unknown brief, get 404), POST /video-generations,
+GET /video-generations/{media_asset_id} (404 without asset or
+version). Tests cover PNG validity via struct, prompt-color
+determinism, real-ffmpeg mp4 bytes (skipif absent), full media-chain
+persistence, checksum round-trips, idempotency/conflicts, and route
+probes. No LLM anywhere in this ticket.
