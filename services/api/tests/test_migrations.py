@@ -40,6 +40,7 @@ _EXPECTED_TABLES = {
     "semantic_segments",
     "segment_embeddings",
     "clip_candidates",
+    "clip_scores",
 }
 
 
