@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M13",
-  "current_ticket": "CLIP-054",
+  "current_ticket": "CLIP-055",
   "status": "M13_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -83,7 +83,8 @@
     "CLIP-050",
     "CLIP-051",
     "CLIP-052",
-    "CLIP-053"
+    "CLIP-053",
+    "CLIP-054"
   ],
   "blocked": [],
   "human_gates": {
@@ -94,9 +95,9 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-053",
-    "at": "2026-10-12T13:49:00+00:00",
-    "facts": "CLIP-053 platform aspect variants/QC/render manifests complete (M12 FINAL - milestone closed): render_variants.execute_variants renders every spec outputs[] entry (per-output aspect override defaulting to composition aspect, validated against {1:1,16:9,9:16} BEFORE RUNNING -> 422 with job left PENDING; platform slug regex [A-Za-z0-9._-]+ filename-safe -> 422; all paths workdir-confined, output workdir/<job_id>/<platform>.mp4), same gates as execute_job (confined input, job 404, SUCCEEDED/RUNNING 409, CLIP-052 prep 422), re-run clears prior render_outputs+qc_reports rows for the job (no orphan retries), ffprobe QC (FFMPEG_BIN sibling FFPROBE_BIN default ffprobe) feeding pure evaluate_qc: size>0 + duration within +/-15% of spec window + exact width/height match EXPECTED_RESOLUTIONS (1080x1920/1920x1080/1080x1080) -> PASSED/FAILED persisted to qc_reports (unique (org, output), checks JSON; probe failure = FAILED report fail-closed never crash), any ffmpeg/QC failure marks job FAILED with error_ref while keeping completed rows; per-output deterministic manifests on render_outputs (fingerprint, argv, paths, captions/logo flags, completed_at) + job manifest {variant_count, outputs summaries}; migration 0034 CREATE-only (0033->0034 PG-verified idempotent: render_outputs uq (org, job, platform) + qc_reports uq (org, output)); audits render_outputs.rendered, qc_reports.recorded, render_jobs.succeeded/failed; pipeline hardening in same change: shared prep_job_assets extraction, SRT path confine fix (latent traversal via job id), RenderJobRequest.job_id slug pattern, build_render_argv aspect_override kwarg; 3 routes CLIP-033 pattern (execute via query org_id+input_path, outputs list 404, qc-report null when absent), OpenAPI probe 110 paths, land 0cf78d0 merge d08ca8c, 22 new tests incl real-ffmpeg two-platform fanout with real ffprobe QC, suite 852 passed CI-env full services (90.86% cov) and 841+11 SQLite-only, ruff format/check clean (TRY004 type() rewrites, I001), mypy clean 62 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 58/58 pre-advance. M12 complete: CLIP-050 DSL, 051 pipeline, 052 captions/branding, 053 variants/QC/manifests"
+    "ticket": "CLIP-054",
+    "at": "2026-10-12T14:08:00+00:00",
+    "facts": "CLIP-054 TTS provider adapter complete (M13 opener): TTSAdapter Protocol (synthesize(text, voice_ref, model_alias) -> bytes) + MockTTSAdapter deterministic stand-in — stdlib wave silence WAV (8kHz mono 16-bit), duration synthesis_duration_ms = text/15cps clamped 500..15000ms (byte-stable per text), no network, no vendor SDK, no provider identifier; voice_assets table (migration 0035 CREATE-only, 0034->0035 PG-verified idempotent, unique (org_id, voice_asset_id)): register idempotent identical no-op / changed label+voice_ref+model_alias conflict 409, model_alias REQUIRED (pydantic rejects empty, never defaulted — Model Registry alias for future provider dispatch), provider-neutral voice_ref <=255, audited voice_assets.registered; synthesize_speech: asset 404, output confine_path RENDER_WORKDIR escape 422, OSError write 422, audits voice_synthesis.completed {model_alias, bytes_written, duration_ms, output_path}; 4 routes CLIP-033 pattern (register/get/list/synthesize; Mock adapter injected at route, TTSAdapter is the future provider seam); OpenAPI probe 113 paths, land fa648df merge 21c2a8e, 17 new tests (wave round-trip validity, duration bounds, mock determinism, alias-required ValidationError, 404/409/422 routes), suite 869 passed CI-env full services (90.98% cov) and 858+11 SQLite-only, ruff format/check clean, mypy clean 63 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 59/59 pre-advance. Milestone status: M13 in progress (CLIP-054 of 054-057 done)"
   },
   "next_action": "Execute CLIP-052 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
@@ -105,8 +106,8 @@
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M13",
-  "tickets_completed": 59,
-  "updated_at": "2026-10-12T13:49:00+00:00",
+  "tickets_completed": 60,
+  "updated_at": "2026-10-12T14:08:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -212,6 +213,11 @@
       "ticket": "CLIP-053",
       "merge_sha": "d08ca8c",
       "summary": "Platform aspect variants/QC/render manifests (M12 final): execute_variants fanout (per-output aspect override validated pre-RUNNING, slug-safe filenames, workdir-confined, retry clears stale rows), ffprobe QC pure evaluate_qc (+/-15% duration, exact resolution, size; fail-closed), render_outputs + qc_reports manifests (migration 0034 PG-verified), prep_job_assets extraction + SRT confine fix + job_id slug pattern; 3 routes; 22 tests incl real-ffmpeg/ffprobe fanout; suite 852 passed CI-env (90.86% cov); ruff/mypy/secret_scan/arch_guard green; land 0cf78d0, merge d08ca8c"
+    },
+    {
+      "ticket": "CLIP-054",
+      "merge_sha": "21c2a8e",
+      "summary": "TTS provider adapter (M13 opener): TTSAdapter Protocol + MockTTSAdapter (stdlib wave silence WAV, deterministic duration), voice_assets (migration 0035, idempotent, model_alias required registry ref, audited registered), synthesize_speech (404/422 confinement, audited voice_synthesis.completed); 4 routes CLIP-033 pattern; 17 tests; suite 869 passed CI-env (90.98% cov); ruff/mypy/secret_scan/arch_guard green; land fa648df, merge 21c2a8e"
     }
   ],
   "tickets_total": 102,
@@ -275,6 +281,11 @@
       "ts": "2026-10-12T13:49:00+00:00",
       "event": "CLIP-053 landed via MiMo direct implementation; M12 COMPLETE (DSL, pipeline, captions, variants/QC); current -> CLIP-054 (M13)",
       "sha": "d08ca8c"
+    },
+    {
+      "ts": "2026-10-12T14:08:00+00:00",
+      "event": "CLIP-054 landed via MiMo direct implementation (TTS adapter + voice assets; 60/102 milestone)",
+      "sha": "21c2a8e"
     }
   ]
 }

@@ -1172,7 +1172,7 @@ tickets:
 - id: CLIP-054
   milestone: M13
   title: Implement TTS provider adapter
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-053
