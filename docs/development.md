@@ -702,3 +702,43 @@ Routes: POST/GET /render-projects/{id}/caption-tracks (path/body id
 match -> 422) and GET /caption-tracks/{track_id} (404). Tests include
 a real-ffmpeg caption burn-in (skipif ffmpeg absent). No LLM, no provider
 identifiers anywhere.
+
+## Platform aspect variants, QC, and output manifests (M12 final)
+
+clipos_api.render_variants (CLIP-053) closes M12 with the fanout
+layer. POST /render-jobs/{job_id}/variants/execute renders **every**
+outputs[] entry of the spec: each output's optional spect override
+(defaulting to the spec composition aspect; validated against
+{1:1,16:9,9:16} before the RUNNING stamp -> 422 with the job left
+PENDING) produces workdir/<job_id>/<platform>.mp4, with platform slugs
+restricted to [A-Za-z0-9._-]+ (unsafe slug -> 422) and every path
+workdir-confined (CLIP-039 policy). Execution honors the CLIP-051 gates
+(input confined, job 404, SUCCEEDED/RUNNING 409, CLIP-052 prep
+failures 422) and clears the job's previous ender_outputs /
+qc_reports rows first so retries never leave orphans.
+
+**QC** runs after each variant: ffprobe (env FFMPEG_BIN sibling
+FFPROBE_BIN, default fprobe) feeds the pure evaluate_qc, which
+PASSES only when size > 0, probe duration is within ±15% of the spec
+window, and width/height exactly match EXPECTED_RESOLUTIONS[aspect]
+(1080x1920 / 1920x1080 / 1080x1080). Results persist as qc_reports
+(unique per (org_id, output_id), checks JSON); probe failures become
+FAILED reports, never crashes. Any ffmpeg or QC failure marks the job
+FAILED (error_ref) while keeping completed rows for diagnosis.
+
+**Render manifests**: every successful variant stores a deterministic
+per-output manifest on ender_outputs (fingerprint, argv, paths,
+captions/logo flags, timestamps); the job manifest aggregates
+{variant_count, outputs:[{platform, aspect, output_path, qc_status}]}.
+Tables: ender_outputs + qc_reports (migration  034, 0033 ->
+0034, CREATE-only). Audits: ender_outputs.rendered,
+qc_reports.recorded, plus ender_jobs.succeeded/failed.
+
+Also in this ticket: uild_render_argv gained spect_override;
+shared CLIP-052 prep extracted to prep_job_assets (used by both
+execute paths); the SRT write path is now confine-checked (fixes a
+latent traversal via job ids); RenderJobRequest.job_id is slug-pattern
+validated. Routes: variants execute (query org_id+input_path),
+GET /render-jobs/{id}/outputs (404), GET /render-outputs/{id}/qc-report
+(null when absent). Tests include a real-ffmpeg two-platform fanout with
+real ffprobe QC (skipif absent). No LLM, no provider identifiers.

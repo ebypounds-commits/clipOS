@@ -34,6 +34,7 @@ from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.render_pipeline import router as render_pipeline_router
 from clipos_api.render_project import router as render_project_router
+from clipos_api.render_variants import router as render_variants_router
 from clipos_api.repository import get_engine
 from clipos_api.research import router as research_router
 from clipos_api.rights_entities import router as rights_entities_router
@@ -77,6 +78,7 @@ app.router.routes.extend(opportunity_router.routes)
 app.router.routes.extend(provenance_router.routes)
 app.router.routes.extend(render_pipeline_router.routes)
 app.router.routes.extend(render_project_router.routes)
+app.router.routes.extend(render_variants_router.routes)
 app.router.routes.extend(research_router.routes)
 app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(watchlist_router.routes)
