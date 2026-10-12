@@ -13,6 +13,7 @@ from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.asset_validation import router as asset_validation_router
+from clipos_api.caption_tracks import router as caption_tracks_router
 from clipos_api.clip_candidates_router import router as clip_candidates_router
 from clipos_api.clip_dedup import router as clip_dedup_router
 from clipos_api.clip_review import router as clip_review_router
@@ -80,6 +81,7 @@ app.router.routes.extend(research_router.routes)
 app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)
+app.router.routes.extend(caption_tracks_router.routes)
 app.router.routes.extend(clip_candidates_router.routes)
 app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_review_router.routes)

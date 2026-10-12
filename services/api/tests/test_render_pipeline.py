@@ -542,3 +542,307 @@ def test_route_execute_path_escape_maps_to_422(client, workdir: Path) -> None:
 def test_route_get_missing_job_maps_to_404(client) -> None:
     response = client.get("/render-jobs/missing", params={"org_id": "org-1"})
     assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# CLIP-052: caption burn-in and logo overlay
+# ---------------------------------------------------------------------------
+
+
+def test_escape_filter_path_escapes_colon_and_quote() -> None:
+    from clipos_api.render_pipeline import escape_filter_path
+
+    assert escape_filter_path("/tmp/a:b'c") == "/tmp/a\\:b\\'c"
+
+
+def test_build_argv_merges_srt_into_video_chain() -> None:
+    argv = build_render_argv(
+        "/tmp/clipos-render/in.mp4",
+        "/tmp/clipos-render/out.mp4",
+        _valid_spec(),
+        srt_path="/tmp/clipos-render/job-1.srt",
+    )
+    vf = argv[argv.index("-vf") + 1]
+    assert ASPECT_FILTERS["9:16"] in vf
+    assert "subtitles=filename='/tmp/clipos-render/job-1.srt'" in vf
+
+
+def test_build_argv_logo_switches_to_filter_complex() -> None:
+    argv = build_render_argv(
+        "/tmp/clipos-render/in.mp4",
+        "/tmp/clipos-render/out.mp4",
+        _valid_spec(),
+        srt_path="/tmp/clipos-render/job-1.srt",
+        logo_path="/tmp/clipos-render/brand.png",
+    )
+    assert "-filter_complex" in argv
+    assert "-vf" not in argv
+    fc = argv[argv.index("-filter_complex") + 1]
+    assert "subtitles=filename=" in fc
+    assert "overlay=W-w-16:16" in fc
+    assert "[v]" in argv
+    assert "0:a?" in argv
+    # both inputs present
+    assert argv.count("-i") == 2
+
+
+def _valid_spec_with_extras(**overrides) -> dict:
+    spec = _valid_spec(**overrides)
+    spec["inputs"] = {"candidate_id": "candidate-1"}
+    return spec
+
+
+def _seed_project_with_captions(engine: Engine, logo_ref: str | None = None) -> None:
+    from clipos_api.caption_tracks import CaptionSegment, CaptionTrackRequest, CaptionTrackStore
+    from clipos_api.content_planning import ContentBrief, ContentPlanningStore
+    from clipos_api.research import ResearchPacket, ResearchStore
+
+    ResearchStore.from_engine(engine).register_packet(
+        ResearchPacket(research_packet_id="packet-1", org_id="org-1", title="Fixture")
+    )
+    ContentPlanningStore.from_engine(engine).register_brief(
+        ContentBrief(
+            brief_id="brief-1",
+            org_id="org-1",
+            research_packet_id="packet-1",
+            title="Fixture brief",
+            objective="Objective",
+        )
+    )
+    spec = _valid_spec()
+    spec["composition"]["captions"] = {"enabled": True, "style_ref": "brand:cap-1"}
+    inputs = {"candidate_id": "candidate-1"}
+    if logo_ref is not None:
+        inputs["logo_ref"] = logo_ref
+    spec["inputs"] = inputs
+    RenderProjectStore.from_engine(engine).register_project(
+        RenderProject(
+            render_project_id="render-1",
+            org_id="org-1",
+            brief_id="brief-1",
+            name="Fixture render",
+            spec=spec,
+        )
+    )
+    CaptionTrackStore.from_engine(engine).register_track(
+        CaptionTrackRequest(
+            track_id="track-1",
+            org_id="org-1",
+            render_project_id="render-1",
+            segments=[CaptionSegment(start_ms=0, end_ms=1500, text="Burned cue")],
+        )
+    )
+
+
+def test_execute_with_captions_track_burns_srt(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    from clipos_api.caption_tracks import CaptionSegment, CaptionTrackStore
+    from clipos_api.caption_tracks import CaptionTrackRequest as _Req
+    from clipos_api.content_planning import ContentBrief, ContentPlanningStore
+    from clipos_api.research import ResearchPacket, ResearchStore
+
+    ResearchStore.from_engine(engine).register_packet(
+        ResearchPacket(research_packet_id="packet-1", org_id="org-1", title="Fixture")
+    )
+    ContentPlanningStore.from_engine(engine).register_brief(
+        ContentBrief(
+            brief_id="brief-1",
+            org_id="org-1",
+            research_packet_id="packet-1",
+            title="Fixture brief",
+            objective="Objective",
+        )
+    )
+    spec = _valid_spec()
+    spec["composition"]["captions"] = {"enabled": True, "style_ref": None}
+    RenderProjectStore.from_engine(engine).register_project(
+        RenderProject(
+            render_project_id="render-1",
+            org_id="org-1",
+            brief_id="brief-1",
+            name="Fixture render",
+            spec=spec,
+        )
+    )
+    CaptionTrackStore.from_engine(engine).register_track(
+        _Req(
+            track_id="track-1",
+            org_id="org-1",
+            render_project_id="render-1",
+            segments=[CaptionSegment(start_ms=0, end_ms=1500, text="Burned cue")],
+        )
+    )
+    _create_job(store)
+    runner = MockRunner()
+    job = store.execute_job(
+        runner,
+        "job-1",
+        "org-1",
+        _make_input(workdir),
+        str(workdir / "out.mp4"),
+    )
+    assert job.status is RenderJobStatus.SUCCEEDED
+    assert job.manifest is not None
+    assert job.manifest["captions_burned"] is True
+    assert any("subtitles=filename=" in arg for arg in runner.calls[0])
+    srt_file = workdir / "job-1.srt"
+    assert srt_file.is_file()
+    assert "Burned cue" in srt_file.read_text(encoding="utf-8")
+
+
+def test_execute_captions_enabled_without_track_still_succeeds(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    from clipos_api.content_planning import ContentBrief, ContentPlanningStore
+    from clipos_api.research import ResearchPacket, ResearchStore
+
+    ResearchStore.from_engine(engine).register_packet(
+        ResearchPacket(research_packet_id="packet-1", org_id="org-1", title="Fixture")
+    )
+    ContentPlanningStore.from_engine(engine).register_brief(
+        ContentBrief(
+            brief_id="brief-1",
+            org_id="org-1",
+            research_packet_id="packet-1",
+            title="Fixture brief",
+            objective="Objective",
+        )
+    )
+    spec = _valid_spec()
+    spec["composition"]["captions"] = {"enabled": True}
+    RenderProjectStore.from_engine(engine).register_project(
+        RenderProject(
+            render_project_id="render-1",
+            org_id="org-1",
+            brief_id="brief-1",
+            name="Fixture render",
+            spec=spec,
+        )
+    )
+    _create_job(store)
+    runner = MockRunner()
+    job = store.execute_job(
+        runner, "job-1", "org-1", _make_input(workdir), str(workdir / "out.mp4")
+    )
+    assert job.status is RenderJobStatus.SUCCEEDED
+    assert job.manifest is not None
+    assert job.manifest["captions_requested"] is True
+    assert job.manifest["captions_burned"] is False
+
+
+def test_execute_with_logo_ref_overlays(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    _seed_project_with_captions(engine, logo_ref="brand-logo.png")
+    (workdir / "brand-logo.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    _create_job(store)
+    runner = MockRunner()
+    job = store.execute_job(
+        runner, "job-1", "org-1", _make_input(workdir), str(workdir / "out.mp4")
+    )
+    assert job.status is RenderJobStatus.SUCCEEDED
+    assert job.manifest is not None
+    assert job.manifest["logo_overlaid"] is True
+    assert job.manifest["captions_burned"] is True
+    argv = runner.calls[0]
+    assert "-filter_complex" in argv
+    assert argv.count("-i") == 2
+
+
+def test_execute_missing_logo_fails_before_running(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    _seed_project_with_captions(engine, logo_ref="missing-logo.png")
+    _create_job(store)
+    with pytest.raises(ValueError, match="input file missing"):
+        store.execute_job(
+            MockRunner(), "job-1", "org-1", _make_input(workdir), str(workdir / "out.mp4")
+        )
+    # job untouched -> still retryable
+    job = store.get_job("job-1", "org-1")
+    assert job is not None
+    assert job.status is RenderJobStatus.PENDING
+
+
+def test_execute_logo_ref_escapes_workdir(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    _seed_project_with_captions(engine, logo_ref="../escape.png")
+    _create_job(store)
+    with pytest.raises(ValueError, match="outside render workdir"):
+        store.execute_job(
+            MockRunner(), "job-1", "org-1", _make_input(workdir), str(workdir / "out.mp4")
+        )
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg not installed")
+def test_real_ffmpeg_captions_burn_succeeds(
+    store: RenderJobStore, engine: Engine, workdir: Path
+) -> None:
+    from clipos_api.caption_tracks import CaptionSegment, CaptionTrackStore
+    from clipos_api.caption_tracks import CaptionTrackRequest as _Req
+    from clipos_api.content_planning import ContentBrief, ContentPlanningStore
+    from clipos_api.research import ResearchPacket, ResearchStore
+
+    ResearchStore.from_engine(engine).register_packet(
+        ResearchPacket(research_packet_id="packet-1", org_id="org-1", title="Fixture")
+    )
+    ContentPlanningStore.from_engine(engine).register_brief(
+        ContentBrief(
+            brief_id="brief-1",
+            org_id="org-1",
+            research_packet_id="packet-1",
+            title="Fixture brief",
+            objective="Objective",
+        )
+    )
+    spec = _valid_spec()
+    spec["composition"]["captions"] = {"enabled": True, "style_ref": None}
+    RenderProjectStore.from_engine(engine).register_project(
+        RenderProject(
+            render_project_id="render-1",
+            org_id="org-1",
+            brief_id="brief-1",
+            name="Fixture render",
+            spec=spec,
+        )
+    )
+    CaptionTrackStore.from_engine(engine).register_track(
+        _Req(
+            track_id="track-1",
+            org_id="org-1",
+            render_project_id="render-1",
+            segments=[CaptionSegment(start_ms=0, end_ms=1500, text="Burned cue")],
+        )
+    )
+    _create_job(store)
+    input_path = workdir / "cap-in.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=duration=1:size=320x240:rate=10",
+            "-pix_fmt",
+            "yuv420p",
+            str(input_path),
+        ],
+        check=True,
+        capture_output=True,
+        timeout=60,
+    )
+    output_path = workdir / "cap-out.mp4"
+    job = store.execute_job(
+        SubprocessRenderRunner(),
+        "job-1",
+        "org-1",
+        str(input_path),
+        str(output_path),
+    )
+    assert job.status is RenderJobStatus.SUCCEEDED, job.error_ref
+    assert output_path.is_file()
+    assert job.manifest is not None
+    assert job.manifest["captions_burned"] is True
