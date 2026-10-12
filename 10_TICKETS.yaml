@@ -974,7 +974,7 @@ tickets:
 - id: CLIP-043
   milestone: M10
   title: Implement multi-factor clip scoring
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-042

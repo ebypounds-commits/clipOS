@@ -12,3 +12,12 @@
 - STATE_AUDIT.jsonl: appended CLIP-041/042 entries (state_audit.py append).
 - Hygiene: untrack .alembic-dev.db (accidentally committed in ee90061), add to .gitignore; prune 42 stale merged ticket worktrees under /srv/clipos/worktrees; stale lease lock files remain as historical records (leases expired; acquire on live tickets works).
 - Local validators: validate_state.py green pre-push; full handoff/state_audit/architecture_guard/secret_scan gates re-run on VPS canonical before push; CI polled to green.
+
+## 2026-10-12 - CLIP-043 multi-factor clip scoring (single-orchestrator direct implementation)
+- Module clipos_api/clip_scores.py: pure scorers length_fit / span_coverage (merged union, clips to window) / density_score / score_clip (weighted 0..100, CLIP-036 contract); compute_components derives length_fit + hook_coverage + claim_coverage + transcript_density from candidate window, semantic_segments (HOOK/CLAIM), transcript_segments (word count) - all org-scoped.
+- ClipScoreStore.record_score idempotent per (org_id, candidate_id): identical re-score no-op, different fields conflict (409); NEW->SCORED transition audited (clip_scores.recorded + clip_candidate.scored); APPROVED/REJECTED candidates frozen; scorer_alias nullable registry ref (vendor scan clean).
+- Migration 0024 clip_scores (revises 0023; unique score_id + unique (org_id, candidate_id) + org index); PG dev upgrade 0023->0024 idempotent (alembic current=0024 head); offline SQL render asserts CREATE TABLE clip_scores.
+- Routes Depends-before-decorator + real runtime imports: POST /clip-candidates/{id}/scores (404 missing / 409 decided-or-conflict / 422 bad weights incl. unknown factor), GET .../scores (null when unscored), GET /clip-scores?org_id=; main.py wiring; OpenAPI probe 81 paths green.
+- Circular-import fix: transcription_store <-> transcription cycle entered unsafely from my import -> deferred import inside load_scoring_context (repo-established pattern).
+- Gates (observed): ruff format --check clean; ruff check clean; mypy clean 52 files (CI invocation + --python-version 3.12); pytest SQLite 602+11 (89.04% cov); pytest CI-env full services 613 passed (89.51% cov); secret_scan clean; architecture_guard 6/6; state_audit verify 48/48; 35 new tests in test_clip_scores.py.
+- Land: worktree commit c200d92, merge 82dc8bc into main; state advance 49/102, current -> CLIP-044.
