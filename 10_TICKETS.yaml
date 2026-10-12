@@ -938,7 +938,7 @@ tickets:
 - id: CLIP-041
   milestone: M9
   title: Implement semantic segmentation/embedding pipeline
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-040
@@ -956,7 +956,7 @@ tickets:
 - id: CLIP-042
   milestone: M10
   title: Implement clip candidate extraction
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-041

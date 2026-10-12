@@ -5,6 +5,8 @@
 **Canonical runtime env (per worktree):** `services/api` package · venv `<worktree>/.venv` (Python 3.14; CI runs 3.12 — mypy verified clean under `--python-version 3.12`) · PG dev DB `localhost:5433` (`clipos_dev`), Redis `6380`, MinIO `9002`.
 **Head at handoff:** main = `2a5d78a` · CI **GREEN** (run 38180545396: validate/test/quality/build all success) · suite **567 passed + 11 skipped** · mypy clean · ruff clean.
 
+**Phase-0 update (2026-10-12, MiMo orchestrator):** operator chose **direct MiMo implementation over VPS SSH; Codex worker dispatch is dormant** (OpenRouter top-up deferred for possible future parallel use). CLIP-041/042 flipped DONE (were stale TODOs); BUILD_STATE reconciled to 48/102, M10, `current_ticket=CLIP-043`; `.alembic-dev.db` untracked; stale worktrees pruned. Standing workflow below still applies except steps 4–5 (packet/dispatch) — MiMo implements in the ticket worktree directly, keeping path guard, lease, independent verification, and landing discipline. Next: **CLIP-043** (multi-factor clip scoring, migration 0024).
+
 ---
 
 ## 1. Where the build stands

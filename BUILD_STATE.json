@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M9",
+  "current_milestone": "M10",
   "current_ticket": "CLIP-043",
-  "status": "M3_IN_PROGRESS",
+  "status": "M10_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -12,7 +12,14 @@
   "completed_milestones": [
     "M0",
     "M1",
-    "M2"
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6",
+    "M7",
+    "M8",
+    "M9"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -52,7 +59,17 @@
     "CLIP-029",
     "CLIP-030",
     "CLIP-031",
-    "CLIP-032"
+    "CLIP-032",
+    "CLIP-033",
+    "CLIP-034",
+    "CLIP-035",
+    "CLIP-036",
+    "CLIP-037",
+    "CLIP-038",
+    "CLIP-039",
+    "CLIP-040",
+    "CLIP-041",
+    "CLIP-042"
   ],
   "blocked": [],
   "human_gates": {
@@ -63,19 +80,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-032",
-    "at": "2026-10-08T16:45:00+00:00",
-    "facts": "CLIP-032 complete: ProvenanceStore (provenance manifests/fingerprints) \u2014 append-only provenance steps (captured|transformed|enriched|published; item + org validated; audited provenance.step_appended), generate_manifest (canonical sorted-keys compact JSON, deterministic sha256 hash computed server-side and recorded, audited provenance.manifest_generated), content_fingerprints (algorithm sha256|sha1|md5 with hex length+charset validation: 64/40/32, idempotent per (manifest_id, algorithm)), org-scoped listings, steps stored as JSON column on manifests (append-only by convention + audited); migration 0013 CREATE-only (2 tables) verified on real PG (0012->0013, tables present); 5 operator routes wired; 12 new tests; land 44588bd, merge 29131f1, CI green all 4 jobs; suite 374+11, ruff format/check + mypy clean (39 files)"
+    "ticket": "CLIP-042",
+    "at": "2026-10-12T09:30:00+00:00",
+    "facts": "CLIP-041 landed 230d0df: semantic_segments (org-scoped, TOPIC/SCENE/CLAIM/HOOK, source TRANSCRIPT/PROBE/MANUAL), segment_embeddings (registry model_alias, vector_ref refs-not-blobs, (segment, model_alias) unique), pure chunk_transcript + deterministic fake_embed, SemanticPipeline, migration 0021, 26 tests. CLIP-042 merged 5f400b5 (feat 6b59b72): clip_candidates (status NEW->SCORED->APPROVED/REJECTED), deterministic heuristic extract_candidates (length window, overlap merge, gap), ClipCandidateStore, flow extract_and_register, migration renumbered 0022->0023 to linearize chain, 23 tests. Suite at merge: 567 passed + 11 skipped; mypy clean; ruff clean; CI green run 38180545396 at 2a5d78a. Phase-0 reconcile (this state advance): flipped CLIP-041/042 to DONE in 10_TICKETS.yaml (stale TODOs), backfilled completed_tickets CLIP-033..042, STATE_AUDIT entries appended for 041/042, stale merged worktrees pruned, .alembic-dev.db untracked. Next: CLIP-043 multi-factor clip scoring, migration 0024."
   },
-  "next_action": "Execute CLIP-033 per 10_TICKETS.yaml.",
-  "orchestrator": "Hermes Agent",
-  "coding_engine": "Codex on VPS",
+  "next_action": "Execute CLIP-043 per 10_TICKETS.yaml.",
+  "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
+  "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M3",
-  "tickets_completed": 46,
-  "updated_at": "2026-10-11T22:10:35.761891+00:00",
+  "milestone": "M10",
+  "tickets_completed": 48,
+  "updated_at": "2026-10-12T09:30:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -116,15 +133,24 @@
       "ticket": "CLIP-040",
       "merge_sha": "3a46fa6",
       "summary": "Transcription adapters and transcript storage: transcripts (idempotent per (org_id, media_asset_id, language)), transcript_segments (append-only, seq monotonic/unique, idempotent identical re-append), TranscriptionAdapter Protocol + deterministic mock (no vendor SDK), transcribe_and_store flow audited; migration 0020 CREATE-only (2 tables, PG-verified to 0020); 4 routes wired; 17 new tests; 518+11 suite; orchestrator-finished after worker false GREEN marker; CI green 46879b1"
+    },
+    {
+      "ticket": "CLIP-041",
+      "merge_sha": "230d0df",
+      "summary": "Semantic segmentation/embeddings: semantic_segments (org-scoped, kind TOPIC/SCENE/CLAIM/HOOK, source TRANSCRIPT/PROBE/MANUAL), segment_embeddings (registry model_alias required no vendor hard-code, vector_ref refs-not-blobs, unique (segment, model_alias)), pure chunk_transcript + deterministic fake_embed, SemanticPipeline; migration 0021 CREATE-only; 26 tests; parallel dispatch with CLIP-042 on disjoint modules validated; orchestrator-finished (missing router routes, frozen-pydantic created_at, B008 Annotated conversion)"
+    },
+    {
+      "ticket": "CLIP-042",
+      "merge_sha": "5f400b5",
+      "summary": "Clip candidate extraction: clip_candidates (org-scoped, status NEW->SCORED->APPROVED/REJECTED), deterministic heuristic extract_candidates (length window, overlap merge, gap), ClipCandidateStore, flow extract_and_register; migration renumbered 0022->0023 to linearize chain (PG-verified to 0023); 23 tests; 567+11 suite; orchestrator-finished (missing tool_policy import in main.py, forward-ref OpenAPI fix a963596, ruff-sorted imports bd60d48/2a5d78a); CI green 38180545396 at 2a5d78a"
     }
   ],
-  "tokens_completed": 48,
   "tickets_total": 102,
   "history": [
     {
       "ts": "2026-10-11T22:10:35.761953+00:00",
       "event": "CLIP-041+CLIP-042 landed via parallel codex workers (orchestrator-finished)",
-      "sha": "pending"
+      "sha": "ee90061"
     }
   ]
 }

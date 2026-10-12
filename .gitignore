@@ -62,3 +62,6 @@ sbom/
 coverage.xml
 openapi.json
 sbom/
+
+# local alembic sqlite fallback (never track; PG is canonical)
+.alembic-dev.db
