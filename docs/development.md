@@ -808,3 +808,65 @@ version). Tests cover PNG validity via struct, prompt-color
 determinism, real-ffmpeg mp4 bytes (skipif absent), full media-chain
 persistence, checksum round-trips, idempotency/conflicts, and route
 probes. No LLM anywhere in this ticket.
+
+## Licensed stock/b-roll adapter interface (M13)
+
+clipos_api.stock_adapter (CLIP-056) is the acquisition-side adapter
+interface: StockClipAdapter.search(query, provider_alias, limit) returns
+provider-neutral candidates (provider_ref, title, license_ref, duration,
+dimensions) and MockStockClipAdapter is the deterministic stand-in
+(three CC0-1.0 1920x1080 candidates derived from
+sha1(provider_alias:normalized-query) — same inputs, same rows; no
+network, **no vendor identifier**: providers are addressed only through
+the caller-supplied registry alias provider_alias, required and never
+defaulted).
+
+Results persist into source_items (migration  037, 0036 -> 0037,
+CREATE-only — the 03_DOMAIN Source table) idempotent on the natural key
+(org_id, provider_alias, provider_ref): a repeat search is a no-op,
+changed title/license/duration/dimensions for the same provider ref
+conflict (409). Every row carries license_ref so license evidence
+exists at candidate time for the M7 rights chain (the CLIP-038
+IngestionGate still governs any later ingestion of the media itself —
+download/ingestion is explicitly out of this interface ticket).
+
+search_stock audits stock_clips.registered per **new** row and
+stock_searches.completed per run (org, alias, query prefix, result
+count). Routes (CLIP-033 pattern): POST /stock-searches (returns the
+persisted items), GET /stock-items , GET /stock-items/{source_item_id}
+(404). Search query 1..200 chars, limit 1..10 default 5. No LLM.
+
+## Licensed stock/b-roll adapter interface (M13)
+
+clipos_api.stock_adapter (CLIP-056) is the acquisition-side adapter
+interface, built **on the existing M7 rights-entity chain** (no new
+tables): StockClipAdapter.search(query, provider_alias, limit) returns
+provider-neutral candidates and MockStockClipAdapter is the
+deterministic stand-in (three CC0-1.0 1920x1080 candidates derived
+from sha1(provider_alias:normalized-query) — same inputs, same rows; no
+network, **no vendor identifier**: providers are addressed only through
+the caller-supplied registry alias provider_alias, required and never
+defaulted).
+
+search_stock deterministically ensures the org's stock creator and
+PARTNER_FEED content source — ids are **org-embedded**
+({org}:stock-provider:{alias} / {org}:stock-feed:{alias}, clipped to
+128) because creators/sources key on bare ids, so embedding the org
+prevents cross-tenant collisions — then registers each candidate through
+RightsEntitiesStore.register_item, idempotent on
+(source_id, external_ref) (repeat search no-op; changed
+title/license/dims/content_ref for the same provider ref -> 409). Each
+item's content_ref is the neutral stock://{alias}/{provider_ref}
+ref and license evidence (license_ref, title, duration, dimensions,
+provider_alias) lives in item metadata for the M7 rights chain —
+the CLIP-038 IngestionGate still governs any later media ingestion
+(download is explicitly out of this interface ticket).
+
+Audits: stock_searches.completed per run (org, alias, source_id, query
+prefix, count) plus the rights store's own
+ights_entities.creator_registered/source_registered/item_registered.
+Routes (CLIP-033 pattern): POST /stock-searches (returns persisted
+items), GET /stock-items?org_id=&provider_alias= (404 when the
+provider source has never been searched). Search query 1..200 chars,
+limit 1..10 default 5. No LLM, zero migrations — persistence reuses
+content_sources/source_items from migration 0011.
