@@ -61,6 +61,7 @@ _EXPECTED_TABLES = {
     "voice_assets",
     "image_assets",
     "source_items",
+    "ai_labels",
 }
 
 

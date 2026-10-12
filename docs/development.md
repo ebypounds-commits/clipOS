@@ -870,3 +870,34 @@ items), GET /stock-items?org_id=&provider_alias= (404 when the
 provider source has never been searched). Search query 1..200 chars,
 limit 1..10 default 5. No LLM, zero migrations — persistence reuses
 content_sources/source_items from migration 0011.
+
+## Generated-media provenance and AI labels (M13 final)
+
+clipos_api.ai_labels (CLIP-057) closes M13 with the compliance
+metadata layer. i_labels (migration  037, 0036 -> 0037, CREATE-only)
+stores one disclosure row per generated asset: asset kind (reuses M7
+MediaAssetKind AUDIO/IMAGE/VIDEO), workdir-relative sset_ref,
+**required** generator_alias (Model Registry ref — never defaulted,
+never a vendor identifier), and the label value (AI_GENERATED for all
+current synthetic output; AI_ASSISTED reserved for tool-assisted
+edits). Idempotent per (org_id, label_id) via deterministic ids
+({org}:ai-label:{sha1[:16]}); changed asset/generator/label ->
+409. Audited i_labels.recorded.
+
+ecord_generated_media is the single registration helper: it
+**validates the brief before persisting anything** (no partial state),
+always registers the label, and — when a brief is present — appends a
+CLIP-049 	ransformation_records row (deterministic
+{org}:gen:{sha1[:16]} id, rom_ref = gen-prompt:{sha1(prompt)[:16]},
+	o_ref = output ref, method = image-generation/video-generation) so
+synthetic outputs enter the same 07 rights chain as editorial
+transformations. Voice synthesis (not brief-linked) labels only.
+
+**Auto-labeling at generation time**: the three generation routes
+(POST /voice-assets/{id}/synthesize, POST /image-generations,
+POST /video-generations) now call the helper after success — every
+HTTP-mediated generation emits its AI label (and transformation for
+brief-linked image/video) without any caller action. The explicit
+POST /generated-media-metadata endpoint covers workflow-side or manual
+registration. Routes also include GET /ai-labels (kind filter) and
+GET /ai-labels/{label_id} (404). No LLM.
