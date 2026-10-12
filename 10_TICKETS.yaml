@@ -1100,7 +1100,7 @@ tickets:
 - id: CLIP-050
   milestone: M12
   title: Implement render project DSL
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-049

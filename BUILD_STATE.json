@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M12",
-  "current_ticket": "CLIP-050",
+  "current_ticket": "CLIP-051",
   "status": "M12_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -78,7 +78,8 @@
     "CLIP-046",
     "CLIP-047",
     "CLIP-048",
-    "CLIP-049"
+    "CLIP-049",
+    "CLIP-050"
   ],
   "blocked": [],
   "human_gates": {
@@ -89,19 +90,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-049",
-    "at": "2026-10-12T12:32:00+00:00",
-    "facts": "CLIP-049 factuality/transformation evaluations complete (M11 FINAL — milestone closed): factuality_evaluations (client eval_id, idempotent per (org_id, eval_id), identical re-record no-op / different fields conflict 409, unknown claim 404), deterministic VERACITY_FOR_RESULT mapping applied atomically with eval insert (PASS->VERIFIED, FAIL->DISPUTED, INCONCLUSIVE unchanged), claims.veracity_changed audited with reason_ref=eval_id so every veracity move cites its evidence, second PASS after VERIFIED records without re-transition, method_ref free ref (manual label or Model Registry alias — no vendor strings), evidence_ref refs-only, migration 0030 CREATE-only (0029->0030 PG-verified idempotent) also creates transformation_records rights-chain rows (from_ref->to_ref->method per brief, brief gate 404, idempotent per (org_id, transformation_id), refs <=255 PG btree-safe, audited transformation_records.registered), 4 routes CLIP-033 pattern (POST/GET both resources, scoped GETs 404), OpenAPI probe 98 paths, land 1d6805b merge 5ae2cda, 21 new tests, suite 750 passed CI-env full services (90.70% cov) and 739+11 SQLite-only, ruff format/check clean, mypy clean 58 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 54/54 pre-advance. M11 complete: CLIP-046..049 landed (research/claims, briefs/plans, hooks/scripts, evals/transformations)"
+    "ticket": "CLIP-050",
+    "at": "2026-10-12T12:44:00+00:00",
+    "facts": "CLIP-050 render project DSL complete (M12 opener): validate_render_spec pure side-effect-free validator (version must be 1, inputs.candidate_id 1..128, composition.aspect in {1:1,16:9,9:16}, duration_ms 1000..600000 int, captions {enabled bool, style_ref null|1..128}, audio_normalization {enabled bool, target_lufs -24..-5 required when enabled}, outputs 1..8 objects each platform 1..64 with duplicate detection, unknown top-level keys rejected, nested unknown tolerated), render_projects table (migration 0031 CREATE-only, 0030->0031 PG-verified idempotent, unique (org_id, render_project_id), ix (org_id, brief_id)): register validates spec BEFORE persistence (422 carrying first 5 validator errors), brief existence gate 404, idempotent identical re-register no-op / changed brief+name+spec conflict 409, audited render_projects.registered {spec_version, output_count}, dry-run POST /render-specs/validate returns {valid, errors} with NO database dependency, GET/POST routes CLIP-033 pattern (list brief-scoped 404, get 404), OpenAPI probe 101 paths, land 7136d51 merge 03daf19, 27 new tests, suite 777 passed CI-env full services (90.76% cov) and 766+11 SQLite-only, ruff format/check clean, mypy clean 59 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 55/55 pre-advance"
   },
-  "next_action": "Execute CLIP-050 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-051 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M12",
-  "tickets_completed": 55,
-  "updated_at": "2026-10-12T12:32:00+00:00",
+  "tickets_completed": 56,
+  "updated_at": "2026-10-12T12:44:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -187,6 +188,11 @@
       "ticket": "CLIP-049",
       "merge_sha": "5ae2cda",
       "summary": "Factuality/transformation evaluations (M11 final): factuality_evaluations (idempotent per (org, eval_id), claim gate, conflict 409), VERACITY_FOR_RESULT mapping PASS->VERIFIED FAIL->DISPUTED INCONCLUSIVE unchanged applied atomically with eval insert, claims.veracity_changed audited reason_ref=eval_id, method_ref free/registry ref no vendor strings; transformation_records rights-chain (from_ref->to_ref->method, brief gate, idempotent, refs <=255); migration 0030 CREATE-only (0029->0030 PG-verified); 4 routes CLIP-033 pattern; 21 tests; suite 750 passed CI-env (90.70% cov); ruff/mypy/secret_scan/arch_guard green; land 1d6805b, merge 5ae2cda"
+    },
+    {
+      "ticket": "CLIP-050",
+      "merge_sha": "03daf19",
+      "summary": "Render project DSL (M12 opener): validate_render_spec pure validator (version=1, aspect in {1:1,16:9,9:16}, duration 1000..600000, captions/audio shapes with LUFS -24..-5, outputs 1..8 unique slugs, unknown top keys rejected), render_projects (migration 0031, unique (org, render_project), brief gate 404, validate-before-persist 422 with error list, idempotent, conflict 409, audited render_projects.registered), dry-run POST /render-specs/validate pure no-DB; 4 routes CLIP-033 pattern; 27 tests; suite 777 passed CI-env (90.76% cov); ruff/mypy/secret_scan/arch_guard green; land 7136d51, merge 03daf19"
     }
   ],
   "tickets_total": 102,
@@ -230,6 +236,11 @@
       "ts": "2026-10-12T12:32:00+00:00",
       "event": "CLIP-049 landed via MiMo direct implementation; M11 COMPLETE (research, plans, hooks/scripts, evals); current -> CLIP-050 (M12 media studio)",
       "sha": "5ae2cda"
+    },
+    {
+      "ts": "2026-10-12T12:44:00+00:00",
+      "event": "CLIP-050 landed via MiMo direct implementation (render project DSL + pure validator)",
+      "sha": "03daf19"
     }
   ]
 }
