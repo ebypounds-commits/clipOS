@@ -9,6 +9,7 @@ from typing import Annotated
 import sqlalchemy as sa
 from fastapi import Depends, FastAPI, HTTPException
 
+import clipos_api.youtube_adapter  # noqa: F401  # registers YouTube adapter at import
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
@@ -32,6 +33,7 @@ from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.opportunities import router as opportunity_router
+from clipos_api.platform_accounts import router as platform_accounts_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.publishing import router as publishing_router
@@ -73,6 +75,7 @@ app.router.routes.extend(model_registry_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
+app.router.routes.extend(platform_accounts_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)
