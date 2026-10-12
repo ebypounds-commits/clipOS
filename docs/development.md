@@ -491,3 +491,34 @@ fingerprint cases (canonical hashlib sha256 outputs).
 regression, with a floor assertion so the set cannot silently shrink to
 nothing. No LLM, network, or provider identifier is involved anywhere in
 this ticket.
+
+## Research packets, claims, and claim sources (M11)
+
+clipos_api.research (CLIP-046) implements the first M11 content-planning
+model from  3_DOMAIN_DATA_MODEL.md: esearch_packets group findings for
+a topic (optional 	opic_id reference to the M8 topics table), claims
+carry statement rows inside a packet with an UNVERIFIED -> VERIFIED /
+DISPUTED veracity lifecycle, and claim_sources link each claim to source
+references — references only (source_ref <= 512 chars, quote_ref
+optional), never source content. Migration  027 (CREATE-only, 0026 ->
+0027) creates all three tables with unique indexes on
+(org_id, research_packet_id), (org_id, claim_id), and
+(claim_id, source_ref).
+
+Idempotency mirrors CLIP-016 opportunity registration: packets and claims
+register on client-supplied natural ids (identical re-register returns the
+stored row; different fields raise -> 409); source links are idempotent per
+(claim_id, source_ref) (identical re-link no-op; different support or
+quote_ref -> 409). Claims require an existing packet in the same org
+(404); veracity changes are audited as claims.veracity_changed with
+actor/reason references, same-value sets are no-ops, and reopening to
+UNVERIFIED is allowed. Registration audits: esearch_packets.registered,
+claims.registered, claim_sources.linked.
+
+Routes (CLIP-033 pattern: real runtime imports, providers before
+decorators): POST/GET /research-packets, POST/GET
+/research-packets/{id}/claims (path/body id must match -> 422),
+POST/GET /claims/{id}/sources, POST /claims/{id}/veracity. Claim
+creation always starts UNVERIFIED — verification must travel through the
+audited veracity route. No LLM, network, or provider identifier is
+involved.
