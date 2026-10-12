@@ -164,3 +164,25 @@
 - platform_accounts (migration 0039, 0038->0039 PG idempotent): uq (org, platform, account_ref) + ix (org, platform); scopes JSON + channel_ref + account_metadata; vault refs only (no secrets); audited platform_accounts.registered; 3 routes register/get/list (platform filter).
 - Gates: ruff format/check clean; mypy clean 69 files; pytest 959 CI-env (91.29% cov); PG 0039 head; OpenAPI 128 paths; secret/arch_guard/state_audit 64/64; 25 new tests (suite delta 945->959); publish tests unbroken (YouTubeMock also SUCCEEDED with 'mock' in external_id).
 - Land: worktree 0e3f83b, merge 11b3013; state advance 65/102, current -> CLIP-060 (TikTok adapter; M14 3/4).
+
+## 2026-10-12 - CLIP-060 TikTok publishing/status adapter
+
+**Ticket**: CLIP-060 (M14)
+**Merge SHA**: 8c32b97
+**Status**: COMPLETE (66/102)
+
+**What was built**:
+- TikTokPublishingAdapter: deterministic mock implementing PublishingAdapter Protocol
+  - health_check: ok with capabilities [upload, privacy, status, creator_info]
+  - publish: external_id = "tt-mock-{sha1(key)[:10]}", SUCCEEDED status
+  - get_status: always SUCCEEDED
+  - No network, no tiktok-businessapi SDK, no provider identifier
+- Registered at module import via publishing.register_adapter("tiktok",...)
+- No new migration (platform_accounts table 0039 already covers TikTok accounts)
+- Publishing route selects adapter per request.platform via get_adapter fallback Mock
+
+**Tests**: 15 new tests (adapter registration, health, publish determinism, platform isolation, route roundtrip, DENIED handling)
+**Suite**: 969 passed CI-env (91.27% cov), 958+11 SQLite-only
+**Gates**: ruff format/check clean, mypy 70 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 65/65
+
+**M14 progress**: CLIP-058 contract/policy + 059 YouTube + 060 TikTok done; 061 Meta remains.

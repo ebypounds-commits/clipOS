@@ -1282,7 +1282,7 @@ tickets:
 - id: CLIP-060
   milestone: M14
   title: Implement TikTok publishing/status adapter
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-059
