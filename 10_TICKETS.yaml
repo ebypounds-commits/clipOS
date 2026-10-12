@@ -1046,7 +1046,7 @@ tickets:
 - id: CLIP-047
   milestone: M11
   title: Implement brief/content-plan engine
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-046

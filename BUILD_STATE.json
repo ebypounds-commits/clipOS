@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M11",
-  "current_ticket": "CLIP-047",
+  "current_ticket": "CLIP-048",
   "status": "M11_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -74,7 +74,8 @@
     "CLIP-043",
     "CLIP-044",
     "CLIP-045",
-    "CLIP-046"
+    "CLIP-046",
+    "CLIP-047"
   ],
   "blocked": [],
   "human_gates": {
@@ -85,19 +86,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-046",
-    "at": "2026-10-12T11:35:00+00:00",
-    "facts": "CLIP-046 research packet and claim/source model complete (M11 opener): research_packets (client-supplied natural id, idempotent per (org_id, research_packet_id), identical re-register no-op / different fields conflict 409, optional topic_id soft ref to M8 topics, audited research_packets.registered), claims (idempotent per (org_id, claim_id), requires existing packet in org -> 404, statement <=2048, veracity always created UNVERIFIED — verification only via audited route, audited claims.registered), claim_sources (idempotent per (claim_id, source_ref), SUPPORTS/CONTRADICTS, source_ref <=512 refs-only + quote_ref, identical re-link no-op / different fields conflict 409, audited claim_sources.linked), set_veracity (any transition incl. reopen to UNVERIFIED, same-value no-op, audited claims.veracity_changed with actor_ref+reason_ref), migration 0027 CREATE-only (0026->0027 PG-verified idempotent, 3 tables: research_packets/claims/claim_sources with unique (org,packet)/(org,claim)/(claim,ref) indexes), 8 routes CLIP-033 pattern (providers before decorators, _database_engine late import, path/body id match -> 422, _map_error 404/409/422), OpenAPI probe 89 paths, land cb2694c merge 1e90691, 31 new tests, suite 686 passed CI-env full services (90.12% cov) and 675+11 SQLite-only, ruff format/check clean (I001 auto-fixed in main.py), mypy clean 55 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 51/51 pre-advance"
+    "ticket": "CLIP-047",
+    "at": "2026-10-12T11:48:00+00:00",
+    "facts": "CLIP-047 brief/content-plan engine complete: content_briefs (client natural id, idempotent per (org_id, brief_id), identical re-register no-op / different fields conflict 409, requires existing research packet 404, platforms <=16 entries each 1..64 chars via pydantic validator, audited content_briefs.registered), derive_plan_payload pure deterministic (sorted claim_ids for byte-stable payloads, claim_count, echoed objective/platforms/refs — no content blobs), generate_plan factuality-gated fail-closed (422 'no verified claims available for planning' when packet yields zero VERIFIED claims; UNVERIFIED/DISPUTED never planned), append-versioned content_plans (migration 0028 CREATE-only, 0027->0028 PG-verified idempotent, unique (org_id, brief_id, version), identical re-derive returns latest untouched, changed claim state mints next version + audits content_plans.generated with version/claim_count), get_latest_plan (null when none), 5 routes CLIP-033 pattern (_map_error 404/409/422, POST plan body org_id + GET plan query), OpenAPI probe 92 paths, land d00c010 merge 29cfa73, 21 new tests, suite 707 passed CI-env full services (90.29% cov) and 696+11 SQLite-only, ruff format/check clean (2 I001 auto-fixes), mypy clean 56 files (CI invocation + --python-version 3.12), secret_scan clean, architecture_guard 6/6 OK, state_audit verify 52/52 pre-advance"
   },
-  "next_action": "Execute CLIP-047 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-048 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M11",
-  "tickets_completed": 52,
-  "updated_at": "2026-10-12T11:35:00+00:00",
+  "tickets_completed": 53,
+  "updated_at": "2026-10-12T11:48:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -168,6 +169,11 @@
       "ticket": "CLIP-046",
       "merge_sha": "1e90691",
       "summary": "Research packet and claim/source model (M11 opener): research_packets (client natural id, idempotent per (org, packet), optional topic_id ref, audited registered), claims (idempotent per (org, claim), packet must exist 404, always created UNVERIFIED, audited registered), claim_sources (idempotent per (claim, source_ref), SUPPORTS/CONTRADICTS, refs-only <=512, audited linked), set_veracity (audited claims.veracity_changed with actor/reason, same-value no-op, reopen allowed); migration 0027 CREATE-only (0026->0027 PG-verified, 3 tables); 8 routes CLIP-033 pattern (404/409/422, path/body id match 422); 31 tests; suite 686 passed CI-env (90.12% cov); ruff/mypy/secret_scan/arch_guard green; land cb2694c, merge 1e90691"
+    },
+    {
+      "ticket": "CLIP-047",
+      "merge_sha": "29cfa73",
+      "summary": "Brief/content-plan engine: content_briefs (client natural id, idempotent per (org, brief), requires research packet, platforms validated 1..64 x <=16, audited content_briefs.registered), derive_plan_payload pure (sorted claim_ids byte-stable, claim_count, refs-only payload), generate_plan fail-closed factuality gate (422 when zero VERIFIED claims; UNVERIFIED/DISPUTED never planned), append-versioned content_plans (migration 0028, unique (org, brief, version), identical re-derive no-op, changed claims mint next version + audited content_plans.generated); 5 routes CLIP-033 pattern; 21 tests; suite 707 passed CI-env (90.29% cov); ruff/mypy/secret_scan/arch_guard green; land d00c010, merge 29cfa73"
     }
   ],
   "tickets_total": 102,
@@ -196,6 +202,11 @@
       "ts": "2026-10-12T11:35:00+00:00",
       "event": "CLIP-046 landed via MiMo direct implementation (M11 opener: research packets + claims + claim sources)",
       "sha": "1e90691"
+    },
+    {
+      "ts": "2026-10-12T11:48:00+00:00",
+      "event": "CLIP-047 landed via MiMo direct implementation (brief/content-plan engine, factuality-gated)",
+      "sha": "29cfa73"
     }
   ]
 }
