@@ -42,6 +42,7 @@ _EXPECTED_TABLES = {
     "clip_candidates",
     "clip_scores",
     "candidate_fingerprints",
+    "candidate_decisions",
 }
 
 

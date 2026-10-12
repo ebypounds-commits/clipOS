@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "description": "ClipOS M10 benchmark eval set (CLIP-045): frozen expectations for the deterministic scoring, overlap, and fingerprint helpers. Cases are hand-computed; SHA-256 values are canonical hashlib outputs. Regressions against this file are scoring-behavior bugs.",
+  "score_cases": [
+    {
+      "name": "ideal_window_full_hook_density",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 9000,
+        "hook_spans": [[0, 9000]],
+        "claim_spans": [],
+        "word_count": 23,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 1.0,
+          "transcript_density": 1.0
+        }
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 0.0,
+          "transcript_density": 1.0
+        },
+        "total": 75.0
+      }
+    },
+    {
+      "name": "too_short_scores_half_length",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 500,
+        "hook_spans": [],
+        "claim_spans": [],
+        "word_count": 0,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {"length_fit": 1.0, "hook_coverage": 1.0}
+      },
+      "expect": {
+        "components": {
+          "length_fit": 0.5,
+          "hook_coverage": 0.0,
+          "claim_coverage": 0.0,
+          "transcript_density": 0.0
+        },
+        "total": 25.0
+      }
+    },
+    {
+      "name": "too_long_half_length_half_claim",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 120000,
+        "hook_spans": [],
+        "claim_spans": [[0, 60000]],
+        "word_count": 300,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {"length_fit": 1.0, "claim_coverage": 1.0}
+      },
+      "expect": {
+        "components": {
+          "length_fit": 0.5,
+          "hook_coverage": 0.0,
+          "claim_coverage": 0.5,
+          "transcript_density": 1.0
+        },
+        "total": 50.0
+      }
+    },
+    {
+      "name": "partial_hook_and_claim_coverage",
+      "input": {
+        "start_ms": 1000,
+        "end_ms": 10000,
+        "hook_spans": [[1000, 5500]],
+        "claim_spans": [[7000, 10000]],
+        "word_count": 0,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 1.0,
+          "transcript_density": 1.0
+        }
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 0.5,
+          "claim_coverage": 0.3333,
+          "transcript_density": 0.0
+        },
+        "total": 45.8325
+      }
+    },
+    {
+      "name": "density_below_target_weighted_mix",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 4000,
+        "hook_spans": [[0, 1000]],
+        "claim_spans": [[3000, 4000]],
+        "word_count": 5,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 1.0,
+          "transcript_density": 1.0
+        }
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 0.25,
+          "claim_coverage": 0.25,
+          "transcript_density": 0.5
+        },
+        "total": 50.0
+      }
+    },
+    {
+      "name": "length_heavy_weights",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 9000,
+        "hook_spans": [[0, 3000]],
+        "claim_spans": [],
+        "word_count": 0,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {"length_fit": 3.0, "hook_coverage": 1.0}
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 0.3333,
+          "claim_coverage": 0.0,
+          "transcript_density": 0.0
+        },
+        "total": 83.3325
+      }
+    },
+    {
+      "name": "degenerate_window_scores_zero",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 0,
+        "hook_spans": [[0, 100]],
+        "claim_spans": [[0, 100]],
+        "word_count": 0,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {"length_fit": 1.0}
+      },
+      "expect": {
+        "components": {
+          "length_fit": 0.0,
+          "hook_coverage": 0.0,
+          "claim_coverage": 0.0,
+          "transcript_density": 0.0
+        },
+        "total": 0.0
+      }
+    },
+    {
+      "name": "overlapping_spans_merge_to_full_coverage",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 1000,
+        "hook_spans": [[0, 600], [400, 1000]],
+        "claim_spans": [[100, 200]],
+        "word_count": 3,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 1.0,
+          "transcript_density": 1.0
+        }
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 1.0,
+          "claim_coverage": 0.1,
+          "transcript_density": 1.0
+        },
+        "total": 77.5
+      }
+    },
+    {
+      "name": "disjoint_spans_score_zero",
+      "input": {
+        "start_ms": 0,
+        "end_ms": 1000,
+        "hook_spans": [[5000, 6000]],
+        "claim_spans": [],
+        "word_count": 0,
+        "min_len_ms": 1000,
+        "max_len_ms": 60000,
+        "target_wps": 2.5,
+        "weights": {"length_fit": 2.0, "hook_coverage": 2.0}
+      },
+      "expect": {
+        "components": {
+          "length_fit": 1.0,
+          "hook_coverage": 0.0,
+          "claim_coverage": 0.0,
+          "transcript_density": 0.0
+        },
+        "total": 50.0
+      }
+    }
+  ],
+  "overlap_cases": [
+    {"name": "half_overlap", "a": [0, 1000], "b": [500, 1500], "expect": 0.5},
+    {"name": "touching_disjoint", "a": [0, 1000], "b": [1000, 2000], "expect": 0.0},
+    {"name": "contained_shorter_scores_one", "a": [0, 5000], "b": [1000, 2000], "expect": 1.0},
+    {"name": "identical_windows", "a": [1000, 5000], "b": [1000, 5000], "expect": 1.0},
+    {"name": "degenerate_window", "a": [0, 0], "b": [0, 1000], "expect": 0.0},
+    {"name": "partial_midpoint", "a": [2000, 3000], "b": [2500, 4000], "expect": 0.5}
+  ],
+  "fingerprint_cases": [
+    {
+      "kind": "window",
+      "media_asset_id": "bench-asset",
+      "start_ms": 0,
+      "end_ms": 1000,
+      "expect": "ecb6586320197c4d879985da468bbd6544af701b8819f356a3ee81e2780297bb"
+    },
+    {
+      "kind": "window",
+      "media_asset_id": "bench-asset",
+      "start_ms": 2000,
+      "end_ms": 8000,
+      "expect": "93f5f7a6ddd0e6b6030a6cb3f0a263ad7b574695d125bf7eaa468729198b730b"
+    },
+    {
+      "kind": "window",
+      "media_asset_id": "other-asset",
+      "start_ms": 0,
+      "end_ms": 1000,
+      "expect": "cdef255600f8b93ea9ed4445d3172d133170df8b8d7764c58d149379cc1ea83d"
+    },
+    {
+      "kind": "transcript",
+      "text": "Benchmark spoken content for scoring",
+      "expect": "0a359d2e7f53b8b59050c4e360448de88ec939ccb45809c22098a12037a1fbaf"
+    },
+    {
+      "kind": "transcript",
+      "text": "DIFFERENT words entirely",
+      "expect": "59e2d29593654ea1e010a751679e2a051d11b8b4d4b41625d64174375127f7a7"
+    },
+    {"kind": "transcript", "text": "   ", "expect": null}
+  ]
+}
