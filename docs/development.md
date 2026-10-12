@@ -742,3 +742,32 @@ validated. Routes: variants execute (query org_id+input_path),
 GET /render-jobs/{id}/outputs (404), GET /render-outputs/{id}/qc-report
 (null when absent). Tests include a real-ffmpeg two-platform fanout with
 real ffprobe QC (skipif absent). No LLM, no provider identifiers.
+
+## TTS provider adapter and voice assets (M13)
+
+clipos_api.voice_assets (CLIP-054) opens M13 with the CLIP-040
+adapter discipline applied to speech synthesis. TTSAdapter is the
+provider-neutral Protocol (synthesize(text, voice_ref, model_alias) ->
+bytes); MockTTSAdapter is the deterministic stand-in that emits a
+**valid WAV** of silence via the stdlib wave module only (8 kHz mono
+16-bit, duration = text length / 15 chars-per-second clamped to
+0.5s..15s — synthesis_duration_ms / silence_wav are pure and
+byte-stable per text). No network, no vendor SDK, no provider identifier
+anywhere: real adapters register behind the Protocol in later M13
+tickets and dispatch by the asset's registry alias.
+
+oice_assets (migration  035, 0034 -> 0035, CREATE-only) is
+idempotent per (org_id, voice_asset_id) (identical re-register no-op,
+changed label/voice_ref/model_alias -> 409) and every asset **requires**
+a caller-supplied model_alias (Model Registry alias, 1..128 chars,
+never defaulted — pydantic rejects empty) plus a provider-neutral
+oice_ref. Registration audits oice_assets.registered.
+
+synthesize_speech(adapter, store, voice_asset_id, request) loads the
+asset (404), confines output_path under RENDER_WORKDIR (escape ->
+422), writes the WAV (OSError -> 422), and audits
+oice_synthesis.completed with alias + byte count + duration. Routes
+(CLIP-033 pattern): POST/GET /voice-assets, GET
+/voice-assets/{voice_asset_id} (404), POST
+/voice-assets/{voice_asset_id}/synthesize (Mock adapter; the injectable
+TTSAdapter parameter is the future provider seam). No LLM involved.
