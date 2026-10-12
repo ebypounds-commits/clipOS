@@ -43,6 +43,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 
 from clipos_api import audit
+from clipos_api.caption_tracks import CaptionSegment, CaptionTrackRecord, segments_to_srt
 from clipos_api.render_project import ALLOWED_ASPECTS, RenderProjectRecord
 from clipos_api.repository import Base
 
@@ -84,13 +85,27 @@ def spec_fingerprint(spec: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def build_render_argv(input_path: str, output_path: str, spec: dict[str, Any]) -> list[str]:
+def escape_filter_path(path: str) -> str:
+    """Escape a filesystem path for use inside an ffmpeg filter argument (pure)."""
+    return path.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+
+
+def build_render_argv(
+    input_path: str,
+    output_path: str,
+    spec: dict[str, Any],
+    *,
+    srt_path: str | None = None,
+    logo_path: str | None = None,
+) -> list[str]:
     """Pure deterministic ffmpeg argv for one render spec (no shell).
 
-    Trim + aspect filter always; loudnorm appended when audio
-    normalization is enabled; faststart flags for mp4 output. Caption
-    burn-in is deliberately absent (CLIP-052) — callers read
-    ``composition.captions.enabled`` for the manifest flag.
+    Trim + aspect filter always; optional SRT burn-in merged into the
+    video filter chain; optional logo overlay via filter_complex
+    (top-right, 16px inset) which switches from -vf to -filter_complex
+    with explicit -map; loudnorm appended when audio normalization is
+    enabled. Caption segment data arrives via ``srt_path`` (CLIP-052
+    tracks); logo is the workdir-confined ``inputs.logo_ref`` file.
     """
     composition = spec.get("composition", {})
     aspect = composition.get("aspect")
@@ -108,11 +123,21 @@ def build_render_argv(input_path: str, output_path: str, spec: dict[str, Any]) -
         "0",
         "-i",
         str(input_path),
-        "-t",
-        duration_seconds,
-        "-vf",
-        ASPECT_FILTERS[aspect],
     ]
+    if logo_path is not None:
+        argv.extend(["-i", str(logo_path)])
+    argv.extend(["-t", duration_seconds])
+
+    video_chain = [ASPECT_FILTERS[aspect]]
+    if srt_path is not None:
+        video_chain.append(f"subtitles=filename='{escape_filter_path(srt_path)}'")
+    joined_chain = ",".join(video_chain)
+
+    if logo_path is not None:
+        filter_complex = f"[0:v]{joined_chain},format=yuv420p[base];[base][1:v]overlay=W-w-16:16[v]"
+        argv.extend(["-filter_complex", filter_complex, "-map", "[v]", "-map", "0:a?"])
+    else:
+        argv.extend(["-vf", joined_chain])
 
     audio = composition.get("audio_normalization")
     if isinstance(audio, dict) and audio.get("enabled") is True:
@@ -357,9 +382,14 @@ class RenderJobStore:
 
         Job must exist (404); SUCCEEDED/RUNNING refuse re-execution (409);
         paths must resolve inside RENDER_WORKDIR (422), the input must
-        exist, the output must end in .mp4. PENDING and FAILED are
-        executable (retry-friendly). Success stores the deterministic
-        manifest; failure stores the stderr tail as error_ref.
+        exist, the output must end in .mp4. When the spec enables
+        captions, the latest caption track for the project is rendered to
+        workdir/<job_id>.srt and burned in (absent track -> clean render
+        with captions_burned=false); inputs.logo_ref (workdir-relative)
+        is overlaid when present and fails the request (422) when missing
+        — both preps run before the RUNNING stamp so failures stay
+        retryable. PENDING and FAILED are executable. Success stores the
+        deterministic manifest; failure stores the stderr tail.
         """
         now = datetime.now(UTC)
         confined_input = confine_path(input_path, must_exist=True)
@@ -390,13 +420,56 @@ class RenderJobStore:
             if project is None:
                 raise ValueError(f"render project not found: {job.render_project_id}")
 
+            spec = dict(project.spec or {})
+            composition = spec.get("composition", {})
+
+            # --- CLIP-052 prep: captions SRT + logo confinement.
+            # Runs BEFORE the RUNNING stamp: prep failures propagate as
+            # ValueErrors -> route 422 with the job left PENDING (retryable).
+            srt_path: str | None = None
+            captions = composition.get("captions")
+            if isinstance(captions, dict) and captions.get("enabled") is True:
+                track = session.scalars(
+                    sa.select(CaptionTrackRecord)
+                    .where(
+                        CaptionTrackRecord.org_id == org_id,
+                        CaptionTrackRecord.render_project_id == job.render_project_id,
+                    )
+                    .order_by(CaptionTrackRecord.created_at.desc(), CaptionTrackRecord.id.desc())
+                ).first()
+                if track is not None:
+                    srt_file = render_workdir() / f"{job_id}.srt"
+                    try:
+                        srt_file.write_text(
+                            segments_to_srt(
+                                [CaptionSegment(**segment) for segment in (track.segments or [])]
+                            ),
+                            encoding="utf-8",
+                        )
+                    except OSError as exc:
+                        raise ValueError(f"caption write failed: {exc}") from exc
+                    srt_path = str(srt_file)
+
+            logo_path: str | None = None
+            inputs = spec.get("inputs")
+            logo_ref = inputs.get("logo_ref") if isinstance(inputs, dict) else None
+            if logo_ref is not None:
+                if not isinstance(logo_ref, str) or not (1 <= len(logo_ref) <= 256):
+                    raise ValueError("inputs.logo_ref must be a string of 1..256 chars")
+                logo_path = str(confine_path(str(render_workdir() / logo_ref), must_exist=True))
+
             job.status = RenderJobStatus.RUNNING.value
             job.updated_at = now
             session.flush()
 
-            spec = dict(project.spec or {})
             try:
-                argv = build_render_argv(str(confined_input), str(confined_output), spec)
+                argv = build_render_argv(
+                    str(confined_input),
+                    str(confined_output),
+                    spec,
+                    srt_path=srt_path,
+                    logo_path=logo_path,
+                )
             except ValueError as exc:
                 job.status = RenderJobStatus.FAILED.value
                 job.error_ref = str(exc)[:512]
@@ -415,8 +488,6 @@ class RenderJobStore:
             )
             result = runner.run(argv, timeout_seconds)
             finished = datetime.now(UTC)
-            composition = spec.get("composition", {})
-            captions = composition.get("captions")
             audio = composition.get("audio_normalization")
             if result.returncode == 0:
                 manifest = {
@@ -429,6 +500,8 @@ class RenderJobStore:
                     "captions_requested": bool(
                         isinstance(captions, dict) and captions.get("enabled")
                     ),
+                    "captions_burned": srt_path is not None,
+                    "logo_overlaid": logo_path is not None,
                     "audio_normalized": bool(isinstance(audio, dict) and audio.get("enabled")),
                     "returncode": 0,
                     "completed_at": finished.isoformat(),

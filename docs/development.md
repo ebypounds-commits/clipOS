@@ -665,3 +665,40 @@ real-ffmpeg integration tests that build a 	estsrc clip and assert a
 non-empty mp4 (skipped when ffmpeg is absent). Routes:
 POST /render-projects/{id}/jobs, POST /render-jobs/{id}/execute,
 GET /render-jobs/{id}, GET /render-jobs?render_project_id=.
+
+## Captions, audio normalization, and branding (M12)
+
+clipos_api.caption_tracks (CLIP-052) adds the M12 caption layer.
+caption_tracks (migration  033, 0032 -> 0033) binds validated timed
+text to a render project: registration gates on the project (404), runs
+the pure alidate_caption_segments check against the project's
+duration_ms (non-empty, <= 200 cues, each 1..200 chars, start < end
+inside the render window, sorted non-overlap; violations -> 422 with the
+error list), and is idempotent per (org_id, track_id) with conflict on
+changed fields (409); audited caption_tracks.registered with segment
+count and language. segments_to_srt deterministically renders SubRip
+(HH:MM:SS,mmm cues, stable ordering) — the burn-in source.
+
+Pipeline integration in ender_pipeline.py (CLIP-051 module, extended):
+
+- escape_filter_path escapes ffmpeg filter-argument metacharacters.
+- uild_render_argv gained srt_path / logo_path keywords: SRT cues
+  merge into the video chain (spect,subtitles=filename='...'); a logo
+  switches the output to -filter_complex with [0:v]<chain>,format=
+  yuv420p[base];[base][1:v]overlay=W-w-16:16[v] plus explicit
+  -map [v] -map 0:a? (top-right, 16px inset).
+- execute_job prep (still before the RUNNING stamp, so failures stay
+  retryable 422s): when composition.captions.enabled, the **latest**
+  caption track for the project is written to workdir/<job_id>.srt and
+  burned in (no track -> clean render, manifest captions_burned=false);
+  inputs.logo_ref (workdir-relative, <=256 chars) is confined and must
+  exist (missing/escape -> 422, job stays PENDING). Manifest now carries
+  captions_burned and logo_overlaid alongside the CLIP-051 fields.
+- Audio normalization continues to execute as loudnorm=I=<target_lufs>
+  (CLIP-051) and remains covered by tests in combination with captions
+  and branding.
+
+Routes: POST/GET /render-projects/{id}/caption-tracks (path/body id
+match -> 422) and GET /caption-tracks/{track_id} (404). Tests include
+a real-ffmpeg caption burn-in (skipif ffmpeg absent). No LLM, no provider
+identifiers anywhere.

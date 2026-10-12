@@ -55,6 +55,7 @@ _EXPECTED_TABLES = {
     "transformation_records",
     "render_projects",
     "render_jobs",
+    "caption_tracks",
 }
 
 
