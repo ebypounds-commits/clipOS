@@ -992,7 +992,7 @@ tickets:
 - id: CLIP-044
   milestone: M10
   title: Implement duplicate/content fingerprint checks
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-043

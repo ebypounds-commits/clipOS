@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M10",
-  "current_ticket": "CLIP-044",
+  "current_ticket": "CLIP-045",
   "status": "M10_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -70,7 +70,8 @@
     "CLIP-040",
     "CLIP-041",
     "CLIP-042",
-    "CLIP-043"
+    "CLIP-043",
+    "CLIP-044"
   ],
   "blocked": [],
   "human_gates": {
@@ -81,19 +82,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-043",
-    "at": "2026-10-12T10:25:00+00:00",
-    "facts": "CLIP-043 multi-factor clip scoring complete: clip_scores table (org-scoped, unique (org_id, candidate_id), unique score_id, scorer_alias registry ref nullable, no vendor strings), pure scorers length_fit / span_coverage (merged-union, window-clipped) / density_score / score_clip weighted 0..100 following the CLIP-036 contract, compute_components derives length_fit+hook_coverage+claim_coverage+transcript_density from candidate window + semantic_segments (HOOK/CLAIM) + transcript_segments (word count), ClipScoreStore.record_score idempotent (identical re-score no-op, different fields conflict), NEW->SCORED transition with dual audit (clip_scores.recorded + clip_candidate.scored), decided candidates frozen, migration 0024 CREATE-only (0023->0024 PG-verified idempotent, alembic current=0024 head), 3 routes Depends-before-decorator with 404/409/422 mapping, OpenAPI probe 81 paths, deferred transcription_store import for cycle safety, land c200d92 merge 82dc8bc, 35 new tests, suite 613 passed CI-env full services (89.51% cov) and 602+11 SQLite-only, ruff format/check clean, mypy clean 52 files under CI invocation and --python-version 3.12, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 48/48 pre-advance"
+    "ticket": "CLIP-044",
+    "at": "2026-10-12T10:49:00+00:00",
+    "facts": "CLIP-044 duplicate/content fingerprint checks complete: candidate_fingerprints table (org-scoped, unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256, no vendor strings), pure normalize_text / overlap_over_shorter (overlap over shorter window) / window_fingerprint (canonical window:asset:start-end sha256) / transcript_fingerprint (normalized text sha256, None on empty so absent content never collides), ClipDedupStore idempotent persist_fingerprint (identical re-persist no-op, different value conflict 409), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when primary-transcript window text exists, derives window dups (same asset, overlap_over_shorter >= caller threshold in (0..1] default 0.5) and content dups by hashing every other org candidate transcript window on the fly (corpus need not be pre-fingerprinted), audited candidate_fingerprints.persisted + clip_candidates.duplicate_check, migration 0025 CREATE-only (0024->0025 PG-verified idempotent, alembic current=0025 head), 2 routes Depends-before-decorator (POST duplicate-check 404/409/422, GET fingerprints 404 unknown), OpenAPI probe 83 paths, land 1fbf1bb merge 49084c0, 24 new tests, suite 637 passed CI-env full services (89.68% cov) and 626+11 SQLite-only, ruff format/check clean, mypy clean 53 files under CI invocation and --python-version 3.12, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 49/49 pre-advance"
   },
-  "next_action": "Execute CLIP-044 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-045 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M10",
-  "tickets_completed": 49,
-  "updated_at": "2026-10-12T10:25:00+00:00",
+  "tickets_completed": 50,
+  "updated_at": "2026-10-12T10:49:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -149,6 +150,11 @@
       "ticket": "CLIP-043",
       "merge_sha": "82dc8bc",
       "summary": "Multi-factor clip scoring: clip_scores (org-scoped unique (org_id, candidate_id), components JSON + total + scorer_alias nullable registry ref), pure length_fit/span_coverage/density_score/score_clip weighted 0..100 (CLIP-036 contract), compute_components (length+hook+claim+density from candidate window + semantic/transcript rows, org-scoped reads), ClipScoreStore.record_score idempotent identical-noop/conflict-raise, NEW->SCORED dual audit, decided candidates frozen; migration 0024 CREATE-only (0023->0024 PG-verified idempotent); 3 routes Depends-before-decorator 404/409/422; deferred transcription_store import (cycle-safe); 35 tests; suite 613 passed CI-env (89.51% cov); ruff/mypy/secret_scan/arch_guard green; land c200d92, merge 82dc8bc"
+    },
+    {
+      "ticket": "CLIP-044",
+      "merge_sha": "49084c0",
+      "summary": "Duplicate/content fingerprint checks: candidate_fingerprints (org-scoped unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256), pure normalize_text/overlap_over_shorter/window_fingerprint/transcript_fingerprint (None on empty), ClipDedupStore idempotent persist (identical no-op, different value conflict), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when text present, derives window dups (same asset, overlap >= caller threshold) and content dups (on-the-fly transcript hash of every other org candidate — corpus not pre-fingerprinted), audited (candidate_fingerprints.persisted + clip_candidates.duplicate_check); migration 0025 CREATE-only (0024->0025 PG-verified idempotent); 2 routes Depends-before-decorator 404/409/422; 24 tests; suite 637 passed CI-env (89.68% cov); ruff/mypy/secret_scan/arch_guard green; land 1fbf1bb, merge 49084c0"
     }
   ],
   "tickets_total": 102,
@@ -162,6 +168,11 @@
       "ts": "2026-10-12T10:25:00+00:00",
       "event": "CLIP-043 landed via MiMo direct implementation (single orchestrator, no worker dispatch)",
       "sha": "82dc8bc"
+    },
+    {
+      "ts": "2026-10-12T10:49:00+00:00",
+      "event": "CLIP-044 landed via MiMo direct implementation (single orchestrator, no worker dispatch)",
+      "sha": "49084c0"
     }
   ]
 }
