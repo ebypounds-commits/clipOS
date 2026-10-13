@@ -84,6 +84,8 @@ _EXPECTED_TABLES = {
     "sponsor_deliverables",
     "sponsor_attributions",
     "revenue_reconciliations",
+    "cost_sources",
+    "cost_entries",
 }
 
 

@@ -1344,3 +1344,30 @@ re-check; audited revenue_reconciliations.recorded.
 Routes (CLIP-033 pattern): GET /revenue/dashboard, POST
 /revenue-reconciliations, GET
 /revenue-reconciliations?org_id=&source_id=. No LLM, no network.
+
+## Cost ledger and provider cost ingestion (M18)
+
+clipos_api.cost_ledger (CLIP-074, M18 opener) records provider bills
+(compute, storage, egress) — distinct from `llm_cost.CostLedger`,
+which records in-process model dispatch spend. CostAdapter is the
+provider-neutral Protocol (health_check, fetch_costs over one period);
+MockCostAdapter is the deterministic CI stand-in returning USAGE +
+STORAGE entries whose external refs and amount_cents derive from
+sha1(source|period|category) — no network, no vendor identifier.
+
+cost_sources (migration 0052, 0051 -> 0052, CREATE-only, unique
+(org_id, source_id), ix org+platform) are org-scoped registrations
+with slug ids, platform slug, vault-only account_ref, and a generic
+cost_center slug; idempotent with conflict on changed fields (409).
+cost_entries is the append-only ledger: integer **amount_cents**
+(never floats; positive cost, negative credit), 3-letter currency,
+(period_start, period_end) window, unique (org_id, source_id,
+external_ref). sync_costs requires the source (404), validates the
+period (422), fetches through the adapter, persists only new entries
+(repeat sync imports zero), and audits each insert as
+cost_entries.recorded.
+
+Routes (CLIP-033 pattern): POST /cost-sources, GET
+/cost-sources/{source_id} (404), GET /cost-sources?org_id=, POST
+/cost-sync, GET /cost-entries?org_id=&source_id=. Audited
+cost_sources.registered. No LLM.
