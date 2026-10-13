@@ -60,6 +60,7 @@ from clipos_api.script_hooks import router as script_hooks_router
 from clipos_api.semantic import router as semantic_router
 from clipos_api.signal_sources import router as signal_sources_router
 from clipos_api.stock_adapter import router as stock_adapter_router
+from clipos_api.strategy_rules import router as strategy_rules_router
 from clipos_api.tool_policy import (
     SandboxPolicy,
     ToolPolicyEngine,
@@ -94,6 +95,7 @@ app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)
 app.router.routes.extend(signal_sources_router.routes)
 app.router.routes.extend(stock_adapter_router.routes)
+app.router.routes.extend(strategy_rules_router.routes)
 app.router.routes.extend(transcription_router.routes)
 app.router.routes.extend(voice_assets_router.routes)
 app.router.routes.extend(semantic_router.routes)

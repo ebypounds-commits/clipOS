@@ -1217,3 +1217,24 @@ conflict (409). Routes (CLIP-033 pattern): POST
 /experiments/{experiment_id}/evaluate (experiment must exist in the
 org, 404), GET /experiments/{experiment_id}/evaluations. Audited
 experiment_evaluations.recorded.
+
+## Strategy-rule canary/promotion/rollback (M16)
+
+clipos_api.strategy_rules (CLIP-069) implements learned rules with a
+guarded rollout lifecycle (PRD journey 5). strategy_rules (migration
+0047, 0046 -> 0047, CREATE-only, unique (org, rule_id), ix
+org+status) store org-scoped rules with slug ids, a generic rule_kind
+slug (never a vendor/model identifier), and a JSON parameters blob.
+Registration is idempotent with conflict on changed fields (409) and
+starts DRAFT.
+
+rule_transition_allowed is the pure lifecycle table: DRAFT -> CANARY
+(canary), CANARY -> ACTIVE (promote) or ROLLED_BACK (abort), ACTIVE ->
+ROLLED_BACK (rollback), ROLLED_BACK -> CANARY (re-canary after a fix).
+A rule can never skip canary (DRAFT -> ACTIVE is rejected 409);
+same-state moves are no-ops. Every real move audits
+strategy_rules.status_changed with actor_ref/reason_ref. Routes
+(CLIP-033 pattern): POST /strategy-rules, GET
+/strategy-rules/{rule_id} (404), GET /strategy-rules?org_id=&status=,
+POST /strategy-rules/{rule_id}/transition. Audited
+strategy_rules.registered. No LLM, no network.
