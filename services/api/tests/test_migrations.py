@@ -80,6 +80,9 @@ _EXPECTED_TABLES = {
     "affiliate_links",
     "affiliate_clicks",
     "affiliate_conversions",
+    "sponsor_campaigns",
+    "sponsor_deliverables",
+    "sponsor_attributions",
 }
 
 
