@@ -77,6 +77,9 @@ _EXPECTED_TABLES = {
     "strategy_rules",
     "revenue_sources",
     "revenue_entries",
+    "affiliate_links",
+    "affiliate_clicks",
+    "affiliate_conversions",
 }
 
 

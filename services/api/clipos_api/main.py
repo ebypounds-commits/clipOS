@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException
 import clipos_api.meta_adapter  # registers Meta adapter at import
 import clipos_api.tiktok_adapter  # registers TikTok adapter at import
 import clipos_api.youtube_adapter  # noqa: F401  # registers YouTube adapter at import
+from clipos_api.affiliate_attribution import router as affiliate_attribution_router
 from clipos_api.agent_evaluation import router as agent_evaluation_router
 from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
@@ -81,6 +82,7 @@ except PackageNotFoundError:
 
 app = FastAPI(title="ClipOS API", version=APP_VERSION)
 app.router.routes.extend(agent_registry_router.routes)
+app.router.routes.extend(affiliate_attribution_router.routes)
 app.router.routes.extend(ai_labels_router.routes)
 app.router.routes.extend(analytics_router.routes)
 app.router.routes.extend(analytics_dashboards_router.routes)

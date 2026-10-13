@@ -1268,3 +1268,26 @@ Routes (CLIP-033 pattern): POST /revenue-sources, GET
 /revenue-sources/{source_id} (404), GET /revenue-sources?org_id=,
 POST /revenue-sync, GET /revenue-entries?org_id=&source_id=. Audited
 revenue_sources.registered. No LLM.
+
+## Affiliate link/click/conversion attribution (M17)
+
+clipos_api.affiliate_attribution (CLIP-071) implements PRD §I
+affiliate tracking. Three CREATE-only tables (migration 0049, 0048 ->
+0049): affiliate_links (unique (org, link_id), opaque
+campaign/destination/content refs — no PII, no provider identifiers),
+affiliate_clicks (unique (org, click_id), ix org+link, append-only,
+link must exist 404), and affiliate_conversions (unique (org,
+conversion_id), ix org+link, integer amount_cents + 3-letter currency
+shared with the CLIP-070 ledger, append-only). A conversion's optional
+click_ref attributes it to one click: the click must exist and belong
+to the same link (404 otherwise). Every registration/record is
+idempotent with conflict on changed fields (409).
+
+summarize_attribution is pure: click/conversion counts, conversion
+rate (0 without clicks), and revenue summed per currency — currencies
+are never mixed. Routes (CLIP-033 pattern): POST/GET
+/affiliate-links, GET /affiliate-links/{link_id}, GET
+/affiliate-links/{link_id}/attribution, POST/GET /affiliate-clicks,
+POST/GET /affiliate-conversions (link_id filters). Audits:
+affiliate_links.registered, affiliate_clicks.recorded,
+affiliate_conversions.recorded. No LLM, no network.
