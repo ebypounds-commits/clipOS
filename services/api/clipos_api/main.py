@@ -49,6 +49,7 @@ from clipos_api.opportunities import router as opportunity_router
 from clipos_api.performance_snapshots import router as performance_snapshots_router
 from clipos_api.platform_accounts import router as platform_accounts_router
 from clipos_api.plugin_registry import router as plugin_registry_router
+from clipos_api.profitability import router as profitability_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.publishing import router as publishing_router
 from clipos_api.render_pipeline import router as render_pipeline_router
@@ -96,6 +97,7 @@ app.router.routes.extend(model_registry_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
+app.router.routes.extend(profitability_router.routes)
 app.router.routes.extend(platform_accounts_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)

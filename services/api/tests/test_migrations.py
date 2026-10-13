@@ -88,6 +88,7 @@ _EXPECTED_TABLES = {
     "cost_entries",
     "budgets",
     "spend_authorizations",
+    "profitability_reports",
 }
 
 

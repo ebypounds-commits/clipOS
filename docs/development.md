@@ -1397,3 +1397,26 @@ Routes (CLIP-033 pattern): POST/GET /budgets, GET
 /budgets/{budget_id} (404), POST /budgets/{budget_id}/authorize,
 GET /budgets/{budget_id}/authorizations. Audited budgets.registered.
 No LLM, no network.
+
+## Profitability and reinvestment calculations (M18)
+
+clipos_api.profitability (CLIP-076) computes PRD §I profit and
+reserve/reinvestment splits as pure integer math. calculate_profitability
+derives profit_cents = revenue - cost, margin_pct = profit/revenue
+* 100 (zero revenue reports 0% when cost is also zero, else -100%),
+and `profitable` (profit >= 0). calculate_reinvestment splits a
+non-negative profit by reinvest_pct (0..100): reinvest_cents is the
+floor of profit * pct / 100 in whole cents, reserve_cents takes the
+remainder (they always sum to profit); non-positive profit yields
+zeros with reason non_positive_profit, out-of-range pct raises (422
+at the route).
+
+run_report sums CLIP-070 revenue_entries and CLIP-074 cost_entries
+for one exact (period_start, period_end, currency) window, computes
+both figures, and persists a profitability_reports row (migration
+0054, 0053 -> 0054, CREATE-only, unique (org, report_id), ix
+org+period_start) — idempotent with conflict on changed inputs and an
+insert-time race re-check; audited profitability_reports.recorded.
+
+Routes (CLIP-033 pattern): POST /profitability/reports, GET
+/profitability/reports?org_id=. No LLM, no network.
