@@ -1447,3 +1447,28 @@ Routes (CLIP-033 pattern): POST /cost-anomalies/check, GET
 /cost-anomalies?org_id=, POST/GET /finance-approvals, GET
 /finance-approvals/{approval_id}, POST .../resolve, POST .../gate.
 No LLM, no network.
+
+## Brand/channel templates (M19)
+
+clipos_api.brand_templates (CLIP-078, M19 opener) implements the PRD
+brand kit as references and small config — never secrets or asset
+bytes. brand_templates (migration 0056, 0055 -> 0056, CREATE-only,
+unique (org, template_id)) store a title, optional voice_ref, a
+validated color palette (#RGB / #RRGGBB hex strings), and an optional
+logo_ref; idempotent with conflict on changed fields (409), audited
+brand_templates.registered.
+
+channel_templates (same migration, unique (org, template_id), ix
+org+platform) are per-platform posting templates: platform slug,
+default Visibility reused from the CLIP-058 publishing contract,
+caption_text config (<= 1000 chars), hashtags (<= 16, pattern-validated
+`#tag`), and an optional brand_template_id that must reference an
+existing brand template in the same org (404 otherwise). Invalid
+palettes/hashtags/slug ids fail validation at the contract layer
+(422) before any persistence. Idempotent with conflict (409); audited
+channel_templates.registered.
+
+Routes (CLIP-033 pattern): POST/GET /brand-templates, GET
+/brand-templates/{template_id} (404), POST/GET /channel-templates
+(+?platform= filter), GET /channel-templates/{template_id} (404).
+No LLM, no network.
