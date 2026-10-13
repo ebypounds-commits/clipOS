@@ -74,6 +74,7 @@ _EXPECTED_TABLES = {
     "experiment_variants",
     "experiment_assignments",
     "experiment_evaluations",
+    "strategy_rules",
 }
 
 
