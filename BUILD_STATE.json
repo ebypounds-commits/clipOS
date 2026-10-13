@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-067",
+  "current_ticket": "CLIP-068",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -98,7 +98,8 @@
     "CLIP-063",
     "CLIP-064",
     "CLIP-065",
-    "CLIP-066"
+    "CLIP-066",
+    "CLIP-067"
   ],
   "blocked": [],
   "human_gates": {
@@ -109,19 +110,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-066",
-    "at": "2026-10-13T10:50:27+00:00",
-    "facts": "CLIP-066 experiment/hypothesis data model complete (M16 opener): experiments (migration 0044 CREATE-only 0043->0044 PG-verified, unique (org,experiment_id) slug-validated [A-Za-z0-9._-] ids, ix org+status, target_metric reuses CLIP-062 MetricKind, starts DRAFT) + hypotheses (unique (org,hypothesis_id), ix org+experiment_id, direction INCREASE/DECREASE/NO_CHANGE, requires linked experiment same-org 404, one-shot PROPOSED->SUPPORTED/REJECTED then frozen); pure transition tables experiment DRAFT->ACTIVE->COMPLETED->ARCHIVED +DRAFT->ARCHIVED (illegal 409, same-state noop), 6 routes CLIP-033 pattern (POST/GET experiments + status filter, transition, POST/GET hypotheses + experiment filter, transition), audited registered + status_changed with actor/reason refs; OpenAPI probe 193 paths, land c87f52f merge 56a1647, 19 new tests, suite 1073 passed CI-env full services (91.75% cov) and 1062+11 SQLite-only, ruff format/check clean, mypy clean 78 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 72/72 pre-advance"
+    "ticket": "CLIP-067",
+    "at": "2026-10-13T11:44:19+00:00",
+    "facts": "CLIP-067 deterministic assignment/variant orchestration complete: experiment_variants (migration 0045 CREATE-only 0044->0045 PG-verified, unique (org,experiment_id,variant_key), DRAFT-only registration frozen once experiment ACTIVE 409, weights 1..100) + experiment_assignments (unique (org,experiment_id,subject_ref), unique assignment_id); pure deterministic_bucket sha256(org|experiment|subject) mod sum(weights) + cumulative-weight select_variant over lexically sorted keys (no RNG, no clock, no network); assign requires experiment ACTIVE and >=2 variants (409), persisted assignment returned unchanged so stored subjects never move on weight edits, insert re-checks idempotency at commit (unique index arbitrates); variant-summary counts per variant; 5 routes CLIP-033 pattern (POST/GET variants, POST/GET assignments, GET variant-summary); audited experiment_variants.registered + experiment_assignments.assigned; OpenAPI probe 198 paths, land e31827c merge 3fc44e8, 18 new tests, suite 1091 passed CI-env full services (91.85% cov) and 1080+11 SQLite-only, ruff format/check clean, mypy clean 79 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 73/73 pre-advance"
   },
-  "next_action": "Execute CLIP-067 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-068 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 72,
-  "updated_at": "2026-10-13T10:50:27+00:00",
+  "tickets_completed": 73,
+  "updated_at": "2026-10-13T11:44:19+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -292,6 +293,11 @@
       "ticket": "CLIP-066",
       "merge_sha": "56a1647",
       "summary": "Experiment/hypothesis data model (M16 opener): experiments + hypotheses migration 0044, pure transition tables, 6 routes, 19 tests; 1073 CI-env (91.75% cov); CI green 56a1647"
+    },
+    {
+      "ticket": "CLIP-067",
+      "merge_sha": "3fc44e8",
+      "summary": "Deterministic assignment/variant orchestration: variants migration 0045, sha256 bucketing, persisted idempotent assignments, 5 routes, 18 tests; 1091 CI-env (91.85% cov); CI green 3fc44e8"
     }
   ],
   "tickets_total": 102,
@@ -427,6 +433,12 @@
       "ticket": "CLIP-066",
       "action": "completed",
       "evidence_ref": "56a1647"
+    },
+    {
+      "at": "2026-10-13T11:44:19+00:00",
+      "ticket": "CLIP-067",
+      "action": "completed",
+      "evidence_ref": "3fc44e8"
     }
   ]
 }

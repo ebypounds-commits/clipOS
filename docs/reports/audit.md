@@ -301,3 +301,21 @@
 **Tests**: 19 new tests (pure tables, store, routes, 404/409/422)
 **Suite**: 1073 passed CI-env (91.75% cov), 1062+11 SQLite-only
 **Gates**: ruff clean, mypy 78 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 72/72, PG migration 0043->0044 verified
+
+## 2026-10-12 - CLIP-067 Deterministic assignment/variant orchestration
+
+**Ticket**: CLIP-067 (M16)
+**Merge SHA**: 3fc44e8
+**Status**: COMPLETE (73/102)
+
+**What was built**:
+- experiment_variants table (migration 0045, CREATE-only, unique (org, experiment_id, variant_key), DRAFT-only registration)
+- experiment_assignments table (unique (org, experiment_id, subject_ref))
+- Pure deterministic_bucket (sha256 mod total weight) + select_variant (cumulative weights, lexical key order)
+- Assignment requires experiment ACTIVE + >=2 variants (409); persisted assignments never move stored subjects
+- 5 routes: POST/GET /experiments/{id}/variants, POST/GET /experiments/{id}/assignments, GET /experiments/{id}/variant-summary
+- Audits: experiment_variants.registered, experiment_assignments.assigned
+
+**Tests**: 18 new tests (pure bucketing, store lifecycle, routes, 404/409)
+**Suite**: 1091 passed CI-env (91.85% cov), 1080+11 SQLite-only
+**Gates**: ruff clean, mypy 79 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 73/73, PG migration 0044->0045 verified

@@ -1413,7 +1413,7 @@ tickets:
 - id: CLIP-067
   milestone: M16
   title: Implement deterministic assignment/variant orchestration
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-066
