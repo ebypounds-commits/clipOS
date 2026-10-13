@@ -1467,7 +1467,7 @@ tickets:
 - id: CLIP-070
   milestone: M17
   title: Implement revenue-source/ledger adapters
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-069

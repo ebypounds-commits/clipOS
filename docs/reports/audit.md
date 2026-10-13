@@ -352,3 +352,21 @@
 **Tests**: 13 new tests (pure lifecycle, store flow, routes, 404/409/422)
 **Suite**: 1119 passed CI-env (92.03% cov), 1108+11 SQLite-only
 **Gates**: ruff clean, mypy 81 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 75/75, PG migration 0046->0047 verified
+
+## 2026-10-13 - CLIP-070 Revenue-source/ledger adapters
+
+**Ticket**: CLIP-070 (M17)
+**Merge SHA**: 93431f3
+**Status**: COMPLETE (76/102)
+
+**What was built**:
+- RevenueAdapter Protocol + MockRevenueAdapter (deterministic 2 entries per fetch, sha1-derived refs/amounts)
+- revenue_sources table (migration 0048, CREATE-only, unique (org, source_id), RevenueKind enum, vault-only account_ref)
+- revenue_entries append-only ledger (integer amount_cents, currency, period window, unique (org, source, external_ref))
+- sync flow: source 404, period validation 422, idempotent skip on repeat, audited per insert
+- 5 routes: POST/GET /revenue-sources, GET /revenue-sources/{source_id}, POST /revenue-sync, GET /revenue-entries
+- Audits: revenue_sources.registered, revenue_entries.recorded
+
+**Tests**: 14 new tests (adapter determinism, source CRUD, sync idempotency, routes)
+**Suite**: 1133 passed CI-env (92.17% cov), 1122+11 SQLite-only
+**Gates**: ruff clean, mypy 82 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 76/76, PG migration 0047->0048 verified
