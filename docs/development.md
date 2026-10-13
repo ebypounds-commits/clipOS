@@ -1194,3 +1194,26 @@ Routes (CLIP-033 pattern): POST/GET
 /experiments/{id}/variants, POST/GET /experiments/{id}/assignments,
 GET /experiments/{id}/variant-summary (counts per variant). Audits:
 experiment_variants.registered, experiment_assignments.assigned.
+
+## Result evaluation and business significance (M16)
+
+clipos_api.experiment_evaluations (CLIP-068) evaluates A/B comparisons
+over CLIP-067 variant samples (PRD journey 4). evaluate_significance
+is pure Welch two-sample math in its large-n normal approximation:
+se = sqrt(sd_a^2/n_a + sd_b^2/n_b), z = (mean_b - mean_a)/se, two-sided
+p = erfc(|z|/sqrt(2)); statistical significance is |z| >= z_critical
+(default 1.96 ~ 95%), business significance additionally requires
+|lift_pct| >= min_effect_pct (default 5.0) — a real effect that is too
+small to matter stays inconclusive. lift_pct is variant B relative to
+A; equal means short-circuit to z=0/p=1; zero standard errors with a
+mean difference are infinitely significant. Winner is declared only
+when both gates pass (the variant ahead by the threshold), else None.
+No scipy, no LLM, no network — math.erfc/math.sqrt only.
+
+experiment_evaluations (migration 0046, 0045 -> 0046, CREATE-only,
+unique (org, eval_id), ix org+experiment_id) stores every evaluation
+idempotently: identical inputs replay the stored row, changed inputs
+conflict (409). Routes (CLIP-033 pattern): POST
+/experiments/{experiment_id}/evaluate (experiment must exist in the
+org, 404), GET /experiments/{experiment_id}/evaluations. Audited
+experiment_evaluations.recorded.
