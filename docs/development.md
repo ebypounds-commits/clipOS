@@ -1291,3 +1291,32 @@ are never mixed. Routes (CLIP-033 pattern): POST/GET
 POST/GET /affiliate-conversions (link_id filters). Audits:
 affiliate_links.registered, affiliate_clicks.recorded,
 affiliate_conversions.recorded. No LLM, no network.
+
+## Sponsorship campaign attribution (M17)
+
+clipos_api.sponsorship (CLIP-072) implements PRD §I sponsor campaigns.
+Three CREATE-only tables (migration 0050, 0049 -> 0050):
+sponsor_campaigns (unique (org, campaign_id), opaque sponsor_ref, integer
+contracted_cents + currency, validated date window),
+sponsor_deliverables (unique (org, deliverable_id), ix org+campaign,
+campaign existence enforced 404, one-shot PENDING -> DELIVERED
+transition audited sponsor_deliverables.delivered), and
+sponsor_attributions (unique (org, attribution_id), ix org+campaign,
+integer amount_cents + currency + opaque revenue_ref, campaign
+existence enforced 404, append-only, audited
+sponsor_attributions.recorded). All registrations idempotent with
+conflict on changed fields (409).
+
+summarize_sponsorship is pure: delivered/total counts, delivery rate
+(0 without deliverables), attributed revenue per currency (never
+mixed), and variance_cents against contracted_cents when attributed
+revenue exists in the contracted currency (None otherwise).
+
+Routes (CLIP-033 pattern): POST/GET /sponsor-campaigns, GET
+/sponsor-campaigns/{campaign_id} (404), POST
+/sponsor-campaigns/{campaign_id}/summary, POST
+/sponsor-campaigns/{campaign_id}/attributions (path/body campaign_id
+must match -> 422), POST/GET /sponsor-deliverables, POST
+/sponsor-deliverables/{deliverable_id}/transition. Audited
+sponsor_campaigns.registered, sponsor_deliverables.registered. No
+LLM, no network.
