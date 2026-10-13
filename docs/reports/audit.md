@@ -284,3 +284,20 @@
 **Tests**: 20 new tests (dashboards 8 + schedules 12)
 **Suite**: 1054 passed CI-env (91.70% cov), 1043+11 SQLite-only
 **Gates**: ruff clean, mypy 77 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 71/71, PG migration 0042->0043 verified
+
+## 2026-10-12 - CLIP-066 Experiment/hypothesis data model
+
+**Ticket**: CLIP-066 (M16)
+**Merge SHA**: 56a1647
+**Status**: COMPLETE (72/102)
+
+**What was built**:
+- experiments table (migration 0044, CREATE-only, unique (org, experiment_id), slug-validated ids, target_metric reuses MetricKind, starts DRAFT)
+- hypotheses table (unique (org, hypothesis_id), linked to experiment with same-org enforcement, direction enum, one-shot resolution)
+- Pure transition tables: experiment DRAFT->ACTIVE->COMPLETED->ARCHIVED (+DRAFT->ARCHIVED); hypothesis PROPOSED->SUPPORTED/REJECTED then frozen
+- 6 routes: POST/GET /experiments, POST /experiments/{id}/transition, POST/GET /hypotheses, POST /hypotheses/{id}/transition
+- Audits: experiments.registered, experiments.status_changed, hypotheses.registered, hypotheses.status_changed
+
+**Tests**: 19 new tests (pure tables, store, routes, 404/409/422)
+**Suite**: 1073 passed CI-env (91.75% cov), 1062+11 SQLite-only
+**Gates**: ruff clean, mypy 78 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 72/72, PG migration 0043->0044 verified

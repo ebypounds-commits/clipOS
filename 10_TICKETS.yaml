@@ -1395,7 +1395,7 @@ tickets:
 - id: CLIP-066
   milestone: M16
   title: Implement experiment/hypothesis data model
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-065
