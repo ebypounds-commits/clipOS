@@ -67,6 +67,7 @@ _EXPECTED_TABLES = {
     "platform_accounts",
     "analytics_metrics",
     "reconciliation_records",
+    "performance_snapshots",
 }
 
 

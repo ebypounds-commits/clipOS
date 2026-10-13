@@ -38,6 +38,7 @@ from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.opportunities import router as opportunity_router
+from clipos_api.performance_snapshots import router as performance_snapshots_router
 from clipos_api.platform_accounts import router as platform_accounts_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.provenance import router as provenance_router
@@ -92,6 +93,7 @@ app.router.routes.extend(voice_assets_router.routes)
 app.router.routes.extend(semantic_router.routes)
 app.router.routes.extend(topics_router.routes)
 app.router.routes.extend(opportunity_router.routes)
+app.router.routes.extend(performance_snapshots_router.routes)
 app.router.routes.extend(provenance_router.routes)
 app.router.routes.extend(publishing_router.routes)
 app.router.routes.extend(render_pipeline_router.routes)
