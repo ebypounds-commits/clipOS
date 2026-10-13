@@ -71,6 +71,8 @@ _EXPECTED_TABLES = {
     "collection_schedules",
     "experiments",
     "hypotheses",
+    "experiment_variants",
+    "experiment_assignments",
 }
 
 

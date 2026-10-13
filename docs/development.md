@@ -1170,3 +1170,27 @@ Routes (CLIP-033 pattern): POST/GET /experiments (+?status= filter),
 POST /experiments/{experiment_id}/transition, POST/GET /hypotheses
 (+?experiment_id= filter), POST /hypotheses/{hypothesis_id}/transition.
 No LLM, no network, no provider identifier.
+
+## Deterministic assignment/variant orchestration (M16)
+
+clipos_api.experiment_orchestration (CLIP-067) adds weighted variants
+and reproducible subject assignment over the CLIP-066 experiments.
+experiment_variants (migration 0045, 0044 -> 0045, CREATE-only,
+unique (org, experiment_id, variant_key)) register only while the
+experiment is DRAFT — frozen once ACTIVE (409) — with integer weights
+1..100 defining bucket boundaries; idempotent with conflict on changed
+label/weight. experiment_assignments (unique (org, experiment_id,
+subject_ref), unique assignment_id) persist one row per subject.
+
+select_variant is pure: bucket = sha256(org|experiment|subject) mod
+sum(weights), cumulative-weight selection over variant keys sorted
+lexically — same inputs, same variant, no RNG or clock. Assignment
+requires the experiment ACTIVE and at least two variants (409
+otherwise); an existing assignment is returned unchanged, so weight
+edits and re-computations never move a stored subject. The insert
+re-checks idempotency at commit time (unique index arbitrates races).
+
+Routes (CLIP-033 pattern): POST/GET
+/experiments/{id}/variants, POST/GET /experiments/{id}/assignments,
+GET /experiments/{id}/variant-summary (counts per variant). Audits:
+experiment_variants.registered, experiment_assignments.assigned.
