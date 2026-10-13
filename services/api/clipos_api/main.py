@@ -32,6 +32,7 @@ from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
 from clipos_api.local_adapter import build_local_adapter, local_adapter_provider_name
 from clipos_api.mcp_boundary import McpBoundary, build_mcp_boundary
 from clipos_api.media_ingestion import router as media_ingestion_router
+from clipos_api.metric_reconciliation import router as metric_reconciliation_router
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
 from clipos_api.operator import OperatorSnapshot
@@ -97,6 +98,7 @@ app.router.routes.extend(render_project_router.routes)
 app.router.routes.extend(render_variants_router.routes)
 app.router.routes.extend(research_router.routes)
 app.router.routes.extend(media_ingestion_router.routes)
+app.router.routes.extend(metric_reconciliation_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)
 app.router.routes.extend(caption_tracks_router.routes)

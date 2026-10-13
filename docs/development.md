@@ -1055,3 +1055,20 @@ collect_analytics flow calls the adapter then persists. Routes
 (CLIP-033 pattern): POST /analytics/collect, GET
 /analytics/metrics?org_id=&content_ref=&kind=. Audited
 analytics_metrics.collected. No LLM.
+
+## Metric ingestion and reconciliation (M15)
+
+clipos_api.metric_reconciliation (CLIP-063) builds on the CLIP-062
+analytics contract. ingest_metrics collects via the adapter and persists
+through AnalyticsStore (idempotent). reconcile_metrics compares the
+latest collected metrics against the previous snapshot for the same
+content_ref and records discrepancies — any metric kind where the value
+changed by more than a caller-supplied threshold (default 0%). Status
+is MATCH (no discrepancies), DISCREPANCY (changes found), or
+NO_PREVIOUS (first collection).
+
+reconciliation_records (migration 0041, 0040 -> 0041, CREATE-only)
+stores outcomes idempotent per record_id with org+content_ref index.
+Routes (CLIP-033 pattern): POST /reconciliation/run, GET
+/reconciliation-records?org_id=&content_ref=. Audited
+metric_reconciliation.reconciled. No LLM.
