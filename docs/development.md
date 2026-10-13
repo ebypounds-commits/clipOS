@@ -1320,3 +1320,27 @@ must match -> 422), POST/GET /sponsor-deliverables, POST
 /sponsor-deliverables/{deliverable_id}/transition. Audited
 sponsor_campaigns.registered, sponsor_deliverables.registered. No
 LLM, no network.
+
+## Revenue dashboards and reconciliation (M17)
+
+clipos_api.revenue_reconciliation (CLIP-073) closes the M17 loop over
+the CLIP-070 ledger. summarize_revenue is a pure dashboard roll-up:
+totals per currency (never mixed), plus per-kind and per-source totals
+keyed `key:currency` so two currencies can never be added together.
+GET /revenue/dashboard?org_id= optionally filters entries to an exact
+(period_start, period_end) window.
+
+reconcile_revenue is pure recorded-vs-expected math: delta_cents,
+delta_pct relative to expected (zero expected reports 0% only when
+recorded is also 0, else 100%), MATCH when |delta_pct| <=
+tolerance_pct (default 0.0 — exact), otherwise DISCREPANCY.
+run_reconciliation sums the ledger for the exact window + currency
+(source 404, inverted period 422), evaluates, and persists a
+revenue_reconciliations row (migration 0051, 0050 -> 0051,
+CREATE-only, unique (org, reconciliation_id), ix org+source),
+idempotent with conflict on changed inputs and an insert-time race
+re-check; audited revenue_reconciliations.recorded.
+
+Routes (CLIP-033 pattern): GET /revenue/dashboard, POST
+/revenue-reconciliations, GET
+/revenue-reconciliations?org_id=&source_id=. No LLM, no network.
