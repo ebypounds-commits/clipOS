@@ -73,6 +73,7 @@ _EXPECTED_TABLES = {
     "hypotheses",
     "experiment_variants",
     "experiment_assignments",
+    "experiment_evaluations",
 }
 
 
