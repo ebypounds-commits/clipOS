@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-074",
+  "current_ticket": "CLIP-075",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -105,7 +105,8 @@
     "CLIP-070",
     "CLIP-071",
     "CLIP-072",
-    "CLIP-073"
+    "CLIP-073",
+    "CLIP-074"
   ],
   "blocked": [],
   "human_gates": {
@@ -116,19 +117,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-073",
-    "at": "2026-10-13T13:57:07+00:00",
-    "facts": "CLIP-073 revenue dashboards/reconciliation complete: summarize_revenue pure dashboard roll-up (totals per currency never mixed, per-kind and per-source totals keyed key:currency), GET /revenue/dashboard?org_id= with exact (period_start,period_end) window filters; reconcile_revenue pure recorded-vs-expected (delta_cents, delta_pct relative to expected with zero-expected rule 0%/100%, MATCH iff |delta_pct| <= tolerance_pct default 0.0 exact); run_reconciliation sums ledger for exact window+currency (source 404, inverted period 422, idempotent conflict 409, insert-time race re-check) persists revenue_reconciliations (migration 0051 CREATE-only 0050->0051 PG-verified, unique (org,reconciliation_id), ix org+source) audited revenue_reconciliations.recorded; 3 routes CLIP-033 pattern; OpenAPI probe 228 paths, land dadaa91 merge b177701, 14 new tests, suite 1175 passed CI-env full services (92.48% cov) and 1164+11 SQLite-only, ruff format/check clean, mypy clean 85 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 79/79 pre-advance"
+    "ticket": "CLIP-074",
+    "at": "2026-10-13T14:23:29+00:00",
+    "facts": "CLIP-074 cost ledger and provider cost ingestion complete (M18 opener): CostAdapter Protocol (health_check, fetch_costs) + MockCostAdapter deterministic (USAGE+STORAGE entries per fetch, external_ref + amount_cents derive from sha1(source|period|category), no network/vendor ids); cost_sources (migration 0052 CREATE-only 0051->0052 PG-verified, unique (org,source_id), ix org+platform, vault-only account_ref, generic cost_center slug, register idempotent conflict 409); cost_entries append-only integer amount_cents (positive cost negative credit, never floats) + currency + period window, unique (org,source_id,external_ref); sync flow source 404 / inverted-period 422 / per-entry idempotent skip (repeat sync same period imports 0) audited cost_entries.recorded per insert; distinct from llm_cost.CostLedger dispatch spend (documented); 5 routes CLIP-033 pattern (POST/GET sources, GET source 404, POST /cost-sync, GET /cost-entries); OpenAPI probe 233 paths, land 1370a35 merge d6865f6, 13 new tests, suite 1188 passed CI-env full services (92.59% cov) and 1177+11 SQLite-only, ruff format/check clean, mypy clean 86 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 80/80 pre-advance"
   },
-  "next_action": "Execute CLIP-074 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-075 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 79,
-  "updated_at": "2026-10-13T13:57:07+00:00",
+  "tickets_completed": 80,
+  "updated_at": "2026-10-13T14:23:29+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -334,6 +335,11 @@
       "ticket": "CLIP-073",
       "merge_sha": "b177701",
       "summary": "Revenue dashboards/reconciliation: pure dashboard + reconcile, migration 0051, 3 routes, 14 tests; 1175 CI-env (92.48% cov); CI green b177701"
+    },
+    {
+      "ticket": "CLIP-074",
+      "merge_sha": "d6865f6",
+      "summary": "Cost ledger/provider cost ingestion (M18 opener): CostAdapter + mock, cost_sources + cost_entries migration 0052, integer-cents idempotent sync, 5 routes, 13 tests; 1188 CI-env (92.59% cov); CI green d6865f6"
     }
   ],
   "tickets_total": 102,
@@ -511,6 +517,12 @@
       "ticket": "CLIP-073",
       "action": "completed",
       "evidence_ref": "b177701"
+    },
+    {
+      "at": "2026-10-13T14:23:29+00:00",
+      "ticket": "CLIP-074",
+      "action": "completed",
+      "evidence_ref": "d6865f6"
     }
   ]
 }

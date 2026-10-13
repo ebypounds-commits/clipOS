@@ -1539,7 +1539,7 @@ tickets:
 - id: CLIP-074
   milestone: M18
   title: Implement cost ledger and provider cost ingestion
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-073

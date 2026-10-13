@@ -424,3 +424,22 @@
 **Tests**: 14 new tests (pure math, dashboard, store flows, routes)
 **Suite**: 1175 passed CI-env (92.48% cov), 1164+11 SQLite-only
 **Gates**: ruff clean, mypy 85 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 79/79, PG migration 0050->0051 verified
+
+## 2026-10-13 - CLIP-074 Cost ledger and provider cost ingestion
+
+**Ticket**: CLIP-074 (M18)
+**Merge SHA**: d6865f6
+**Status**: COMPLETE (80/102)
+
+**What was built**:
+- CostAdapter Protocol + MockCostAdapter (deterministic USAGE+STORAGE entries, sha1-derived)
+- cost_sources table (migration 0052, CREATE-only, unique (org, source_id), generic cost_center slug)
+- cost_entries append-only ledger (integer amount_cents, currency, period window, unique (org, source, external_ref))
+- sync flow: source 404, period 422, idempotent skip, audited per insert
+- 5 routes: POST/GET /cost-sources, GET /cost-sources/{source_id}, POST /cost-sync, GET /cost-entries
+- Audits: cost_sources.registered, cost_entries.recorded
+- Distinct from llm_cost.CostLedger (dispatch spend)
+
+**Tests**: 13 new tests (adapter determinism, source CRUD, sync idempotency, routes)
+**Suite**: 1188 passed CI-env (92.59% cov), 1177+11 SQLite-only
+**Gates**: ruff clean, mypy 86 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 80/80, PG migration 0051->0052 verified
