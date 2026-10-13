@@ -370,3 +370,21 @@
 **Tests**: 14 new tests (adapter determinism, source CRUD, sync idempotency, routes)
 **Suite**: 1133 passed CI-env (92.17% cov), 1122+11 SQLite-only
 **Gates**: ruff clean, mypy 82 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 76/76, PG migration 0047->0048 verified
+
+## 2026-10-13 - CLIP-071 Affiliate link/click/conversion attribution
+
+**Ticket**: CLIP-071 (M17)
+**Merge SHA**: 2b43bb7
+**Status**: COMPLETE (77/102)
+
+**What was built**:
+- affiliate_links, affiliate_clicks, affiliate_conversions tables (migration 0049, CREATE-only)
+- Clicks/conversions append-only, idempotent, link existence enforced (404)
+- Conversion click_ref attribution validated to same link (404)
+- summarize_attribution: pure counts, conversion rate, revenue per currency (never mixed)
+- 8 routes: POST/GET /affiliate-links, GET /{link_id}, GET /{link_id}/attribution, POST/GET /affiliate-clicks, POST/GET /affiliate-conversions
+- Audits: affiliate_links.registered, affiliate_clicks.recorded, affiliate_conversions.recorded
+
+**Tests**: 14 new tests (pure attribution, store CRUD, routes)
+**Suite**: 1147 passed CI-env (92.29% cov), 1136+11 SQLite-only
+**Gates**: ruff clean, mypy 83 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 77/77, PG migration 0048->0049 verified

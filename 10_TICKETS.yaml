@@ -1485,7 +1485,7 @@ tickets:
 - id: CLIP-071
   milestone: M17
   title: Implement affiliate link/click/conversion attribution
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-070

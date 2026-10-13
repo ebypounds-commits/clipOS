@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-071",
+  "current_ticket": "CLIP-072",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -102,7 +102,8 @@
     "CLIP-067",
     "CLIP-068",
     "CLIP-069",
-    "CLIP-070"
+    "CLIP-070",
+    "CLIP-071"
   ],
   "blocked": [],
   "human_gates": {
@@ -113,19 +114,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-070",
-    "at": "2026-10-13T12:50:50+00:00",
-    "facts": "CLIP-070 revenue-source/ledger adapters complete (M17 opener): RevenueAdapter Protocol (health_check, fetch_revenue) + MockRevenueAdapter deterministic (2 entries PLATFORM+AFFILIATE per fetch, external_ref + amount_cents derive from sha1(source|period|kind), no network/vendor ids); revenue_sources (migration 0048 CREATE-only 0047->0048 PG-verified, unique (org,source_id), ix org+platform, vault-only account_ref, RevenueKind PLATFORM/AFFILIATE/SPONSOR/PRODUCT/LEAD_GEN, register idempotent conflict 409); revenue_entries append-only integer amount_cents (BigInteger, never floats) + 3-letter currency + period window, unique (org,source_id,external_ref); sync flow source 404 / inverted-period 422 / per-entry idempotent skip (repeat sync same period imports 0 skips rest) audited revenue_entries.recorded per insert; 5 routes CLIP-033 pattern (POST/GET sources, GET source 404, POST /revenue-sync, GET /revenue-entries); OpenAPI probe 209 paths, land 9a3ef20 merge 93431f3, 14 new tests, suite 1133 passed CI-env full services (92.17% cov) and 1122+11 SQLite-only, ruff format/check clean, mypy clean 82 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 76/76 pre-advance"
+    "ticket": "CLIP-071",
+    "at": "2026-10-13T13:12:34+00:00",
+    "facts": "CLIP-071 affiliate link/click/conversion attribution complete: affiliate_links + affiliate_clicks + affiliate_conversions (migration 0049 CREATE-only 0048->0049 PG-verified, unique (org,link_id)/(org,click_id)/(org,conversion_id), ix org+link on events; opaque refs no PII/vendor ids; clicks+conversions append-only; conversion integer amount_cents + 3-letter currency; optional click_ref attribution validated to exist and belong to same link 404), summarize_attribution pure (conversion rate 0 without clicks, revenue summed per currency never mixed), all registrations idempotent conflict 409; 8 routes CLIP-033 pattern (POST/GET links, GET link 404, GET attribution, POST/GET clicks, POST/GET conversions + link filter); audited affiliate_links.registered, affiliate_clicks.recorded, affiliate_conversions.recorded; OpenAPI probe 217 paths, land aee65d2 merge 2b43bb7, 14 new tests, suite 1147 passed CI-env full services (92.29% cov) and 1136+11 SQLite-only, ruff format/check clean, mypy clean 83 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 77/77 pre-advance"
   },
-  "next_action": "Execute CLIP-071 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-072 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 76,
-  "updated_at": "2026-10-13T12:50:50+00:00",
+  "tickets_completed": 77,
+  "updated_at": "2026-10-13T13:12:34+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -316,6 +317,11 @@
       "ticket": "CLIP-070",
       "merge_sha": "93431f3",
       "summary": "Revenue-source/ledger adapters (M17 opener): RevenueAdapter + mock, revenue_sources + revenue_entries migration 0048, integer-cents idempotent sync, 5 routes, 14 tests; 1133 CI-env (92.17% cov); CI green 93431f3"
+    },
+    {
+      "ticket": "CLIP-071",
+      "merge_sha": "2b43bb7",
+      "summary": "Affiliate attribution: links/clicks/conversions migration 0049, click-attributed conversions, pure per-currency summary, 8 routes, 14 tests; 1147 CI-env (92.29% cov); CI green 2b43bb7"
     }
   ],
   "tickets_total": 102,
@@ -475,6 +481,12 @@
       "ticket": "CLIP-070",
       "action": "completed",
       "evidence_ref": "93431f3"
+    },
+    {
+      "at": "2026-10-13T13:12:34+00:00",
+      "ticket": "CLIP-071",
+      "action": "completed",
+      "evidence_ref": "2b43bb7"
     }
   ]
 }
