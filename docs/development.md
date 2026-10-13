@@ -1420,3 +1420,30 @@ insert-time race re-check; audited profitability_reports.recorded.
 
 Routes (CLIP-033 pattern): POST /profitability/reports, GET
 /profitability/reports?org_id=. No LLM, no network.
+
+## Anomaly detection and finance approval gates (M18)
+
+clipos_api.finance_controls (CLIP-077) closes M18 with two fail-closed
+finance controls. detect_cost_anomaly is pure: z-score against the
+population mean/stddev of a baseline (fewer than 2 points ->
+INSUFFICIENT_DATA; only over-cost flags — a candidate above
+mean + z_threshold * stddev is ANOMALY; zero stddev flags strictly
+above-mean candidates with infinite z). run_anomaly_check scores one
+CLIP-074 cost entry against the other entries of the same source +
+category and persists a cost_anomalies row (migration 0055, 0054 ->
+0055, CREATE-only, unique (org, anomaly_id), ix org+entry_id;
+entry 404; idempotent conflict; audited cost_anomalies.recorded).
+
+finance_approvals (same migration, unique (org, approval_id), ix
+org+status) carry a requested amount through a one-shot lifecycle:
+PENDING -> APPROVED or REJECTED, then frozen (illegal moves 409,
+same-state no-op), with actor/reason refs; audited submitted/resolved.
+evaluate_approval_gate is the pure gate — only APPROVED with matching
+currency and requested <= approved allows; not_approved /
+currency_mismatch / amount_exceeds_approved otherwise — and every
+check audits finance_approvals.checked.
+
+Routes (CLIP-033 pattern): POST /cost-anomalies/check, GET
+/cost-anomalies?org_id=, POST/GET /finance-approvals, GET
+/finance-approvals/{approval_id}, POST .../resolve, POST .../gate.
+No LLM, no network.
