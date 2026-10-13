@@ -53,6 +53,7 @@ from clipos_api.render_project import router as render_project_router
 from clipos_api.render_variants import router as render_variants_router
 from clipos_api.repository import get_engine
 from clipos_api.research import router as research_router
+from clipos_api.revenue_ledger import router as revenue_ledger_router
 from clipos_api.rights_entities import router as rights_entities_router
 from clipos_api.rights_gate import router as rights_gate_router
 from clipos_api.rights_ledger import router as rights_ledger_router
@@ -108,6 +109,7 @@ app.router.routes.extend(render_pipeline_router.routes)
 app.router.routes.extend(render_project_router.routes)
 app.router.routes.extend(render_variants_router.routes)
 app.router.routes.extend(research_router.routes)
+app.router.routes.extend(revenue_ledger_router.routes)
 app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(metric_reconciliation_router.routes)
 app.router.routes.extend(watchlist_router.routes)
