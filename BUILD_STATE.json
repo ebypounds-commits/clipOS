@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-065",
+  "current_ticket": "CLIP-066",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -96,7 +96,8 @@
     "CLIP-061",
     "CLIP-062",
     "CLIP-063",
-    "CLIP-064"
+    "CLIP-064",
+    "CLIP-065"
   ],
   "blocked": [],
   "human_gates": {
@@ -107,19 +108,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-064",
-    "at": "2026-10-13T10:11:01+00:00",
-    "facts": "CLIP-064 normalized performance snapshots complete: build_snapshot_fields pure (engagement_rate=(LIKE+COMMENT+SHARE)/VIEW*100 zero-safe, per-kind counts default 0 when unmeasured), performance_snapshots (migration 0042 CREATE-only 0041->0042 PG-verified, unique (org,content_ref) + unique snapshot_id), build flow 404 when content_ref has no stored analytics metrics (fail-closed), idempotent re-derivation returns stored row, changed fields 409 via route mapping, audited performance_snapshots.recorded, 3 routes CLIP-033 pattern (POST, GET /{snapshot_id}?org_id= org-scoped, GET list), OpenAPI probe 181 paths, land 75155dc merge 38932a9, 13 new tests, suite 1034 passed CI-env full services (91.56% cov) and 1023+11 SQLite-only, ruff format/check clean, mypy clean 75 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 70/70 pre-advance. Interleaved: Jev System One decision tools landed ad-hoc at d07359d (jev_tools.py, 22 tests, no state change) per operator request; CLIP-064 branch synced with main before landing"
+    "ticket": "CLIP-065",
+    "at": "2026-10-13T10:32:30+00:00",
+    "facts": "CLIP-065 analytics dashboards and scheduled collection complete: summarize_snapshots pure roll-up over CLIP-064 performance snapshots (org totals per kind, content count, avg engagement, top-5 by engagement deterministic tie-break, empty zeroed), GET /analytics/dashboard?org_id=; collection_schedules (migration 0043 CREATE-only 0042->0043 PG-verified, unique (org,content_ref), unique schedule_id, ix org+enabled) register idempotent/conflict 409, run_due injected clock timezone-safe Python comparison ALWAYS advances last/next run incl fail-soft FAILED outcome on adapter error (never hot-loops), caller-invoked POST /collection-schedules/run-due, 3 routes CLIP-033 pattern, audited collection_schedules.registered + executed; OpenAPI probe 185 paths, land 6093e6d merge b71b9b5, 20 new tests (dashboards 8 + schedules 12), suite 1054 passed CI-env full services (91.70% cov) and 1043+11 SQLite-only, ruff format/check clean, mypy clean 77 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 71/71 pre-advance"
   },
-  "next_action": "Execute CLIP-065 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-066 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 70,
-  "updated_at": "2026-10-13T10:11:01+00:00",
+  "tickets_completed": 71,
+  "updated_at": "2026-10-13T10:32:30+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -280,6 +281,11 @@
       "ticket": "CLIP-064",
       "merge_sha": "38932a9",
       "summary": "Normalized performance snapshots: build_snapshot_fields pure engagement rate, performance_snapshots migration 0042, 404 no-metrics / 409 changed-fields, 3 routes, 13 tests; 1034 CI-env (91.56% cov); Jev decision tools landed interleaved at d07359d; CI green 38932a9"
+    },
+    {
+      "ticket": "CLIP-065",
+      "merge_sha": "b71b9b5",
+      "summary": "Analytics dashboards + scheduled collection: summarize_snapshots pure, collection_schedules migration 0043, run_due fail-soft executor, 4 routes, 20 tests; 1054 CI-env (91.70% cov); CI green b71b9b5"
     }
   ],
   "tickets_total": 102,
@@ -403,6 +409,12 @@
       "ticket": "CLIP-064",
       "action": "completed",
       "evidence_ref": "38932a9"
+    },
+    {
+      "at": "2026-10-13T10:32:30+00:00",
+      "ticket": "CLIP-065",
+      "action": "completed",
+      "evidence_ref": "b71b9b5"
     }
   ]
 }

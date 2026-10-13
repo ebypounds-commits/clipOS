@@ -1377,7 +1377,7 @@ tickets:
 - id: CLIP-065
   milestone: M15
   title: Implement analytics dashboards and scheduled collection
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-064

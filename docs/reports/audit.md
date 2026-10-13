@@ -266,3 +266,21 @@
 **Tests**: 13 new tests
 **Suite**: 1034 passed CI-env (91.56% cov), 1023+11 SQLite-only
 **Gates**: ruff clean, mypy 75 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 70/70, PG migration 0041->0042 verified
+
+## 2026-10-12 - CLIP-065 Analytics dashboards and scheduled collection
+
+**Ticket**: CLIP-065 (M15)
+**Merge SHA**: b71b9b5
+**Status**: COMPLETE (71/102)
+
+**What was built**:
+- summarize_snapshots: pure org-level roll-up over performance snapshots (totals, avg engagement, top-5 deterministic)
+- GET /analytics/dashboard?org_id=
+- collection_schedules table (migration 0043, CREATE-only, unique (org, content_ref))
+- run_due: injected clock, always advances schedule, fail-soft on adapter failure
+- Routes: POST /collection-schedules, GET /collection-schedules?org_id=&enabled=, POST /collection-schedules/run-due
+- Audits: collection_schedules.registered, collection_schedules.executed
+
+**Tests**: 20 new tests (dashboards 8 + schedules 12)
+**Suite**: 1054 passed CI-env (91.70% cov), 1043+11 SQLite-only
+**Gates**: ruff clean, mypy 77 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 71/71, PG migration 0042->0043 verified
