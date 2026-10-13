@@ -20,6 +20,7 @@ from clipos_api.ai_labels import router as ai_labels_router
 from clipos_api.analytics import router as analytics_router
 from clipos_api.analytics_dashboards import router as analytics_dashboards_router
 from clipos_api.asset_validation import router as asset_validation_router
+from clipos_api.brand_templates import router as brand_templates_router
 from clipos_api.budgets import router as budgets_router
 from clipos_api.caption_tracks import router as caption_tracks_router
 from clipos_api.clip_candidates_router import router as clip_candidates_router
@@ -125,6 +126,7 @@ app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(metric_reconciliation_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)
+app.router.routes.extend(brand_templates_router.routes)
 app.router.routes.extend(budgets_router.routes)
 app.router.routes.extend(caption_tracks_router.routes)
 app.router.routes.extend(clip_candidates_router.routes)

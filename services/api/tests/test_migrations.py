@@ -91,6 +91,8 @@ _EXPECTED_TABLES = {
     "profitability_reports",
     "cost_anomalies",
     "finance_approvals",
+    "brand_templates",
+    "channel_templates",
 }
 
 
