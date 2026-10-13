@@ -1145,3 +1145,28 @@ Routes: POST /collection-schedules, GET
 /collection-schedules?org_id=&enabled=, POST
 /collection-schedules/run-due. Audits:
 collection_schedules.registered, collection_schedules.executed.
+
+## Experiment and hypothesis data model (M16)
+
+clipos_api.experiments (CLIP-066, M16 opener) implements the PRD §H
+experiment records. experiments (migration 0044, 0043 -> 0044,
+CREATE-only) are org-scoped, idempotent per (org_id, experiment_id)
+with slug-validated client natural ids ([A-Za-z0-9._-]), carry a
+target_metric reusing the CLIP-062 MetricKind plus a
+hypothesis_summary, and start DRAFT. The status lifecycle is a pure
+transition table: DRAFT -> ACTIVE -> COMPLETED -> ARCHIVED (also
+DRAFT -> ARCHIVED); anything else is rejected (409), same-state is a
+no-op, and every real move audits experiments.status_changed with
+actor_ref/reason_ref.
+
+hypotheses (same migration) link to one experiment — registration
+requires the experiment in the same org (404 otherwise) — idempotent
+per (org_id, hypothesis_id), with direction INCREASE/DECREASE/
+NO_CHANGE against the experiment's target metric. Resolution is
+one-shot: PROPOSED -> SUPPORTED or REJECTED, then frozen (409).
+Audits: hypotheses.registered, hypotheses.status_changed.
+
+Routes (CLIP-033 pattern): POST/GET /experiments (+?status= filter),
+POST /experiments/{experiment_id}/transition, POST/GET /hypotheses
+(+?experiment_id= filter), POST /hypotheses/{hypothesis_id}/transition.
+No LLM, no network, no provider identifier.

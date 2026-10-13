@@ -69,6 +69,8 @@ _EXPECTED_TABLES = {
     "reconciliation_records",
     "performance_snapshots",
     "collection_schedules",
+    "experiments",
+    "hypotheses",
 }
 
 
