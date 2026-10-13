@@ -247,3 +247,22 @@
 **Tests**: 8 new tests (reconciliation no-previous, match, store CRUD, routes)
 **Suite**: 999 passed CI-env (91.41% cov), 988+11 SQLite-only
 **Gates**: ruff format/check clean, mypy 73 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 69/69, PG migration 0040->0041 verified
+
+## 2026-10-12 - CLIP-064 Normalized performance snapshots
+
+**Ticket**: CLIP-064 (M15)
+**Merge SHA**: 38932a9
+**Status**: COMPLETE (70/102)
+
+**What was built**:
+- build_snapshot_fields: pure derivation, engagement_rate = (LIKE+COMMENT+SHARE)/VIEW*100 (0 when views missing/zero), per-kind counts default 0
+- performance_snapshots table (migration 0042, CREATE-only, unique (org_id, content_ref), unique snapshot_id)
+- Build flow: 404 when content_ref has no stored analytics metrics; idempotent re-derivation; changed fields -> 409
+- 3 routes: POST /performance-snapshots, GET /performance-snapshots/{snapshot_id}?org_id=, GET /performance-snapshots?org_id=
+- Audited performance_snapshots.recorded
+
+**Interleaved work**: Jev System One decision tools (operator-requested) landed at d07359d before this ticket — jev_tools.py + 22 tests, ad-hoc feature, no state change.
+
+**Tests**: 13 new tests
+**Suite**: 1034 passed CI-env (91.56% cov), 1023+11 SQLite-only
+**Gates**: ruff clean, mypy 75 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 70/70, PG migration 0041->0042 verified

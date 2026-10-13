@@ -1359,7 +1359,7 @@ tickets:
 - id: CLIP-064
   milestone: M15
   title: Implement normalized performance snapshots
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-063
