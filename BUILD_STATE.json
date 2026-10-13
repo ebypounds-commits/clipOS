@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-069",
+  "current_ticket": "CLIP-070",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -100,7 +100,8 @@
     "CLIP-065",
     "CLIP-066",
     "CLIP-067",
-    "CLIP-068"
+    "CLIP-068",
+    "CLIP-069"
   ],
   "blocked": [],
   "human_gates": {
@@ -111,19 +112,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-068",
-    "at": "2026-10-13T12:04:26+00:00",
-    "facts": "CLIP-068 result evaluation/business significance complete: evaluate_significance pure Welch two-sample normal approximation (se=sqrt(sd_a^2/n_a+sd_b^2/n_b), z=(mean_b-mean_a)/se, two-sided p=erfc(|z|/sqrt(2)), statistical gate |z|>=z_critical default 1.96, business gate |lift_pct|>=min_effect_pct default 5.0, lift is B relative to A, equal means short-circuit z=0/p=1, zero-SE with mean difference infinite significance, winner declared only when both gates pass else None; math.erfc only, no scipy), experiment_evaluations (migration 0046 CREATE-only 0045->0046 PG-verified, unique (org,eval_id), ix org+experiment_id), store requires experiment exists in org (404), idempotent identical inputs replay / changed inputs 409, 2 routes CLIP-033 pattern (POST /experiments/{id}/evaluate, GET /experiments/{id}/evaluations), audited experiment_evaluations.recorded; OpenAPI probe 200 paths, land 205f4ad merge 62b5e89, 15 new tests (pure 7 + store 4 + routes 4), suite 1106 passed CI-env full services (91.95% cov) and 1095+11 SQLite-only, ruff format/check clean, mypy clean 80 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 74/74 pre-advance"
+    "ticket": "CLIP-069",
+    "at": "2026-10-13T12:26:19+00:00",
+    "facts": "CLIP-069 strategy-rule canary/promotion/rollback complete: strategy_rules (migration 0047 CREATE-only 0046->0047 PG-verified, unique (org,rule_id), ix org+status, rule_kind generic slug never vendor id, JSON parameters blob, starts DRAFT) register idempotent/conflict 409; pure rule_transition_allowed lifecycle DRAFT->CANARY (canary), CANARY->ACTIVE (promote) or ROLLED_BACK (abort), ACTIVE->ROLLED_BACK (rollback), ROLLED_BACK->CANARY (re-canary), never skip canary (DRAFT->ACTIVE 409), same-state noop; 4 routes CLIP-033 pattern (POST /strategy-rules, GET /{rule_id} 404, GET list +status filter, POST /{rule_id}/transition); audited strategy_rules.registered + strategy_rules.status_changed with actor/reason refs; OpenAPI probe 204 paths, land 28ff0c6 merge 46c2612, 13 new tests, suite 1119 passed CI-env full services (92.03% cov) and 1108+11 SQLite-only, ruff format/check clean, mypy clean 81 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 75/75 pre-advance"
   },
-  "next_action": "Execute CLIP-069 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-070 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 74,
-  "updated_at": "2026-10-13T12:04:26+00:00",
+  "tickets_completed": 75,
+  "updated_at": "2026-10-13T12:26:19+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -304,6 +305,11 @@
       "ticket": "CLIP-068",
       "merge_sha": "62b5e89",
       "summary": "Result evaluation/business significance: pure Welch significance + business gate, experiment_evaluations migration 0046, 2 routes, 15 tests; 1106 CI-env (91.95% cov); CI green 62b5e89"
+    },
+    {
+      "ticket": "CLIP-069",
+      "merge_sha": "46c2612",
+      "summary": "Strategy-rule canary/promotion/rollback: guarded lifecycle migration 0047, 4 routes, 13 tests; 1119 CI-env (92.03% cov); CI green 46c2612"
     }
   ],
   "tickets_total": 102,
@@ -451,6 +457,12 @@
       "ticket": "CLIP-068",
       "action": "completed",
       "evidence_ref": "62b5e89"
+    },
+    {
+      "at": "2026-10-13T12:26:19+00:00",
+      "ticket": "CLIP-069",
+      "action": "completed",
+      "evidence_ref": "46c2612"
     }
   ]
 }

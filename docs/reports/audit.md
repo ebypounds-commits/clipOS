@@ -336,3 +336,19 @@
 **Tests**: 15 new tests (pure math 7, store 4, routes 4)
 **Suite**: 1106 passed CI-env (91.95% cov), 1095+11 SQLite-only
 **Gates**: ruff clean, mypy 80 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 74/74, PG migration 0045->0046 verified
+
+## 2026-10-12 - CLIP-069 Strategy-rule canary/promotion/rollback
+
+**Ticket**: CLIP-069 (M16)
+**Merge SHA**: 46c2612
+**Status**: COMPLETE (75/102)
+
+**What was built**:
+- strategy_rules table (migration 0047, CREATE-only, unique (org, rule_id), JSON parameters, starts DRAFT)
+- Guarded lifecycle: DRAFT->CANARY->ACTIVE/ROLLED_BACK, ACTIVE->ROLLED_BACK, ROLLED_BACK->CANARY; cannot skip canary (409)
+- 4 routes: POST /strategy-rules, GET /strategy-rules/{rule_id}, GET /strategy-rules?org_id=&status=, POST /strategy-rules/{rule_id}/transition
+- Audits: strategy_rules.registered, strategy_rules.status_changed (actor/reason refs)
+
+**Tests**: 13 new tests (pure lifecycle, store flow, routes, 404/409/422)
+**Suite**: 1119 passed CI-env (92.03% cov), 1108+11 SQLite-only
+**Gates**: ruff clean, mypy 81 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 75/75, PG migration 0046->0047 verified

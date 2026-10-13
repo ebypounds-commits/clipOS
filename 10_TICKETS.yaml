@@ -1449,7 +1449,7 @@ tickets:
 - id: CLIP-069
   milestone: M16
   title: Implement strategy-rule canary/promotion/rollback
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-068
