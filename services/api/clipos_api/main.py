@@ -17,12 +17,14 @@ from clipos_api.agent_policy import router as agent_policy_router
 from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.ai_labels import router as ai_labels_router
 from clipos_api.analytics import router as analytics_router
+from clipos_api.analytics_dashboards import router as analytics_dashboards_router
 from clipos_api.asset_validation import router as asset_validation_router
 from clipos_api.caption_tracks import router as caption_tracks_router
 from clipos_api.clip_candidates_router import router as clip_candidates_router
 from clipos_api.clip_dedup import router as clip_dedup_router
 from clipos_api.clip_review import router as clip_review_router
 from clipos_api.clip_scores import router as clip_scores_router
+from clipos_api.collection_schedules import router as collection_schedules_router
 from clipos_api.content_evals import router as content_evals_router
 from clipos_api.content_planning import router as content_planning_router
 from clipos_api.generation_adapters import router as generation_adapters_router
@@ -76,6 +78,7 @@ app = FastAPI(title="ClipOS API", version=APP_VERSION)
 app.router.routes.extend(agent_registry_router.routes)
 app.router.routes.extend(ai_labels_router.routes)
 app.router.routes.extend(analytics_router.routes)
+app.router.routes.extend(analytics_dashboards_router.routes)
 app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
@@ -109,6 +112,7 @@ app.router.routes.extend(clip_candidates_router.routes)
 app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_review_router.routes)
 app.router.routes.extend(clip_scores_router.routes)
+app.router.routes.extend(collection_schedules_router.routes)
 app.router.routes.extend(content_evals_router.routes)
 app.router.routes.extend(content_planning_router.routes)
 app.router.routes.extend(generation_adapters_router.routes)

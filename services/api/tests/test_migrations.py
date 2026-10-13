@@ -68,6 +68,7 @@ _EXPECTED_TABLES = {
     "analytics_metrics",
     "reconciliation_records",
     "performance_snapshots",
+    "collection_schedules",
 }
 
 
