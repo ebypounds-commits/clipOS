@@ -1098,3 +1098,24 @@ urgency noul), GET /jev/health. Upstream failures normalize to 502
 with bounded detail. Audited jev_tools.answered carries org, tool,
 question count, model alias, and mode — never the state text or the
 API key. No table, no migration, no LLM.
+
+## Normalized performance snapshots (M15)
+
+clipos_api.performance_snapshots (CLIP-064) rolls stored analytics
+metrics (CLIP-062) into one normalized performance snapshot per
+content_ref (PRD §H). build_snapshot_fields is the pure derivation:
+engagement_rate = (LIKE + COMMENT + SHARE) / VIEW * 100 (0 when the
+view count is missing or zero), one stored count per metric kind, all
+fields defaulting to 0 when unmeasured — no LLM, no network, no
+provider identifier.
+
+performance_snapshots (migration 0042, 0041 -> 0042, CREATE-only)
+persists snapshots idempotent per (org_id, content_ref): an identical
+re-derivation returns the stored row, changed views/likes/comments/
+shares/engagement_rate conflict (409). The flow 404s when the
+content_ref has no stored analytics metrics (fail-closed — no
+snapshot from absent data). Routes (CLIP-033 pattern):
+POST /performance-snapshots, GET
+/performance-snapshots/{snapshot_id}?org_id= (org-scoped), GET
+/performance-snapshots?org_id=. Audited
+performance_snapshots.recorded.
