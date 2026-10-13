@@ -228,3 +228,22 @@
 **Tests**: 13 new tests (mock adapter, store idempotency, collect flow, routes)
 **Suite**: 991 passed CI-env (91.35% cov), 980+11 SQLite-only
 **Gates**: ruff format/check clean, mypy 72 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 68/68, PG migration 0039->0040 verified
+
+## 2026-10-12 - CLIP-063 Native metric ingestion/reconciliation
+
+**Ticket**: CLIP-063 (M15)
+**Merge SHA**: b247eaa
+**Status**: COMPLETE (69/102)
+
+**What was built**:
+- reconcile_metrics: collects via AnalyticsAdapter, compares against previous snapshot, records discrepancies
+- ReconciliationStatus: MATCH, DISCREPANCY, NO_PREVIOUS
+- Discrepancy model: kind, previous_value, current_value, delta, delta_pct
+- reconciliation_records table (migration 0041, CREATE-only, unique record_id, ix (org, content_ref))
+- ReconciliationStore with list/filter
+- 2 routes: POST /reconciliation/run, GET /reconciliation-records?org_id=&content_ref=
+- Audited metric_reconciliation.reconciled
+
+**Tests**: 8 new tests (reconciliation no-previous, match, store CRUD, routes)
+**Suite**: 999 passed CI-env (91.41% cov), 988+11 SQLite-only
+**Gates**: ruff format/check clean, mypy 73 files clean, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 69/69, PG migration 0040->0041 verified

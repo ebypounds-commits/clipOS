@@ -1341,7 +1341,7 @@ tickets:
 - id: CLIP-063
   milestone: M15
   title: Implement native metric ingestion/reconciliation
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-062

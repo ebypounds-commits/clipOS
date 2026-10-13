@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-063",
+  "current_ticket": "CLIP-064",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -94,7 +94,8 @@
     "CLIP-059",
     "CLIP-060",
     "CLIP-061",
-    "CLIP-062"
+    "CLIP-062",
+    "CLIP-063"
   ],
   "blocked": [],
   "human_gates": {
@@ -105,19 +106,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-062",
-    "at": "2026-10-12T20:27:09+00:00",
-    "facts": "CLIP-062 analytics provider contract complete: AnalyticsAdapter Protocol (health_check collect_metrics normalized results), MockAnalyticsAdapter deterministic (VIEW/LIKE/COMMENT metrics from content ref, no network/vendor ids), MetricKind enum (VIEW LIKE COMMENT SHARE WATCH_TIME_MINUTES IMPRESSION CLICK_THROUGH), analytics_metrics (migration 0040 CREATE-only 0039->0040 PG-verified idempotent per (org,content,kind,collected_at window) ix (org,content)), collect_analytics flow audited analytics_metrics.collected, 2 routes CLIP-033 pattern, OpenAPI probe paths, land 18802d1 merge e1dd57f, 13 new tests (mock 2 + store 5 + collect 1 + routes 4 + migration 1), suite 991 passed CI-env full services (91.35% cov) and 980+11 SQLite-only, ruff format/check clean, mypy clean 72 files, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 68/68 pre-advance"
+    "ticket": "CLIP-063",
+    "at": "2026-10-13T07:37:33+00:00",
+    "facts": "CLIP-063 native metric ingestion/reconciliation complete: reconcile_metrics (collect via AnalyticsAdapter, compare against previous snapshot for same content_ref, record discrepancies MATCH/DISCREPANCY/NO_PREVIOUS with threshold_pct), reconciliation_records (migration 0041 CREATE-only 0040->0041 PG-verified, unique record_id, ix (org,content_ref), discrepancies JSON), ReconciliationStore, 2 routes CLIP-033 pattern, audited metric_reconciliation.reconciled, OpenAPI probe paths, land 46fb6b7 merge b247eaa, 8 new tests, suite 999 passed CI-env full services (91.41% cov) and 988+11 SQLite-only, ruff format/check clean, mypy clean 73 files, secret_scan clean, architecture_guard 6/6 OK, state_audit verify 69/69 pre-advance"
   },
-  "next_action": "Execute CLIP-063 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-064 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 68,
-  "updated_at": "2026-10-12T20:27:09+00:00",
+  "tickets_completed": 69,
+  "updated_at": "2026-10-13T07:37:33+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -268,6 +269,11 @@
       "ticket": "CLIP-062",
       "merge_sha": "e1dd57f",
       "summary": "Analytics provider contract: AnalyticsAdapter Protocol + MockAnalyticsAdapter deterministic (VIEW/LIKE/COMMENT), MetricKind enum, analytics_metrics migration 0040, 2 routes, 13 tests; 991 CI-env (91.35% cov); CI green e1dd57f"
+    },
+    {
+      "ticket": "CLIP-063",
+      "merge_sha": "b247eaa",
+      "summary": "Metric ingestion/reconciliation: reconcile_metrics (collect, compare, record discrepancies), reconciliation_records migration 0041, 2 routes, 8 tests; 999 CI-env (91.41% cov); CI green b247eaa"
     }
   ],
   "tickets_total": 102,
@@ -379,6 +385,12 @@
       "ticket": "CLIP-062",
       "action": "completed",
       "evidence_ref": "e1dd57f"
+    },
+    {
+      "at": "2026-10-13T07:37:33+00:00",
+      "ticket": "CLIP-063",
+      "action": "completed",
+      "evidence_ref": "b247eaa"
     }
   ]
 }
