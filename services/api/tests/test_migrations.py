@@ -83,6 +83,7 @@ _EXPECTED_TABLES = {
     "sponsor_campaigns",
     "sponsor_deliverables",
     "sponsor_attributions",
+    "revenue_reconciliations",
 }
 
 
