@@ -406,3 +406,21 @@
 **Tests**: 14 new tests (pure summary, store flows, routes, 404/409/422)
 **Suite**: 1161 passed CI-env (92.41% cov), 1150+11 SQLite-only
 **Gates**: ruff clean, mypy 84 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 78/78, PG migration 0049->0050 verified
+
+## 2026-10-13 - CLIP-073 Revenue dashboards/reconciliation workflows
+
+**Ticket**: CLIP-073 (M17)
+**Merge SHA**: b177701
+**Status**: COMPLETE (79/102)
+
+**What was built**:
+- summarize_revenue: pure dashboard roll-up (per-currency totals, per-kind/source keyed key:currency — currencies never mixed)
+- GET /revenue/dashboard with exact-window filters
+- reconcile_revenue: pure recorded-vs-expected (tolerance MATCH/DISCREPANCY, zero-expected rule)
+- revenue_reconciliations table (migration 0051, CREATE-only, unique (org, reconciliation_id))
+- run_reconciliation: source 404, period 422, idempotent conflict 409, insert race re-check, audited
+- 3 routes: GET /revenue/dashboard, POST/GET /revenue-reconciliations
+
+**Tests**: 14 new tests (pure math, dashboard, store flows, routes)
+**Suite**: 1175 passed CI-env (92.48% cov), 1164+11 SQLite-only
+**Gates**: ruff clean, mypy 85 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 79/79, PG migration 0050->0051 verified

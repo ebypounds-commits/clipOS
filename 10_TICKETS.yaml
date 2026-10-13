@@ -1521,7 +1521,7 @@ tickets:
 - id: CLIP-073
   milestone: M17
   title: Implement revenue dashboards/reconciliation workflows
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-072

@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-073",
+  "current_ticket": "CLIP-074",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -104,7 +104,8 @@
     "CLIP-069",
     "CLIP-070",
     "CLIP-071",
-    "CLIP-072"
+    "CLIP-072",
+    "CLIP-073"
   ],
   "blocked": [],
   "human_gates": {
@@ -115,19 +116,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-072",
-    "at": "2026-10-13T13:34:55+00:00",
-    "facts": "CLIP-072 sponsorship campaign attribution complete: sponsor_campaigns + sponsor_deliverables + sponsor_attributions (migration 0050 CREATE-only 0049->0050 PG-verified, unique (org,campaign_id)/(org,deliverable_id)/(org,attribution_id), ix org+campaign on events; integer contracted_cents/amount_cents + currency; date window validated; deliverables campaign-404 + one-shot PENDING->DELIVERED audited sponsor_deliverables.delivered; attributions campaign-404 + path/body campaign_id match 422), summarize_sponsorship pure (delivery rate 0 without deliverables, revenue per currency never mixed, variance_cents vs contracted when same currency else None); all registrations idempotent conflict 409; 8 routes CLIP-033 pattern; audited sponsor_campaigns.registered + sponsor_deliverables.registered + sponsor_attributions.recorded; OpenAPI probe 225 paths, land 710f26e merge a1c167d, 14 new tests, suite 1161 passed CI-env full services (92.41% cov) and 1150+11 SQLite-only, ruff format/check clean, mypy clean 84 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 78/78 pre-advance"
+    "ticket": "CLIP-073",
+    "at": "2026-10-13T13:57:07+00:00",
+    "facts": "CLIP-073 revenue dashboards/reconciliation complete: summarize_revenue pure dashboard roll-up (totals per currency never mixed, per-kind and per-source totals keyed key:currency), GET /revenue/dashboard?org_id= with exact (period_start,period_end) window filters; reconcile_revenue pure recorded-vs-expected (delta_cents, delta_pct relative to expected with zero-expected rule 0%/100%, MATCH iff |delta_pct| <= tolerance_pct default 0.0 exact); run_reconciliation sums ledger for exact window+currency (source 404, inverted period 422, idempotent conflict 409, insert-time race re-check) persists revenue_reconciliations (migration 0051 CREATE-only 0050->0051 PG-verified, unique (org,reconciliation_id), ix org+source) audited revenue_reconciliations.recorded; 3 routes CLIP-033 pattern; OpenAPI probe 228 paths, land dadaa91 merge b177701, 14 new tests, suite 1175 passed CI-env full services (92.48% cov) and 1164+11 SQLite-only, ruff format/check clean, mypy clean 85 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 79/79 pre-advance"
   },
-  "next_action": "Execute CLIP-073 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-074 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 78,
-  "updated_at": "2026-10-13T13:34:55+00:00",
+  "tickets_completed": 79,
+  "updated_at": "2026-10-13T13:57:07+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -328,6 +329,11 @@
       "ticket": "CLIP-072",
       "merge_sha": "a1c167d",
       "summary": "Sponsorship campaign attribution: campaigns/deliverables/attributions migration 0050, one-shot delivery, pure summary with variance, 8 routes, 14 tests; 1161 CI-env (92.41% cov); CI green a1c167d"
+    },
+    {
+      "ticket": "CLIP-073",
+      "merge_sha": "b177701",
+      "summary": "Revenue dashboards/reconciliation: pure dashboard + reconcile, migration 0051, 3 routes, 14 tests; 1175 CI-env (92.48% cov); CI green b177701"
     }
   ],
   "tickets_total": 102,
@@ -499,6 +505,12 @@
       "ticket": "CLIP-072",
       "action": "completed",
       "evidence_ref": "a1c167d"
+    },
+    {
+      "at": "2026-10-13T13:57:07+00:00",
+      "ticket": "CLIP-073",
+      "action": "completed",
+      "evidence_ref": "b177701"
     }
   ]
 }
