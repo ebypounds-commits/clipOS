@@ -461,3 +461,21 @@
 **Tests**: 15 new tests (pure math, store flows, scope filter, currency deny, routes)
 **Suite**: 1203 passed CI-env (92.70% cov), 1192+11 SQLite-only
 **Gates**: ruff clean, mypy 87 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 81/81, PG migration 0052->0053 verified
+
+## 2026-10-13 - CLIP-076 Profitability/reinvestment calculations
+
+**Ticket**: CLIP-076 (M18)
+**Merge SHA**: d021d4d
+**Status**: COMPLETE (82/102)
+
+**What was built**:
+- calculate_profitability: pure profit/margin (zero-revenue rules), profitable flag
+- calculate_reinvestment: integer floor split, reinvest+reserve=profit, non-positive zeros
+- profitability_reports table (migration 0054, CREATE-only, unique (org, report_id))
+- run_report: sums revenue + cost ledgers exact window+currency, persists, audited
+- 2 routes: POST/GET /profitability/reports
+- Audited profitability_reports.recorded
+
+**Tests**: 14 new tests (pure math, store flows, routes, 409/422)
+**Suite**: 1217 passed CI-env (92.76% cov), 1206+11 SQLite-only
+**Gates**: ruff clean, mypy 88 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 82/82, PG migration 0053->0054 verified

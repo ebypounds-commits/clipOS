@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-076",
+  "current_ticket": "CLIP-077",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -107,7 +107,8 @@
     "CLIP-072",
     "CLIP-073",
     "CLIP-074",
-    "CLIP-075"
+    "CLIP-075",
+    "CLIP-076"
   ],
   "blocked": [],
   "human_gates": {
@@ -118,19 +119,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-075",
-    "at": "2026-10-13T14:48:05+00:00",
-    "facts": "CLIP-075 budgets/spend authorization complete: budgets (migration 0053 CREATE-only 0052->0053 PG-verified, unique (org,budget_id), ix org+scope_key, integer amount_cents, exact period window, generic scope_key = cost_center value or org for all sources, inverted period 422, register idempotent conflict 409); pure authorize_spend fail-closed arithmetic (allowed iff spent+requested<=cap, exact boundary allowed, remaining_after None on deny); store hard-deny currency_mismatch (USD budget never authorizes EUR), spent basis = sum cost_entries exact window+currency joined to cost_sources cost_center==scope_key (org scope counts all); every decision allowed-or-denied persisted spend_authorizations (unique (org,authorization_id), ix org+budget) audited spend_authorizations.evaluated, repeat idempotent conflict; 5 routes CLIP-033 pattern (POST/GET /budgets, GET /{budget_id} 404, POST /{budget_id}/authorize, GET /{budget_id}/authorizations); OpenAPI probe 238 paths, land 143793d merge 9bff106, 15 new tests, suite 1203 passed CI-env full services (92.70% cov) and 1192+11 SQLite-only, ruff format/check clean, mypy clean 87 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 81/81 pre-advance"
+    "ticket": "CLIP-076",
+    "at": "2026-10-13T15:27:44+00:00",
+    "facts": "CLIP-076 profitability/reinvestment calculations complete: pure calculate_profitability (profit_cents=revenue-cost, margin_pct=profit/revenue*100 with zero-revenue rules 0% when cost also 0 else -100%, profitable=profit>=0) + calculate_reinvestment (integer floor split reinvest=floor(profit*pct/100), reserve=remainder, they always sum to profit, non-positive profit zeros reason non_positive_profit, out-of-range pct ValueError->422); run_report sums CLIP-070 revenue_entries + CLIP-074 cost_entries for exact (period_start,period_end,currency) window, computes both, persists profitability_reports (migration 0054 CREATE-only 0053->0054 PG-verified, unique (org,report_id), ix org+period_start), idempotent conflict 409, insert-time race re-check, audited profitability_reports.recorded; 2 routes CLIP-033 pattern (POST/GET /profitability/reports); OpenAPI probe 240 paths, land e85d907 merge d021d4d, 14 new tests, suite 1217 passed CI-env full services (92.76% cov) and 1206+11 SQLite-only, ruff format/check clean (post-fix verify), mypy clean 88 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 82/82 pre-advance"
   },
-  "next_action": "Execute CLIP-076 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-077 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 81,
-  "updated_at": "2026-10-13T14:48:05+00:00",
+  "tickets_completed": 82,
+  "updated_at": "2026-10-13T15:27:44+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -346,6 +347,11 @@
       "ticket": "CLIP-075",
       "merge_sha": "9bff106",
       "summary": "Budgets/spend authorization: pure fail-closed gate, ledger-backed spend, migration 0053, 5 routes, 15 tests; 1203 CI-env (92.70% cov); CI green 9bff106"
+    },
+    {
+      "ticket": "CLIP-076",
+      "merge_sha": "d021d4d",
+      "summary": "Profitability/reinvestment: pure margin + integer split, dual-ledger reports migration 0054, 2 routes, 14 tests; 1217 CI-env (92.76% cov); CI green d021d4d"
     }
   ],
   "tickets_total": 102,
@@ -535,6 +541,12 @@
       "ticket": "CLIP-075",
       "action": "completed",
       "evidence_ref": "9bff106"
+    },
+    {
+      "at": "2026-10-13T15:27:44+00:00",
+      "ticket": "CLIP-076",
+      "action": "completed",
+      "evidence_ref": "d021d4d"
     }
   ]
 }
