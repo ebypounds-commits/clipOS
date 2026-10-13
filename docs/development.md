@@ -1072,3 +1072,29 @@ stores outcomes idempotent per record_id with org+content_ref index.
 Routes (CLIP-033 pattern): POST /reconciliation/run, GET
 /reconciliation-records?org_id=&content_ref=. Audited
 metric_reconciliation.reconciled. No LLM.
+
+## Jev System One decision tools (ad-hoc, operator-requested)
+
+clipos_api.jev_tools exposes TypeSafe's System One protocol as
+provider-neutral decision tools: typed questions (choice over named
+criteria, noul yes/no, score over ordered levels) answered from
+calibrated probabilities — classification, not text generation.
+
+JevAdapter is the Protocol (health_check, answer); MockJevAdapter is
+the deterministic stand-in (per-question probabilities derive from
+sha1(state|question|criteria) so identical requests always yield
+identical answers — no network, no key). RemoteJevAdapter speaks
+POST {JEV_BASE_URL}/v1/systemone with
+`authorization: Bearer {JEV_API_KEY}` (GET /v1/models for health);
+both values come from env only and are never persisted, logged, or
+audited. Selection is opt-in: both env vars set -> remote, else mock
+(same shape as LOCAL_ADAPTER_BASE_URL). Callers pass a registry-style
+model_alias (default `systemone-latest`) — no model/vendor identifier
+is hard-coded.
+
+Routes (CLIP-033 pattern): POST /jev/answer (arbitrary typed
+questions), POST /jev/triage (caller-supplied category choice plus an
+urgency noul), GET /jev/health. Upstream failures normalize to 502
+with bounded detail. Audited jev_tools.answered carries org, tool,
+question count, model alias, and mode — never the state text or the
+API key. No table, no migration, no LLM.

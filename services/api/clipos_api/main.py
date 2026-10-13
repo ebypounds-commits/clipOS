@@ -26,6 +26,7 @@ from clipos_api.clip_scores import router as clip_scores_router
 from clipos_api.content_evals import router as content_evals_router
 from clipos_api.content_planning import router as content_planning_router
 from clipos_api.generation_adapters import router as generation_adapters_router
+from clipos_api.jev_tools import router as jev_tools_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
@@ -109,6 +110,7 @@ app.router.routes.extend(clip_scores_router.routes)
 app.router.routes.extend(content_evals_router.routes)
 app.router.routes.extend(content_planning_router.routes)
 app.router.routes.extend(generation_adapters_router.routes)
+app.router.routes.extend(jev_tools_router.routes)
 app.router.routes.extend(script_hooks_router.routes)
 
 
