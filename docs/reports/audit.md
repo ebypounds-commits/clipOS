@@ -443,3 +443,21 @@
 **Tests**: 13 new tests (adapter determinism, source CRUD, sync idempotency, routes)
 **Suite**: 1188 passed CI-env (92.59% cov), 1177+11 SQLite-only
 **Gates**: ruff clean, mypy 86 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 80/80, PG migration 0051->0052 verified
+
+## 2026-10-13 - CLIP-075 Budgets/spend authorization
+
+**Ticket**: CLIP-075 (M18)
+**Merge SHA**: 9bff106
+**Status**: COMPLETE (81/102)
+
+**What was built**:
+- budgets table (migration 0053, CREATE-only, unique (org, budget_id), integer caps, exact window, generic scope_key)
+- Pure authorize_spend: fail-closed, boundary allowed, remaining_after None on deny
+- Store: currency mismatch hard deny, spent = cost_entries summed by exact window + currency + cost_center scope
+- spend_authorizations table (every decision persisted, audited evaluated)
+- 5 routes: POST/GET /budgets, GET /{budget_id}, POST /{budget_id}/authorize, GET /{budget_id}/authorizations
+- Audits: budgets.registered, spend_authorizations.evaluated
+
+**Tests**: 15 new tests (pure math, store flows, scope filter, currency deny, routes)
+**Suite**: 1203 passed CI-env (92.70% cov), 1192+11 SQLite-only
+**Gates**: ruff clean, mypy 87 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 81/81, PG migration 0052->0053 verified

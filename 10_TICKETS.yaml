@@ -1557,7 +1557,7 @@ tickets:
 - id: CLIP-075
   milestone: M18
   title: Implement budgets/spend authorization
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-074

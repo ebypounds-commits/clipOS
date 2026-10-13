@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-075",
+  "current_ticket": "CLIP-076",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -106,7 +106,8 @@
     "CLIP-071",
     "CLIP-072",
     "CLIP-073",
-    "CLIP-074"
+    "CLIP-074",
+    "CLIP-075"
   ],
   "blocked": [],
   "human_gates": {
@@ -117,19 +118,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-074",
-    "at": "2026-10-13T14:23:29+00:00",
-    "facts": "CLIP-074 cost ledger and provider cost ingestion complete (M18 opener): CostAdapter Protocol (health_check, fetch_costs) + MockCostAdapter deterministic (USAGE+STORAGE entries per fetch, external_ref + amount_cents derive from sha1(source|period|category), no network/vendor ids); cost_sources (migration 0052 CREATE-only 0051->0052 PG-verified, unique (org,source_id), ix org+platform, vault-only account_ref, generic cost_center slug, register idempotent conflict 409); cost_entries append-only integer amount_cents (positive cost negative credit, never floats) + currency + period window, unique (org,source_id,external_ref); sync flow source 404 / inverted-period 422 / per-entry idempotent skip (repeat sync same period imports 0) audited cost_entries.recorded per insert; distinct from llm_cost.CostLedger dispatch spend (documented); 5 routes CLIP-033 pattern (POST/GET sources, GET source 404, POST /cost-sync, GET /cost-entries); OpenAPI probe 233 paths, land 1370a35 merge d6865f6, 13 new tests, suite 1188 passed CI-env full services (92.59% cov) and 1177+11 SQLite-only, ruff format/check clean, mypy clean 86 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 80/80 pre-advance"
+    "ticket": "CLIP-075",
+    "at": "2026-10-13T14:48:05+00:00",
+    "facts": "CLIP-075 budgets/spend authorization complete: budgets (migration 0053 CREATE-only 0052->0053 PG-verified, unique (org,budget_id), ix org+scope_key, integer amount_cents, exact period window, generic scope_key = cost_center value or org for all sources, inverted period 422, register idempotent conflict 409); pure authorize_spend fail-closed arithmetic (allowed iff spent+requested<=cap, exact boundary allowed, remaining_after None on deny); store hard-deny currency_mismatch (USD budget never authorizes EUR), spent basis = sum cost_entries exact window+currency joined to cost_sources cost_center==scope_key (org scope counts all); every decision allowed-or-denied persisted spend_authorizations (unique (org,authorization_id), ix org+budget) audited spend_authorizations.evaluated, repeat idempotent conflict; 5 routes CLIP-033 pattern (POST/GET /budgets, GET /{budget_id} 404, POST /{budget_id}/authorize, GET /{budget_id}/authorizations); OpenAPI probe 238 paths, land 143793d merge 9bff106, 15 new tests, suite 1203 passed CI-env full services (92.70% cov) and 1192+11 SQLite-only, ruff format/check clean, mypy clean 87 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 81/81 pre-advance"
   },
-  "next_action": "Execute CLIP-075 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-076 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 80,
-  "updated_at": "2026-10-13T14:23:29+00:00",
+  "tickets_completed": 81,
+  "updated_at": "2026-10-13T14:48:05+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -340,6 +341,11 @@
       "ticket": "CLIP-074",
       "merge_sha": "d6865f6",
       "summary": "Cost ledger/provider cost ingestion (M18 opener): CostAdapter + mock, cost_sources + cost_entries migration 0052, integer-cents idempotent sync, 5 routes, 13 tests; 1188 CI-env (92.59% cov); CI green d6865f6"
+    },
+    {
+      "ticket": "CLIP-075",
+      "merge_sha": "9bff106",
+      "summary": "Budgets/spend authorization: pure fail-closed gate, ledger-backed spend, migration 0053, 5 routes, 15 tests; 1203 CI-env (92.70% cov); CI green 9bff106"
     }
   ],
   "tickets_total": 102,
@@ -523,6 +529,12 @@
       "ticket": "CLIP-074",
       "action": "completed",
       "evidence_ref": "d6865f6"
+    },
+    {
+      "at": "2026-10-13T14:48:05+00:00",
+      "ticket": "CLIP-075",
+      "action": "completed",
+      "evidence_ref": "9bff106"
     }
   ]
 }
