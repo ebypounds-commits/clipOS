@@ -1119,3 +1119,29 @@ POST /performance-snapshots, GET
 /performance-snapshots/{snapshot_id}?org_id= (org-scoped), GET
 /performance-snapshots?org_id=. Audited
 performance_snapshots.recorded.
+
+## Analytics dashboards and scheduled collection (M15)
+
+clipos_api.analytics_dashboards (CLIP-065 part 1) is the org-level
+roll-up over CLIP-064 performance snapshots: summarize_snapshots is
+pure (per-kind totals, content count, average engagement rate, top-5
+content by engagement with a deterministic views/content_ref
+tie-break; empty input yields a zeroed summary). Route:
+GET /analytics/dashboard?org_id=. No table, no LLM.
+
+clipos_api.collection_schedules (CLIP-065 part 2) adds operator-defined
+collection schedules (journey 3): collection_schedules (migration
+0043, 0042 -> 0043, CREATE-only, unique (org, content_ref), unique
+schedule_id, ix org+enabled) with interval_minutes 5..10080, enabled
+flag, last/next run timestamps. Registration is idempotent on the
+natural key; changed platform/account/external/interval/enabled
+conflict (409). run_due executes enabled schedules whose next_run_at
+has arrived — the clock is injected (timezone-safe Python comparison),
+each due schedule collects through the CLIP-062 adapter flow and
+ALWAYS advances last_run_at/next_run_at, including on adapter failure
+(fail-soft FAILED outcome, never a hot loop). The scheduler tick is
+caller-invoked (operator/workflow): POST /collection-schedules/run-due.
+Routes: POST /collection-schedules, GET
+/collection-schedules?org_id=&enabled=, POST
+/collection-schedules/run-due. Audits:
+collection_schedules.registered, collection_schedules.executed.
