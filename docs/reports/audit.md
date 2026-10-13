@@ -388,3 +388,21 @@
 **Tests**: 14 new tests (pure attribution, store CRUD, routes)
 **Suite**: 1147 passed CI-env (92.29% cov), 1136+11 SQLite-only
 **Gates**: ruff clean, mypy 83 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 77/77, PG migration 0048->0049 verified
+
+## 2026-10-13 - CLIP-072 Sponsorship campaign attribution
+
+**Ticket**: CLIP-072 (M17)
+**Merge SHA**: a1c167d
+**Status**: COMPLETE (78/102)
+
+**What was built**:
+- sponsor_campaigns, sponsor_deliverables, sponsor_attributions tables (migration 0050, CREATE-only)
+- Deliverables: campaign existence 404, one-shot PENDING -> DELIVERED (audited)
+- Attributions: campaign existence 404, integer money, path/body campaign match 422
+- summarize_sponsorship: pure delivery rate, revenue per currency, variance vs contracted
+- 8 routes: campaigns POST/GET/summary/attributions, deliverables POST/GET/transition
+- Audits: sponsor_campaigns.registered, sponsor_deliverables.registered, sponsor_deliverables.delivered, sponsor_attributions.recorded
+
+**Tests**: 14 new tests (pure summary, store flows, routes, 404/409/422)
+**Suite**: 1161 passed CI-env (92.41% cov), 1150+11 SQLite-only
+**Gates**: ruff clean, mypy 84 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 78/78, PG migration 0049->0050 verified

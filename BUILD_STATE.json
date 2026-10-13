@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M14",
-  "current_ticket": "CLIP-072",
+  "current_ticket": "CLIP-073",
   "status": "M14_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -103,7 +103,8 @@
     "CLIP-068",
     "CLIP-069",
     "CLIP-070",
-    "CLIP-071"
+    "CLIP-071",
+    "CLIP-072"
   ],
   "blocked": [],
   "human_gates": {
@@ -114,19 +115,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-071",
-    "at": "2026-10-13T13:12:34+00:00",
-    "facts": "CLIP-071 affiliate link/click/conversion attribution complete: affiliate_links + affiliate_clicks + affiliate_conversions (migration 0049 CREATE-only 0048->0049 PG-verified, unique (org,link_id)/(org,click_id)/(org,conversion_id), ix org+link on events; opaque refs no PII/vendor ids; clicks+conversions append-only; conversion integer amount_cents + 3-letter currency; optional click_ref attribution validated to exist and belong to same link 404), summarize_attribution pure (conversion rate 0 without clicks, revenue summed per currency never mixed), all registrations idempotent conflict 409; 8 routes CLIP-033 pattern (POST/GET links, GET link 404, GET attribution, POST/GET clicks, POST/GET conversions + link filter); audited affiliate_links.registered, affiliate_clicks.recorded, affiliate_conversions.recorded; OpenAPI probe 217 paths, land aee65d2 merge 2b43bb7, 14 new tests, suite 1147 passed CI-env full services (92.29% cov) and 1136+11 SQLite-only, ruff format/check clean, mypy clean 83 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 77/77 pre-advance"
+    "ticket": "CLIP-072",
+    "at": "2026-10-13T13:34:55+00:00",
+    "facts": "CLIP-072 sponsorship campaign attribution complete: sponsor_campaigns + sponsor_deliverables + sponsor_attributions (migration 0050 CREATE-only 0049->0050 PG-verified, unique (org,campaign_id)/(org,deliverable_id)/(org,attribution_id), ix org+campaign on events; integer contracted_cents/amount_cents + currency; date window validated; deliverables campaign-404 + one-shot PENDING->DELIVERED audited sponsor_deliverables.delivered; attributions campaign-404 + path/body campaign_id match 422), summarize_sponsorship pure (delivery rate 0 without deliverables, revenue per currency never mixed, variance_cents vs contracted when same currency else None); all registrations idempotent conflict 409; 8 routes CLIP-033 pattern; audited sponsor_campaigns.registered + sponsor_deliverables.registered + sponsor_attributions.recorded; OpenAPI probe 225 paths, land 710f26e merge a1c167d, 14 new tests, suite 1161 passed CI-env full services (92.41% cov) and 1150+11 SQLite-only, ruff format/check clean, mypy clean 84 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 78/78 pre-advance"
   },
-  "next_action": "Execute CLIP-072 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-073 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 77,
-  "updated_at": "2026-10-13T13:12:34+00:00",
+  "tickets_completed": 78,
+  "updated_at": "2026-10-13T13:34:55+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -322,6 +323,11 @@
       "ticket": "CLIP-071",
       "merge_sha": "2b43bb7",
       "summary": "Affiliate attribution: links/clicks/conversions migration 0049, click-attributed conversions, pure per-currency summary, 8 routes, 14 tests; 1147 CI-env (92.29% cov); CI green 2b43bb7"
+    },
+    {
+      "ticket": "CLIP-072",
+      "merge_sha": "a1c167d",
+      "summary": "Sponsorship campaign attribution: campaigns/deliverables/attributions migration 0050, one-shot delivery, pure summary with variance, 8 routes, 14 tests; 1161 CI-env (92.41% cov); CI green a1c167d"
     }
   ],
   "tickets_total": 102,
@@ -487,6 +493,12 @@
       "ticket": "CLIP-071",
       "action": "completed",
       "evidence_ref": "2b43bb7"
+    },
+    {
+      "at": "2026-10-13T13:34:55+00:00",
+      "ticket": "CLIP-072",
+      "action": "completed",
+      "evidence_ref": "a1c167d"
     }
   ]
 }
