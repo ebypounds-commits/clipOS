@@ -242,6 +242,7 @@ def test_routes_registered_on_app() -> None:
 @pytest.fixture()
 def client(engine: Engine, audit_log: Path, monkeypatch: pytest.MonkeyPatch):
     from fastapi.testclient import TestClient
+
     from clipos_api import main as main_mod
 
     monkeypatch.setattr(main_mod, "database_engine", lambda: engine)
