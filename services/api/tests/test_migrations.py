@@ -86,6 +86,8 @@ _EXPECTED_TABLES = {
     "revenue_reconciliations",
     "cost_sources",
     "cost_entries",
+    "budgets",
+    "spend_authorizations",
 }
 
 

@@ -1371,3 +1371,29 @@ Routes (CLIP-033 pattern): POST /cost-sources, GET
 /cost-sources/{source_id} (404), GET /cost-sources?org_id=, POST
 /cost-sync, GET /cost-entries?org_id=&source_id=. Audited
 cost_sources.registered. No LLM.
+
+## Budgets and spend authorization (M18)
+
+clipos_api.budgets (CLIP-075) implements PRD §I budgets as a
+fail-closed gate before provider spend. budgets (migration 0053,
+0052 -> 0053, CREATE-only, unique (org, budget_id), ix org+scope) cap
+one generic scope_key (a cost_center value, or `org` for every
+source) over an explicit (period_start, period_end) window in one
+currency as integer amount_cents; inverted windows 422, changed
+re-registrations 409.
+
+authorize_spend is pure arithmetic: allowed only when spent +
+requested <= cap (exact boundary allowed), remaining_after is None on
+denial. The store makes currency mismatch a hard deny
+(`currency_mismatch`) — a USD budget never authorizes EUR spend —
+and sums already-recorded spend from CLIP-074 cost_entries for the
+budget's exact window + currency, with source cost_center equal to
+scope_key (scope `org` counts all sources). Every decision, allowed
+or denied, persists to spend_authorizations (unique (org,
+authorization_id)) and audits spend_authorizations.evaluated, so the
+call is auditable; repeated ids replay or conflict (409).
+
+Routes (CLIP-033 pattern): POST/GET /budgets, GET
+/budgets/{budget_id} (404), POST /budgets/{budget_id}/authorize,
+GET /budgets/{budget_id}/authorizations. Audited budgets.registered.
+No LLM, no network.
