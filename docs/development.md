@@ -1238,3 +1238,33 @@ strategy_rules.status_changed with actor_ref/reason_ref. Routes
 /strategy-rules/{rule_id} (404), GET /strategy-rules?org_id=&status=,
 POST /strategy-rules/{rule_id}/transition. Audited
 strategy_rules.registered. No LLM, no network.
+
+## Revenue-source/ledger adapters (M17)
+
+clipos_api.revenue_ledger (CLIP-070, M17 opener) implements PRD §I
+monetization ingestion. RevenueAdapter is the provider-neutral
+Protocol (health_check, fetch_revenue over one period);
+MockRevenueAdapter is the deterministic CI stand-in returning two
+entries per fetch (PLATFORM + AFFILIATE) whose external refs and
+amount_cents derive from sha1(source|period|kind) — no network, no
+vendor identifier. Real platform/affiliate/sponsor adapters register
+behind the Protocol later.
+
+revenue_sources (migration 0048, 0047 -> 0048, CREATE-only, unique
+(org_id, source_id), ix org+platform) are org-scoped source
+registrations with slug ids, platform slug, vault-only account_ref,
+and the RevenueKind they report (PLATFORM/AFFILIATE/SPONSOR/PRODUCT/
+LEAD_GEN); idempotent with conflict on changed fields (409).
+
+revenue_entries is the append-only ledger: integer **amount_cents**
+(never floats), 3-letter uppercase currency, (period_start,
+period_end) window, unique (org_id, source_id, external_ref). sync
+requires the source (404), validates the period (422), fetches through
+the adapter, persists only entries not already recorded (repeat sync
+of the same period imports zero and skips the rest), and audits each
+insert as revenue_entries.recorded.
+
+Routes (CLIP-033 pattern): POST /revenue-sources, GET
+/revenue-sources/{source_id} (404), GET /revenue-sources?org_id=,
+POST /revenue-sync, GET /revenue-entries?org_id=&source_id=. Audited
+revenue_sources.registered. No LLM.
