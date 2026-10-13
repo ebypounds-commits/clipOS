@@ -479,3 +479,22 @@
 **Tests**: 14 new tests (pure math, store flows, routes, 409/422)
 **Suite**: 1217 passed CI-env (92.76% cov), 1206+11 SQLite-only
 **Gates**: ruff clean, mypy 88 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 82/82, PG migration 0053->0054 verified
+
+## 2026-10-13 - CLIP-077 Anomaly detection and finance approval gates
+
+**Ticket**: CLIP-077 (M18)
+**Merge SHA**: 759a92c
+**Status**: COMPLETE (83/102) - M18 MILESTONE CLOSED
+
+**What was built**:
+- detect_cost_anomaly: pure population z-score over-cost detector (INSUFFICIENT_DATA below 2 baseline points, zero-variance rules)
+- run_anomaly_check: scores a cost entry against source+category peers (migration 0055 cost_anomalies, audited recorded)
+- finance_approvals: one-shot PENDING -> APPROVED/REJECTED lifecycle (audited submitted/resolved)
+- evaluate_approval_gate: fail-closed (not_approved / currency_mismatch / amount_exceeds_approved), audited checked
+- 6 routes: cost-anomalies check/list, finance-approvals submit/get/list/resolve/gate
+
+**Milestone bookkeeping**: M15/M16/M17/M18 recorded in completed_milestones; current_milestone -> M19.
+
+**Tests**: 19 new tests (pure detection, gate, store flows, routes)
+**Suite**: 1236 passed CI-env (92.86% cov), 1225+11 SQLite-only
+**Gates**: ruff clean, mypy 89 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 83/83, PG migration 0054->0055 verified

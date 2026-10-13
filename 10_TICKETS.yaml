@@ -1593,7 +1593,7 @@ tickets:
 - id: CLIP-077
   milestone: M18
   title: Implement anomaly detection and finance approval gates
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-076

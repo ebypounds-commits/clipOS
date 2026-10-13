@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M14",
-  "current_ticket": "CLIP-077",
-  "status": "M14_COMPLETE",
+  "current_milestone": "M19",
+  "current_ticket": "CLIP-078",
+  "status": "M19_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -24,7 +24,11 @@
     "M11",
     "M12",
     "M13",
-    "M14"
+    "M14",
+    "M15",
+    "M16",
+    "M17",
+    "M18"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -108,7 +112,8 @@
     "CLIP-073",
     "CLIP-074",
     "CLIP-075",
-    "CLIP-076"
+    "CLIP-076",
+    "CLIP-077"
   ],
   "blocked": [],
   "human_gates": {
@@ -119,19 +124,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-076",
-    "at": "2026-10-13T15:27:44+00:00",
-    "facts": "CLIP-076 profitability/reinvestment calculations complete: pure calculate_profitability (profit_cents=revenue-cost, margin_pct=profit/revenue*100 with zero-revenue rules 0% when cost also 0 else -100%, profitable=profit>=0) + calculate_reinvestment (integer floor split reinvest=floor(profit*pct/100), reserve=remainder, they always sum to profit, non-positive profit zeros reason non_positive_profit, out-of-range pct ValueError->422); run_report sums CLIP-070 revenue_entries + CLIP-074 cost_entries for exact (period_start,period_end,currency) window, computes both, persists profitability_reports (migration 0054 CREATE-only 0053->0054 PG-verified, unique (org,report_id), ix org+period_start), idempotent conflict 409, insert-time race re-check, audited profitability_reports.recorded; 2 routes CLIP-033 pattern (POST/GET /profitability/reports); OpenAPI probe 240 paths, land e85d907 merge d021d4d, 14 new tests, suite 1217 passed CI-env full services (92.76% cov) and 1206+11 SQLite-only, ruff format/check clean (post-fix verify), mypy clean 88 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 82/82 pre-advance"
+    "ticket": "CLIP-077",
+    "at": "2026-10-13T15:44:26+00:00",
+    "facts": "CLIP-077 anomaly detection/finance approval gates complete (M18 MILESTONE CLOSED): pure detect_cost_anomaly (population z-score, over-cost only, <2 baseline points INSUFFICIENT_DATA, zero-variance above-mean infinite-z anomaly, negative threshold ValueError->422), run_anomaly_check scores a CLIP-074 cost entry against other entries of same source+category (entry 404, idempotent (org,anomaly_id) conflict, insert race re-check, audited cost_anomalies.recorded); finance_approvals one-shot lifecycle PENDING->APPROVED/REJECTED then frozen (illegal 409, same-state noop, actor/reason refs, audited submitted+resolved); pure evaluate_approval_gate fail-closed (not_approved / currency_mismatch / amount_exceeds_approved; only APPROVED + currency match + requested<=approved allows), every gate call audited finance_approvals.checked; migration 0055 CREATE-only 0054->0055 PG-verified (cost_anomalies + finance_approvals, unique identities, ix org+entry / org+status); 6 routes CLIP-033 pattern (POST /cost-anomalies/check, GET /cost-anomalies, POST/GET /finance-approvals, GET /{approval_id} 404, POST /{approval_id}/resolve, POST /{approval_id}/gate); OpenAPI probe 247 paths, land 0ec8d8e merge 759a92c, 19 new tests, suite 1236 passed CI-env full services (92.86% cov) and 1225+11 SQLite-only, ruff format/check clean, mypy clean 89 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 83/83 pre-advance. Milestone bookkeeping: M15/M16/M17 (closed earlier without completed_milestones append) + M18 recorded now; current_milestone -> M19"
   },
-  "next_action": "Execute CLIP-077 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-078 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 82,
-  "updated_at": "2026-10-13T15:27:44+00:00",
+  "tickets_completed": 83,
+  "updated_at": "2026-10-13T15:44:26+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -352,6 +357,11 @@
       "ticket": "CLIP-076",
       "merge_sha": "d021d4d",
       "summary": "Profitability/reinvestment: pure margin + integer split, dual-ledger reports migration 0054, 2 routes, 14 tests; 1217 CI-env (92.76% cov); CI green d021d4d"
+    },
+    {
+      "ticket": "CLIP-077",
+      "merge_sha": "759a92c",
+      "summary": "Anomaly detection/finance approval gates (M18 closer): pure z-score detection + one-shot approvals + fail-closed gate, migration 0055, 6 routes, 19 tests; 1236 CI-env (92.86% cov); M15-M18 milestones recorded; CI green 759a92c"
     }
   ],
   "tickets_total": 102,
@@ -547,6 +557,12 @@
       "ticket": "CLIP-076",
       "action": "completed",
       "evidence_ref": "d021d4d"
+    },
+    {
+      "at": "2026-10-13T15:44:26+00:00",
+      "ticket": "CLIP-077",
+      "action": "completed",
+      "evidence_ref": "759a92c"
     }
   ]
 }
