@@ -498,3 +498,20 @@
 **Tests**: 19 new tests (pure detection, gate, store flows, routes)
 **Suite**: 1236 passed CI-env (92.86% cov), 1225+11 SQLite-only
 **Gates**: ruff clean, mypy 89 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 83/83, PG migration 0054->0055 verified
+
+## 2026-10-13 - CLIP-078 Brand/channel templates
+
+**Ticket**: CLIP-078 (M19)
+**Merge SHA**: 1c4cb95
+**Status**: COMPLETE (84/102)
+
+**What was built**:
+- brand_templates table (migration 0056, CREATE-only, unique (org, template_id), hex-validated palette, refs only)
+- channel_templates table (Visibility from CLIP-058, hashtags validated, brand link 404 same-org)
+- Contract validators: bad hex/hashtag/slug fail 422 pre-persistence
+- 6 routes: POST/GET /brand-templates, GET /{template_id}, POST/GET /channel-templates (+platform), GET /{template_id}
+- Audits: brand_templates.registered, channel_templates.registered
+
+**Tests**: 12 new tests (validators, store flows, routes, 404/409/422)
+**Suite**: 1248 passed CI-env (92.94% cov), 1237+11 SQLite-only (one unrelated flaky redis rate-limit test passed on retry)
+**Gates**: ruff clean, mypy 90 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 84/84, PG migration 0055->0056 verified

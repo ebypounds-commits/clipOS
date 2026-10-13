@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M19",
-  "current_ticket": "CLIP-078",
+  "current_ticket": "CLIP-079",
   "status": "M19_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -113,7 +113,8 @@
     "CLIP-074",
     "CLIP-075",
     "CLIP-076",
-    "CLIP-077"
+    "CLIP-077",
+    "CLIP-078"
   ],
   "blocked": [],
   "human_gates": {
@@ -124,19 +125,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-077",
-    "at": "2026-10-13T15:44:26+00:00",
-    "facts": "CLIP-077 anomaly detection/finance approval gates complete (M18 MILESTONE CLOSED): pure detect_cost_anomaly (population z-score, over-cost only, <2 baseline points INSUFFICIENT_DATA, zero-variance above-mean infinite-z anomaly, negative threshold ValueError->422), run_anomaly_check scores a CLIP-074 cost entry against other entries of same source+category (entry 404, idempotent (org,anomaly_id) conflict, insert race re-check, audited cost_anomalies.recorded); finance_approvals one-shot lifecycle PENDING->APPROVED/REJECTED then frozen (illegal 409, same-state noop, actor/reason refs, audited submitted+resolved); pure evaluate_approval_gate fail-closed (not_approved / currency_mismatch / amount_exceeds_approved; only APPROVED + currency match + requested<=approved allows), every gate call audited finance_approvals.checked; migration 0055 CREATE-only 0054->0055 PG-verified (cost_anomalies + finance_approvals, unique identities, ix org+entry / org+status); 6 routes CLIP-033 pattern (POST /cost-anomalies/check, GET /cost-anomalies, POST/GET /finance-approvals, GET /{approval_id} 404, POST /{approval_id}/resolve, POST /{approval_id}/gate); OpenAPI probe 247 paths, land 0ec8d8e merge 759a92c, 19 new tests, suite 1236 passed CI-env full services (92.86% cov) and 1225+11 SQLite-only, ruff format/check clean, mypy clean 89 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 83/83 pre-advance. Milestone bookkeeping: M15/M16/M17 (closed earlier without completed_milestones append) + M18 recorded now; current_milestone -> M19"
+    "ticket": "CLIP-078",
+    "at": "2026-10-13T16:10:16+00:00",
+    "facts": "CLIP-078 brand/channel templates complete (M19 opener): brand_templates (migration 0056 CREATE-only 0055->0056 PG-verified, unique (org,template_id), refs-only voice_ref/logo_ref + hex-validated color_palette #RGB/#RRGGBB, register idempotent conflict 409, audited brand_templates.registered) + channel_templates (unique (org,template_id), ix org+platform, default Visibility reused CLIP-058 publishing contract, caption_text<=1000 config, hashtags<=16 pattern ^#[^\\s#]{1,63}$, optional brand_template_id validated same-org 404, register idempotent conflict 409, audited channel_templates.registered); contract-layer validators reject bad hex/hashtag/slug with 422 pre-persistence; 6 routes CLIP-033 pattern (POST/GET brand-templates, GET /{template_id} 404, POST/GET channel-templates +platform filter, GET /{template_id} 404); OpenAPI probe 253 paths, land c9f9352 merge 1c4cb95, 12 new tests, suite 1248 passed CI-env full services (92.94% cov; one unrelated flaky redis rate-limit test passed on retry) and 1237+11 SQLite-only, ruff format/check clean, mypy clean 90 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 84/84 pre-advance"
   },
-  "next_action": "Execute CLIP-078 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-079 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 83,
-  "updated_at": "2026-10-13T15:44:26+00:00",
+  "tickets_completed": 84,
+  "updated_at": "2026-10-13T16:10:16+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -362,6 +363,11 @@
       "ticket": "CLIP-077",
       "merge_sha": "759a92c",
       "summary": "Anomaly detection/finance approval gates (M18 closer): pure z-score detection + one-shot approvals + fail-closed gate, migration 0055, 6 routes, 19 tests; 1236 CI-env (92.86% cov); M15-M18 milestones recorded; CI green 759a92c"
+    },
+    {
+      "ticket": "CLIP-078",
+      "merge_sha": "1c4cb95",
+      "summary": "Brand/channel templates (M19 opener): refs-only brand kit + channel templates with brand linkage, migration 0056, 6 routes, 12 tests; 1248 CI-env (92.94% cov); CI green 1c4cb95"
     }
   ],
   "tickets_total": 102,
@@ -563,6 +569,12 @@
       "ticket": "CLIP-077",
       "action": "completed",
       "evidence_ref": "759a92c"
+    },
+    {
+      "at": "2026-10-13T16:10:16+00:00",
+      "ticket": "CLIP-078",
+      "action": "completed",
+      "evidence_ref": "1c4cb95"
     }
   ]
 }

@@ -1611,7 +1611,7 @@ tickets:
 - id: CLIP-078
   milestone: M19
   title: Implement brand/channel templates
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-077
