@@ -1431,7 +1431,7 @@ tickets:
 - id: CLIP-068
   milestone: M16
   title: Implement result evaluation/business significance
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-067

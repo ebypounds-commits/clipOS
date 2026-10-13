@@ -319,3 +319,20 @@
 **Tests**: 18 new tests (pure bucketing, store lifecycle, routes, 404/409)
 **Suite**: 1091 passed CI-env (91.85% cov), 1080+11 SQLite-only
 **Gates**: ruff clean, mypy 79 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 73/73, PG migration 0044->0045 verified
+
+## 2026-10-12 - CLIP-068 Result evaluation/business significance
+
+**Ticket**: CLIP-068 (M16)
+**Merge SHA**: 62b5e89
+**Status**: COMPLETE (74/102)
+
+**What was built**:
+- evaluate_significance: pure Welch two-sample test (normal approximation), statistical gate (|z| >= 1.96) + business gate (|lift| >= 5%), winner only when both pass
+- experiment_evaluations table (migration 0046, CREATE-only, unique (org, eval_id))
+- Store: experiment existence 404, idempotent replay, changed inputs 409
+- Routes: POST /experiments/{id}/evaluate, GET /experiments/{id}/evaluations
+- Audited experiment_evaluations.recorded
+
+**Tests**: 15 new tests (pure math 7, store 4, routes 4)
+**Suite**: 1106 passed CI-env (91.95% cov), 1095+11 SQLite-only
+**Gates**: ruff clean, mypy 80 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 74/74, PG migration 0045->0046 verified
