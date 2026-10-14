@@ -19,6 +19,7 @@ from clipos_api.agent_registry import router as agent_registry_router
 from clipos_api.ai_labels import router as ai_labels_router
 from clipos_api.analytics import router as analytics_router
 from clipos_api.analytics_dashboards import router as analytics_dashboards_router
+from clipos_api.architect import router as architect_router
 from clipos_api.asset_validation import router as asset_validation_router
 from clipos_api.brand_lifecycle import router as brand_lifecycle_router
 from clipos_api.brand_templates import router as brand_templates_router
@@ -97,6 +98,7 @@ app.router.routes.extend(affiliate_attribution_router.routes)
 app.router.routes.extend(ai_labels_router.routes)
 app.router.routes.extend(analytics_router.routes)
 app.router.routes.extend(analytics_dashboards_router.routes)
+app.router.routes.extend(architect_router.routes)
 app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
