@@ -281,6 +281,16 @@ class ModelRegistryStore:
             ).all()
             return [_route_from_row(row) for row in rows]
 
+    def list_providers(self) -> list[str]:
+        """Return the distinct provider names present in the registry.
+
+        Gateway wiring discovers providers from data — no provider
+        name is compiled into application source.
+        """
+        with self._sessions() as session:
+            rows = session.execute(sa.select(sa.distinct(ModelRouteRecord.provider))).scalars()
+            return sorted(str(name) for name in rows)
+
 
 def _registry_store(engine: Annotated[Engine, Depends(database_engine)]) -> ModelRegistryStore:
     return ModelRegistryStore.from_engine(engine)
