@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M19",
-  "current_ticket": "CLIP-080",
+  "current_ticket": "CLIP-081",
   "status": "M19_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -115,7 +115,8 @@
     "CLIP-076",
     "CLIP-077",
     "CLIP-078",
-    "CLIP-079"
+    "CLIP-079",
+    "CLIP-080"
   ],
   "blocked": [],
   "human_gates": {
@@ -126,19 +127,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-079",
-    "at": "2026-10-14T07:36:06+00:00",
-    "facts": "CLIP-079 channel incubation/launch experiments complete: incubation_runs (migration 0057 CREATE-only 0056->0057 PG-verified, unique (org,run_id), ix org+status, platform slug + opaque channel_ref/goal_ref, optional brand/channel template links validated same-org 404, register idempotent conflict 409, audited incubation_runs.registered); pure run_transition_allowed lifecycle DRAFT->INCUBATING (start), INCUBATING->LAUNCHED (launch) or SUNSET (abandon), LAUNCHED/SUNSET->ARCHIVED (terminal), never skip incubating (DRAFT->LAUNCHED 409), same-state noop; transitions audited incubation_runs.status_changed with actor/reason refs; 4 routes CLIP-033 pattern (POST /incubation-runs, GET list +status filter, GET /{run_id} 404, POST /{run_id}/transition); OpenAPI probe 257 paths, land d08e734 merge e85b325, 14 new tests, suite 1262 passed CI-env full services (93.01% cov) and 1251+11 SQLite-only, ruff format/check clean, mypy clean 91 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 85/85 pre-advance"
+    "ticket": "CLIP-080",
+    "at": "2026-10-14T08:06:44+00:00",
+    "facts": "CLIP-080 portfolio allocation/quota engine complete: quota_policies (migration 0058 CREATE-only 0057->0058 PG-verified, unique (org,quota_id), ix org+scope_ref, scope ACCOUNT counts publication_jobs by account_ref / PLATFORM by slug, rolling DAILY 24h / WEEKLY 7d / MONTHLY 30d UTC windows, register idempotent conflict 409 audited quota_policies.registered); evaluate_quota pure gate (allowed iff used+proposed<=max, boundary allowed); check_quota counts publication_jobs in window with scope filter audited quota_checks.evaluated (window excludes old jobs verified); allocate_portfolio pure largest-remainder allocator (floor shares by weight, remainder by descending fractional part with key-order tie-break, always sums exactly to total_units, empty/zero/negative weights and negative totals raise 422); portfolio_allocations persist weights+split (unique (org,allocation_id), idempotent conflict, audited portfolio_allocations.recorded); 5 routes CLIP-033 pattern (POST/GET /quota-policies, POST /{quota_id}/check, POST/GET /portfolio-allocations); OpenAPI probe 262 paths, land d4d536a merge d09266a, 16 new tests, suite 1278 passed CI-env full services (93.11% cov) and 1267+11 SQLite-only, ruff format/check clean, mypy clean 92 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 86/86 pre-advance"
   },
-  "next_action": "Execute CLIP-080 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-081 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 85,
-  "updated_at": "2026-10-14T07:36:06+00:00",
+  "tickets_completed": 86,
+  "updated_at": "2026-10-14T08:06:44+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -374,6 +375,11 @@
       "ticket": "CLIP-079",
       "merge_sha": "e85b325",
       "summary": "Channel incubation/launch experiments: guarded lifecycle migration 0057, template links, 4 routes, 14 tests; 1262 CI-env (93.01% cov); CI green e85b325"
+    },
+    {
+      "ticket": "CLIP-080",
+      "merge_sha": "d09266a",
+      "summary": "Portfolio allocation/quota engine: rolling-window quota gate over publication_jobs + largest-remainder allocator, migration 0058, 5 routes, 16 tests; 1278 CI-env (93.11% cov); CI green d09266a"
     }
   ],
   "tickets_total": 102,
@@ -587,6 +593,12 @@
       "ticket": "CLIP-079",
       "action": "completed",
       "evidence_ref": "e85b325"
+    },
+    {
+      "at": "2026-10-14T08:06:44+00:00",
+      "ticket": "CLIP-080",
+      "action": "completed",
+      "evidence_ref": "d09266a"
     }
   ]
 }

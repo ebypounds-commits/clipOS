@@ -1647,7 +1647,7 @@ tickets:
 - id: CLIP-080
   milestone: M19
   title: Implement portfolio allocation/quota engine
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-079

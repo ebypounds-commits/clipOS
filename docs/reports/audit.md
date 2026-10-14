@@ -531,3 +531,21 @@
 **Tests**: 14 new tests (pure lifecycle, store flows, template links, routes)
 **Suite**: 1262 passed CI-env (93.01% cov), 1251+11 SQLite-only
 **Gates**: ruff clean, mypy 91 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 85/85, PG migration 0056->0057 verified
+
+## 2026-10-13 - CLIP-080 Portfolio allocation/quota engine
+
+**Ticket**: CLIP-080 (M19)
+**Merge SHA**: d09266a
+**Status**: COMPLETE (86/102)
+
+**What was built**:
+- quota_policies table (migration 0058, CREATE-only, unique (org, quota_id), ACCOUNT/PLATFORM scope, rolling windows)
+- evaluate_quota: pure gate (boundary allowed), check_quota counts publication_jobs with window+scope filters (audited)
+- allocate_portfolio: pure largest-remainder allocator (deterministic, always sums exact)
+- portfolio_allocations table (unique (org, allocation_id), idempotent, audited)
+- 5 routes: POST/GET /quota-policies, POST /{quota_id}/check, POST/GET /portfolio-allocations
+- Audits: quota_policies.registered, quota_checks.evaluated, portfolio_allocations.recorded
+
+**Tests**: 16 new tests (pure allocator, quota gate, store flows, routes)
+**Suite**: 1278 passed CI-env (93.11% cov), 1267+11 SQLite-only
+**Gates**: ruff clean, mypy 92 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 86/86, PG migration 0057->0058 verified
