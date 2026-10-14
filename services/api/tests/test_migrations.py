@@ -96,6 +96,8 @@ _EXPECTED_TABLES = {
     "incubation_runs",
     "quota_policies",
     "portfolio_allocations",
+    "brand_lifecycles",
+    "shutdown_policies",
 }
 
 

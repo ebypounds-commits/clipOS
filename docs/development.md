@@ -1523,3 +1523,29 @@ with conflict, audited portfolio_allocations.recorded.
 Routes (CLIP-033 pattern): POST/GET /quota-policies, POST
 /quota-policies/{quota_id}/check, POST/GET /portfolio-allocations.
 No LLM, no network.
+
+## Brand lifecycle and shutdown policies (M19)
+
+clipos_api.brand_lifecycle (CLIP-081) adds PRD §K lifecycle controls
+over the CLIP-078 brand templates. brand_lifecycles (migration 0059,
+0058 -> 0059, CREATE-only) attach one lifecycle per brand — unique
+natural key (org_id, brand_template_id) plus a client slug
+(org_id, lifecycle_id); the brand must exist in the same org (404
+otherwise). The pure lifecycle table is DRAFT -> ACTIVE -> SUSPENDED
+-> RETIRED with SUSPENDED -> ACTIVE (resume), RETIRED terminal,
+same-state no-ops and everything else 409; registration audits
+brand_lifecycles.registered and every real move audits
+brand_lifecycles.status_changed with actor/reason refs.
+
+shutdown_policies (same migration, unique (org, policy_id), unique
+(org, brand_template_id)) record the operator's declared wind-down
+intent for one brand: KEEP_PUBLISHED / UNLIST_PUBLISHED /
+SCHEDULE_DELETE with grace_days 0..90 (422 outside bounds). One
+policy per brand (twin -> 409), brand existence enforced (404),
+idempotent on repeat, audited shutdown_policies.registered. Policies
+declare intent only — enforcement is a later workflow concern.
+
+Routes (CLIP-033 pattern): POST /brand-lifecycles, GET
+/brand-lifecycles?org_id=&status=, POST
+/brand-lifecycles/{lifecycle_id}/transition, POST /shutdown-policies,
+GET /shutdown-policies?org_id=. No LLM, no network.
