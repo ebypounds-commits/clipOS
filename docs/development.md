@@ -1593,3 +1593,29 @@ genuinely new registrations/links).
 Route (CLIP-033 pattern): POST /improvement-proposals/generate
 returning the proposal, linked evidence, and created/replayed counts
 (<= 16 evidence refs, evidence_kind slug-validated 422).
+
+## Eval sandbox and safe promotion (M20)
+
+clipos_api.eval_sandbox (CLIP-084) closes the journey-5 evaluation
+loop. eval_sandboxes (migration 0061, 0060 -> 0061, CREATE-only,
+unique (org, sandbox_id), ix org+proposal_id) bind one CLIP-082
+proposal (404 when missing) to a required evaluator_alias (registry
+reference — never defaulted, never a vendor id) plus a scenario_ref.
+The pure lifecycle is CREATED -> RUNNING -> PASSED or FAILED with
+FAILED -> RUNNING (re-run); PASSED/FAILED do not regress otherwise;
+same-state no-ops; anything else 409. Registration audits
+eval_sandboxes.registered; moves audit eval_sandboxes.status_changed
+with actor/reason refs.
+
+evaluate_promotion is the pure safe-promotion gate: allowed only
+when the sandbox is PASSED **and** the proposal is ACCEPTED or
+IMPLEMENTED (sandbox_not_passed / proposal_not_ready otherwise).
+Every promotion request persists its decision (PROMOTED-or-DENIED
+captured as allowed+reason) in promotions (unique (org,
+promotion_id), ix org+proposal_id); proposal and sandbox existence
+enforced (404); idempotent with conflict on changed inputs (409);
+audited promotions.evaluated.
+
+Routes (CLIP-033 pattern): POST/GET /eval-sandboxes, POST
+/eval-sandboxes/{sandbox_id}/transition, POST/GET /promotions. No
+LLM, no network.
