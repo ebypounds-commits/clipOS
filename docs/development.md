@@ -1574,3 +1574,22 @@ Routes (CLIP-033 pattern): POST/GET /improvement-proposals, GET
 /improvement-proposals/{proposal_id} (404), POST
 /improvement-proposals/{proposal_id}/transition, POST/GET
 /proposal-evidence (+?proposal_id= filter). No LLM, no network.
+
+## Agent Architect proposal generator (M20)
+
+clipos_api.architect (CLIP-083) generates CLIP-082 proposals
+deterministically from weakness observations — the Agent Architect's
+contribution is a derivation rule, not model inference (no LLM, no
+network, no new tables). derive_proposal_id =
+`gen-{sha1(org|weakness_ref)[:12]}` and derive_evidence_id =
+`gen-{sha1(proposal_id|evidence_ref)[:12]}` mean generating the same
+weakness twice is a replay: the stored PROPOSED proposal and evidence
+are returned with evidence_replayed counting the pre-existing links,
+while a changed title/summary for the same weakness identity
+conflicts (409). Each run audits
+proposal_generation.generated (plus the per-row CLIP-082 audits for
+genuinely new registrations/links).
+
+Route (CLIP-033 pattern): POST /improvement-proposals/generate
+returning the proposal, linked evidence, and created/replayed counts
+(<= 16 evidence refs, evidence_kind slug-validated 422).
