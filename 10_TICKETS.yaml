@@ -1683,7 +1683,7 @@ tickets:
 - id: CLIP-082
   milestone: M20
   title: Implement improvement proposal evidence model
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-081

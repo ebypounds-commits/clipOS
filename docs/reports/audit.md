@@ -567,3 +567,20 @@
 **Tests**: 11 new tests (pure lifecycle, store flows, routes, 404/409/422)
 **Suite**: 1289 passed CI-env (93.18% cov), 1278+11 SQLite-only
 **Gates**: ruff clean, mypy 93 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 87/87, PG migration 0058->0059 verified
+
+## 2026-10-13 - CLIP-082 Improvement proposal evidence model
+
+**Ticket**: CLIP-082 (M20)
+**Merge SHA**: 049d7d9
+**Status**: COMPLETE (88/102)
+
+**What was built**:
+- improvement_proposals table (migration 0060, CREATE-only, unique (org, proposal_id))
+- Pure lifecycle: PROPOSED -> IN_REVIEW -> ACCEPTED/REJECTED, ACCEPTED -> IMPLEMENTED -> VERIFIED/ROLLED_BACK (terminal states)
+- proposal_evidence table (append-only refs-only evidence links, proposal 404)
+- 6 routes: POST/GET /improvement-proposals, GET /{proposal_id}, POST /{proposal_id}/transition, POST/GET /proposal-evidence
+- Audits: improvement_proposals.registered, improvement_proposals.status_changed, proposal_evidence.linked
+
+**Tests**: 12 new tests (pure lifecycle, store flows, evidence links, routes)
+**Suite**: 1301 passed CI-env (93.27% cov), 1290+11 SQLite-only
+**Gates**: ruff clean, mypy 94 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 88/88, PG migration 0059->0060 verified

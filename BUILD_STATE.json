@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M20",
-  "current_ticket": "CLIP-082",
+  "current_ticket": "CLIP-083",
   "status": "M20_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -118,7 +118,8 @@
     "CLIP-078",
     "CLIP-079",
     "CLIP-080",
-    "CLIP-081"
+    "CLIP-081",
+    "CLIP-082"
   ],
   "blocked": [],
   "human_gates": {
@@ -129,19 +130,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-081",
-    "at": "2026-10-14T08:36:53+00:00",
-    "facts": "CLIP-081 brand lifecycle/shutdown policies complete (M19 MILESTONE CLOSED): brand_lifecycles (migration 0059 CREATE-only 0058->0059 PG-verified, unique (org,lifecycle_id) + unique (org,brand_template_id) one-per-brand, brand existence 404, pure lifecycle_transition_allowed DRAFT->ACTIVE->SUSPENDED->RETIRED with SUSPENDED->ACTIVE resume, RETIRED terminal, same-state noop, illegal 409; audited brand_lifecycles.registered + brand_lifecycles.status_changed actor/reason refs) + shutdown_policies (unique (org,policy_id) + unique (org,brand_template_id) one-per-brand, action KEEP_PUBLISHED/UNLIST_PUBLISHED/SCHEDULE_DELETE intent-only, grace_days 0..90 else 422, brand 404, idempotent conflict 409, audited shutdown_policies.registered); 5 routes CLIP-033 pattern (POST /brand-lifecycles, GET list +status, POST /{lifecycle_id}/transition, POST /shutdown-policies, GET list); OpenAPI probe 267 paths, land efd3854 merge c97b5a2, 11 new tests, suite 1289 passed CI-env full services (93.18% cov) and 1278+11 SQLite-only, ruff format/check clean, mypy clean 93 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 87/87 pre-advance. M19 recorded in completed_milestones; current_milestone -> M20"
+    "ticket": "CLIP-082",
+    "at": "2026-10-14T10:39:31+00:00",
+    "facts": "CLIP-082 improvement proposal evidence model complete (M20 opener): improvement_proposals (migration 0060 CREATE-only 0059->0060 PG-verified, unique (org,proposal_id), ix org+status, opaque weakness_ref + summary<=2000, starts PROPOSED, register idempotent conflict 409 audited improvement_proposals.registered) + proposal_evidence (unique (org,evidence_id), ix org+proposal_id, refs-only evidence_ref<=512 + evidence_kind slug + optional note_ref, append-only, proposal existence 404, idempotent conflict 409 audited proposal_evidence.linked); pure proposal_transition_allowed journey PROPOSED->IN_REVIEW->ACCEPTED|REJECTED (one-shot review), ACCEPTED->IMPLEMENTED->VERIFIED|ROLLED_BACK; REJECTED/VERIFIED/ROLLED_BACK terminal, no skips 409, same-state noop; transitions audited improvement_proposals.status_changed with actor/reason refs; 6 routes CLIP-033 pattern (POST/GET /improvement-proposals, GET /{proposal_id} 404, POST /{proposal_id}/transition, POST/GET /proposal-evidence +proposal filter); OpenAPI probe 273 paths, land ef2f717 merge 049d7d9, 12 new tests, suite 1301 passed CI-env full services (93.27% cov) and 1290+11 SQLite-only, ruff format/check clean, mypy clean 94 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 88/88 pre-advance"
   },
-  "next_action": "Execute CLIP-082 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-083 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 87,
-  "updated_at": "2026-10-14T08:36:53+00:00",
+  "tickets_completed": 88,
+  "updated_at": "2026-10-14T10:39:31+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -387,6 +388,11 @@
       "ticket": "CLIP-081",
       "merge_sha": "c97b5a2",
       "summary": "Brand lifecycle/shutdown policies (M19 closer): one-per-brand lifecycle + shutdown intent, migration 0059, 5 routes, 11 tests; 1289 CI-env (93.18% cov); M19 recorded; CI green c97b5a2"
+    },
+    {
+      "ticket": "CLIP-082",
+      "merge_sha": "049d7d9",
+      "summary": "Improvement proposal evidence model (M20 opener): guarded review journey + evidence links, migration 0060, 6 routes, 12 tests; 1301 CI-env (93.27% cov); CI green 049d7d9"
     }
   ],
   "tickets_total": 102,
@@ -612,6 +618,12 @@
       "ticket": "CLIP-081",
       "action": "completed",
       "evidence_ref": "c97b5a2"
+    },
+    {
+      "at": "2026-10-14T10:39:31+00:00",
+      "ticket": "CLIP-082",
+      "action": "completed",
+      "evidence_ref": "049d7d9"
     }
   ]
 }
