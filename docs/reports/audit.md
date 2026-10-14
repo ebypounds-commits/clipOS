@@ -549,3 +549,21 @@
 **Tests**: 16 new tests (pure allocator, quota gate, store flows, routes)
 **Suite**: 1278 passed CI-env (93.11% cov), 1267+11 SQLite-only
 **Gates**: ruff clean, mypy 92 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 86/86, PG migration 0057->0058 verified
+
+## 2026-10-13 - CLIP-081 Brand lifecycle and shutdown/archive policies
+
+**Ticket**: CLIP-081 (M19)
+**Merge SHA**: c97b5a2
+**Status**: COMPLETE (87/102) - M19 MILESTONE CLOSED
+
+**What was built**:
+- brand_lifecycles table (migration 0059, CREATE-only, one lifecycle per brand, guarded DRAFT->ACTIVE->SUSPENDED->RETIRED with resume)
+- shutdown_policies table (one per brand, KEEP/UNLIST/SCHEDULE_DELETE intent, grace 0..90)
+- 5 routes: POST/GET /brand-lifecycles, POST /{lifecycle_id}/transition, POST/GET /shutdown-policies
+- Audits: brand_lifecycles.registered, brand_lifecycles.status_changed, shutdown_policies.registered
+
+**Milestone bookkeeping**: M19 recorded in completed_milestones; current_milestone -> M20.
+
+**Tests**: 11 new tests (pure lifecycle, store flows, routes, 404/409/422)
+**Suite**: 1289 passed CI-env (93.18% cov), 1278+11 SQLite-only
+**Gates**: ruff clean, mypy 93 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 87/87, PG migration 0058->0059 verified

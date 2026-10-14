@@ -1665,7 +1665,7 @@ tickets:
 - id: CLIP-081
   milestone: M19
   title: Implement brand lifecycle and shutdown/archive policies
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-080

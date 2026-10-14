@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M19",
-  "current_ticket": "CLIP-081",
-  "status": "M19_IN_PROGRESS",
+  "current_milestone": "M20",
+  "current_ticket": "CLIP-082",
+  "status": "M20_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -28,7 +28,8 @@
     "M15",
     "M16",
     "M17",
-    "M18"
+    "M18",
+    "M19"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -116,7 +117,8 @@
     "CLIP-077",
     "CLIP-078",
     "CLIP-079",
-    "CLIP-080"
+    "CLIP-080",
+    "CLIP-081"
   ],
   "blocked": [],
   "human_gates": {
@@ -127,19 +129,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-080",
-    "at": "2026-10-14T08:06:44+00:00",
-    "facts": "CLIP-080 portfolio allocation/quota engine complete: quota_policies (migration 0058 CREATE-only 0057->0058 PG-verified, unique (org,quota_id), ix org+scope_ref, scope ACCOUNT counts publication_jobs by account_ref / PLATFORM by slug, rolling DAILY 24h / WEEKLY 7d / MONTHLY 30d UTC windows, register idempotent conflict 409 audited quota_policies.registered); evaluate_quota pure gate (allowed iff used+proposed<=max, boundary allowed); check_quota counts publication_jobs in window with scope filter audited quota_checks.evaluated (window excludes old jobs verified); allocate_portfolio pure largest-remainder allocator (floor shares by weight, remainder by descending fractional part with key-order tie-break, always sums exactly to total_units, empty/zero/negative weights and negative totals raise 422); portfolio_allocations persist weights+split (unique (org,allocation_id), idempotent conflict, audited portfolio_allocations.recorded); 5 routes CLIP-033 pattern (POST/GET /quota-policies, POST /{quota_id}/check, POST/GET /portfolio-allocations); OpenAPI probe 262 paths, land d4d536a merge d09266a, 16 new tests, suite 1278 passed CI-env full services (93.11% cov) and 1267+11 SQLite-only, ruff format/check clean, mypy clean 92 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 86/86 pre-advance"
+    "ticket": "CLIP-081",
+    "at": "2026-10-14T08:36:53+00:00",
+    "facts": "CLIP-081 brand lifecycle/shutdown policies complete (M19 MILESTONE CLOSED): brand_lifecycles (migration 0059 CREATE-only 0058->0059 PG-verified, unique (org,lifecycle_id) + unique (org,brand_template_id) one-per-brand, brand existence 404, pure lifecycle_transition_allowed DRAFT->ACTIVE->SUSPENDED->RETIRED with SUSPENDED->ACTIVE resume, RETIRED terminal, same-state noop, illegal 409; audited brand_lifecycles.registered + brand_lifecycles.status_changed actor/reason refs) + shutdown_policies (unique (org,policy_id) + unique (org,brand_template_id) one-per-brand, action KEEP_PUBLISHED/UNLIST_PUBLISHED/SCHEDULE_DELETE intent-only, grace_days 0..90 else 422, brand 404, idempotent conflict 409, audited shutdown_policies.registered); 5 routes CLIP-033 pattern (POST /brand-lifecycles, GET list +status, POST /{lifecycle_id}/transition, POST /shutdown-policies, GET list); OpenAPI probe 267 paths, land efd3854 merge c97b5a2, 11 new tests, suite 1289 passed CI-env full services (93.18% cov) and 1278+11 SQLite-only, ruff format/check clean, mypy clean 93 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 87/87 pre-advance. M19 recorded in completed_milestones; current_milestone -> M20"
   },
-  "next_action": "Execute CLIP-081 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-082 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 86,
-  "updated_at": "2026-10-14T08:06:44+00:00",
+  "tickets_completed": 87,
+  "updated_at": "2026-10-14T08:36:53+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -380,6 +382,11 @@
       "ticket": "CLIP-080",
       "merge_sha": "d09266a",
       "summary": "Portfolio allocation/quota engine: rolling-window quota gate over publication_jobs + largest-remainder allocator, migration 0058, 5 routes, 16 tests; 1278 CI-env (93.11% cov); CI green d09266a"
+    },
+    {
+      "ticket": "CLIP-081",
+      "merge_sha": "c97b5a2",
+      "summary": "Brand lifecycle/shutdown policies (M19 closer): one-per-brand lifecycle + shutdown intent, migration 0059, 5 routes, 11 tests; 1289 CI-env (93.18% cov); M19 recorded; CI green c97b5a2"
     }
   ],
   "tickets_total": 102,
@@ -599,6 +606,12 @@
       "ticket": "CLIP-080",
       "action": "completed",
       "evidence_ref": "d09266a"
+    },
+    {
+      "at": "2026-10-14T08:36:53+00:00",
+      "ticket": "CLIP-081",
+      "action": "completed",
+      "evidence_ref": "c97b5a2"
     }
   ]
 }
