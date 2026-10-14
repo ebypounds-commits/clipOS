@@ -100,6 +100,8 @@ _EXPECTED_TABLES = {
     "shutdown_policies",
     "improvement_proposals",
     "proposal_evidence",
+    "eval_sandboxes",
+    "promotions",
 }
 
 
