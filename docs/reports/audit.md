@@ -515,3 +515,19 @@
 **Tests**: 12 new tests (validators, store flows, routes, 404/409/422)
 **Suite**: 1248 passed CI-env (92.94% cov), 1237+11 SQLite-only (one unrelated flaky redis rate-limit test passed on retry)
 **Gates**: ruff clean, mypy 90 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 84/84, PG migration 0055->0056 verified
+
+## 2026-10-13 - CLIP-079 Channel incubation/launch experiments
+
+**Ticket**: CLIP-079 (M19)
+**Merge SHA**: e85b325
+**Status**: COMPLETE (85/102)
+
+**What was built**:
+- incubation_runs table (migration 0057, CREATE-only, unique (org, run_id), brand/channel template links validated 404)
+- Pure lifecycle: DRAFT -> INCUBATING -> LAUNCHED/SUNSET -> ARCHIVED (cannot skip incubating, ARCHIVED terminal)
+- 4 routes: POST /incubation-runs, GET list +status, GET /{run_id}, POST /{run_id}/transition
+- Audits: incubation_runs.registered, incubation_runs.status_changed
+
+**Tests**: 14 new tests (pure lifecycle, store flows, template links, routes)
+**Suite**: 1262 passed CI-env (93.01% cov), 1251+11 SQLite-only
+**Gates**: ruff clean, mypy 91 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 85/85, PG migration 0056->0057 verified
