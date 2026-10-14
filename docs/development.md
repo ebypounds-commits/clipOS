@@ -1472,3 +1472,26 @@ Routes (CLIP-033 pattern): POST/GET /brand-templates, GET
 /brand-templates/{template_id} (404), POST/GET /channel-templates
 (+?platform= filter), GET /channel-templates/{template_id} (404).
 No LLM, no network.
+
+## Channel incubation/launch experiments (M19)
+
+clipos_api.incubation (CLIP-079) models the rollout lifecycle for new
+channels (PRD journey). incubation_runs (migration 0057, 0056 ->
+0057, CREATE-only, unique (org, run_id), ix org+status) carry a
+platform slug, opaque channel_ref/goal_ref, and optional links to a
+CLIP-078 brand template and channel template — each validated in the
+same org (404 otherwise). Registration is idempotent with conflict on
+changed fields (409), audited incubation_runs.registered.
+
+run_transition_allowed is the pure lifecycle table: DRAFT ->
+INCUBATING (start), INCUBATING -> LAUNCHED (launch) or SUNSET
+(abandon), LAUNCHED/SUNSET -> ARCHIVED. A run can never launch
+straight from DRAFT (409) — launch always travels through
+incubating; ARCHIVED is terminal; same-state moves are no-ops. Every
+real move audits incubation_runs.status_changed with actor/reason
+refs.
+
+Routes (CLIP-033 pattern): POST /incubation-runs, GET
+/incubation-runs?org_id=&status=, GET /incubation-runs/{run_id}
+(404), POST /incubation-runs/{run_id}/transition. No LLM, no
+network.

@@ -36,6 +36,7 @@ from clipos_api.experiment_orchestration import router as experiment_orchestrati
 from clipos_api.experiments import router as experiments_router
 from clipos_api.finance_controls import router as finance_controls_router
 from clipos_api.generation_adapters import router as generation_adapters_router
+from clipos_api.incubation import router as incubation_router
 from clipos_api.jev_tools import router as jev_tools_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
@@ -142,6 +143,7 @@ app.router.routes.extend(cost_ledger_router.routes)
 app.router.routes.extend(experiment_evaluations_router.routes)
 app.router.routes.extend(experiment_orchestration_router.routes)
 app.router.routes.extend(generation_adapters_router.routes)
+app.router.routes.extend(incubation_router.routes)
 app.router.routes.extend(jev_tools_router.routes)
 app.router.routes.extend(script_hooks_router.routes)
 
