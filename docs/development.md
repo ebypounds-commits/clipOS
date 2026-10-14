@@ -1619,3 +1619,46 @@ audited promotions.evaluated.
 Routes (CLIP-033 pattern): POST/GET /eval-sandboxes, POST
 /eval-sandboxes/{sandbox_id}/transition, POST/GET /promotions. No
 LLM, no network.
+
+## Provider wiring: six LLM providers + HTTP dispatch (operator plan)
+
+clipos_api.llm_providers wires six providers behind the existing
+LLMGateway contracts using three wire protocols (no provider SDKs,
+plain httpx — same shape as the local adapter):
+
+- openai-compatible (`{endpoint}/chat/completions`, Bearer auth) for
+  `openai`, `deepseek`, `deepinfra`, `mimo` — any OpenAI-wire
+  endpoint an operator points a route at;
+- anthropic (`{endpoint}/messages`, `x-api-key` +
+  `anthropic-version 2023-06-01`, system prompts hoisted above the
+  message list) for `claude`;
+- gemini (`{endpoint}/models/{model}:generateContent`,
+  `x-goog-api-key`, systemInstruction) for `gemini`.
+
+Provider identity lives in the database route rows (provider /
+endpoint_ref / model_ref / metadata); the module only holds
+deployment defaults — endpoints from `route.endpoint_ref` when it is a
+URL, else `{PROVIDER}_BASE_URL` env (required for mimo); credentials
+resolve lazily at send time from `route.metadata.api_key_env` or the
+default key env (OPENAI_API_KEY, DEEPSEEK_API_KEY, DEEPINFRA_API_KEY,
+MIMO_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY). A missing key or
+wire error raises ProviderDispatchError so the gateway degrades that
+route and walks the alias fallback chain instead of failing outright.
+
+`main.build_llm_gateway` now calls
+`register_provider_factories(gateway)` for all six names alongside the
+existing local-adapter registration.
+
+**HTTP dispatch** — `POST /models/{alias}/dispatch`
+(`{execution_id, messages[], params?}`) exposes `LLMGateway.dispatch`
+over HTTP: 404 unknown/disabled alias, 200 completion (provider/model/
+usage/latency fields are gateway-owned), 502 when every route in the
+chain failed. Completions persist to the cost ledger and are listed at
+GET /models/{alias}/dispatches.
+
+Operator scripts: `scripts/setup_llm_providers.py` registers
+per-provider aliases (chat-claude, ...) plus the ordered `chat`
+fallback chain via the Model Registry API (endpoints/models are
+env-overridable; MODEL_MIMO and MIMO_BASE_URL required for mimo);
+`scripts/test_llm_dispatch.py` probes each alias and reports
+PASS / KEY-MISSING / FAIL per provider.

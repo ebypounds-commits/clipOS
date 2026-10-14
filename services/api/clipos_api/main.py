@@ -45,6 +45,12 @@ from clipos_api.jev_tools import router as jev_tools_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
 from clipos_api.llm_gateway import AdapterRegistry, LLMGateway
+from clipos_api.llm_providers import (
+    build_provider_adapter,
+)
+from clipos_api.llm_providers import (
+    router as llm_providers_router,
+)
 from clipos_api.local_adapter import build_local_adapter, local_adapter_provider_name
 from clipos_api.mcp_boundary import McpBoundary, build_mcp_boundary
 from clipos_api.media_ingestion import router as media_ingestion_router
@@ -104,6 +110,7 @@ app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
+app.router.routes.extend(llm_providers_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
 app.router.routes.extend(portfolio_quotas_router.routes)
@@ -187,13 +194,16 @@ def operator_health(engine: Annotated[sa.Engine, Depends(database_engine)]) -> O
 
 def build_llm_gateway(engine: sa.Engine) -> LLMGateway:
     """Production wiring point: operators register adapter factories here."""
+    registry = ModelRegistryStore.from_engine(engine)
     gateway = LLMGateway(
-        ModelRegistryStore.from_engine(engine),
+        registry,
         AdapterRegistry(),
         ledger=CostLedger.from_engine(engine),
     )
     if os.environ.get("LOCAL_ADAPTER_BASE_URL"):
         gateway.register_adapter(local_adapter_provider_name(), build_local_adapter)
+    for provider_name in registry.list_providers():
+        gateway.register_adapter(provider_name, build_provider_adapter)
     return gateway
 
 
