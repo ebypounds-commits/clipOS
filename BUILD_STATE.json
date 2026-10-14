@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M20",
-  "current_ticket": "CLIP-083",
+  "current_ticket": "CLIP-084",
   "status": "M20_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -119,7 +119,8 @@
     "CLIP-079",
     "CLIP-080",
     "CLIP-081",
-    "CLIP-082"
+    "CLIP-082",
+    "CLIP-083"
   ],
   "blocked": [],
   "human_gates": {
@@ -130,19 +131,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-082",
-    "at": "2026-10-14T10:39:31+00:00",
-    "facts": "CLIP-082 improvement proposal evidence model complete (M20 opener): improvement_proposals (migration 0060 CREATE-only 0059->0060 PG-verified, unique (org,proposal_id), ix org+status, opaque weakness_ref + summary<=2000, starts PROPOSED, register idempotent conflict 409 audited improvement_proposals.registered) + proposal_evidence (unique (org,evidence_id), ix org+proposal_id, refs-only evidence_ref<=512 + evidence_kind slug + optional note_ref, append-only, proposal existence 404, idempotent conflict 409 audited proposal_evidence.linked); pure proposal_transition_allowed journey PROPOSED->IN_REVIEW->ACCEPTED|REJECTED (one-shot review), ACCEPTED->IMPLEMENTED->VERIFIED|ROLLED_BACK; REJECTED/VERIFIED/ROLLED_BACK terminal, no skips 409, same-state noop; transitions audited improvement_proposals.status_changed with actor/reason refs; 6 routes CLIP-033 pattern (POST/GET /improvement-proposals, GET /{proposal_id} 404, POST /{proposal_id}/transition, POST/GET /proposal-evidence +proposal filter); OpenAPI probe 273 paths, land ef2f717 merge 049d7d9, 12 new tests, suite 1301 passed CI-env full services (93.27% cov) and 1290+11 SQLite-only, ruff format/check clean, mypy clean 94 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 88/88 pre-advance"
+    "ticket": "CLIP-083",
+    "at": "2026-10-14T11:01:22+00:00",
+    "facts": "CLIP-083 Agent Architect proposal generator complete: derive_proposal_id gen-{sha1(org|weakness_ref)[:12]} + derive_evidence_id gen-{sha1(proposal_id|evidence_ref)[:12]} pure deterministic identities; generate_proposal registers PROPOSED proposal (changed wording for same weakness 409), links <=16 evidence refs via CLIP-082 store (created/replayed counts, per-row audits), audits proposal_generation.generated; no new tables, no LLM/network (migration-free ticket); route POST /improvement-proposals/generate (registered before GET /{proposal_id}, method-disjoint); OpenAPI probe 274 paths, land 297fea8 merge b5ab7b2, 10 new tests, suite 1311 passed CI-env full services (93.28% cov) and 1300+11 SQLite-only, ruff format/check clean, mypy clean 95 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 89/89 pre-advance"
   },
-  "next_action": "Execute CLIP-083 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-084 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 88,
-  "updated_at": "2026-10-14T10:39:31+00:00",
+  "tickets_completed": 89,
+  "updated_at": "2026-10-14T11:01:22+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -393,6 +394,11 @@
       "ticket": "CLIP-082",
       "merge_sha": "049d7d9",
       "summary": "Improvement proposal evidence model (M20 opener): guarded review journey + evidence links, migration 0060, 6 routes, 12 tests; 1301 CI-env (93.27% cov); CI green 049d7d9"
+    },
+    {
+      "ticket": "CLIP-083",
+      "merge_sha": "b5ab7b2",
+      "summary": "Agent Architect proposal generator: deterministic sha1 identities composing CLIP-082, replay-safe, 1 route, 10 tests; 1311 CI-env (93.28% cov); CI green b5ab7b2"
     }
   ],
   "tickets_total": 102,
@@ -624,6 +630,12 @@
       "ticket": "CLIP-082",
       "action": "completed",
       "evidence_ref": "049d7d9"
+    },
+    {
+      "at": "2026-10-14T11:01:22+00:00",
+      "ticket": "CLIP-083",
+      "action": "completed",
+      "evidence_ref": "b5ab7b2"
     }
   ]
 }

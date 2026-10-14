@@ -1701,7 +1701,7 @@ tickets:
 - id: CLIP-083
   milestone: M20
   title: Implement Agent Architect proposal generator
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-082

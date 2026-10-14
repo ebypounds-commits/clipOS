@@ -584,3 +584,21 @@
 **Tests**: 12 new tests (pure lifecycle, store flows, evidence links, routes)
 **Suite**: 1301 passed CI-env (93.27% cov), 1290+11 SQLite-only
 **Gates**: ruff clean, mypy 94 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 88/88, PG migration 0059->0060 verified
+
+## 2026-10-13 - CLIP-083 Agent Architect proposal generator
+
+**Ticket**: CLIP-083 (M20)
+**Merge SHA**: b5ab7b2
+**Status**: COMPLETE (89/102)
+
+**What was built**:
+- derive_proposal_id / derive_evidence_id: pure sha1 deterministic identities
+- generate_proposal: registers PROPOSED proposal, links evidence, created/replayed counts
+- Replay-safe: same weakness returns stored proposal; reworded identity 409
+- Route: POST /improvement-proposals/generate
+- Audits: proposal_generation.generated (+ CLIP-082 per-row audits)
+- No new tables, no LLM/network
+
+**Tests**: 10 new tests (identity derivation, generation, replay, conflict, routes)
+**Suite**: 1311 passed CI-env (93.28% cov), 1300+11 SQLite-only
+**Gates**: ruff clean, mypy 95 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 89/89
