@@ -94,6 +94,8 @@ _EXPECTED_TABLES = {
     "brand_templates",
     "channel_templates",
     "incubation_runs",
+    "quota_policies",
+    "portfolio_allocations",
 }
 
 

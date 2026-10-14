@@ -1495,3 +1495,31 @@ Routes (CLIP-033 pattern): POST /incubation-runs, GET
 /incubation-runs?org_id=&status=, GET /incubation-runs/{run_id}
 (404), POST /incubation-runs/{run_id}/transition. No LLM, no
 network.
+
+## Portfolio allocation and quota engine (M19)
+
+clipos_api.portfolio_quotas (CLIP-080) implements the PRD §K
+per-account publishing caps and the §H allocation split.
+
+**Quotas** — quota_policies (migration 0058, 0057 -> 0058,
+CREATE-only, unique (org, quota_id), ix org+scope_ref) cap
+publication volume for one scope_kind (ACCOUNT counts
+publication_jobs for one account_ref; PLATFORM by platform slug)
+over a rolling UTC window (DAILY 24h / WEEKLY 7d / MONTHLY 30d) as
+max_count. Registration is idempotent with conflict (409), audited
+quota_policies.registered. evaluate_quota is the pure gate (allowed
+iff used + proposed <= max, boundary allowed); check_quota counts
+used jobs inside the window and audits quota_checks.evaluated.
+
+**Allocation** — allocate_portfolio is the pure largest-remainder
+allocator: floor shares by weight, leftovers assigned by descending
+fractional part with key-order tie-breaks; the result always sums to
+exactly total_units and is fully deterministic. Invalid weights
+(empty, all zero, negative) and negative totals raise (422 at the
+route). portfolio_allocations (same migration, unique (org,
+allocation_id)) persists input weights + resulting split, idempotent
+with conflict, audited portfolio_allocations.recorded.
+
+Routes (CLIP-033 pattern): POST/GET /quota-policies, POST
+/quota-policies/{quota_id}/check, POST/GET /portfolio-allocations.
+No LLM, no network.
