@@ -1719,7 +1719,7 @@ tickets:
 - id: CLIP-084
   milestone: M20
   title: Implement eval sandbox and safe promotion
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-083

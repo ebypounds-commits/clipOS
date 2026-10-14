@@ -602,3 +602,19 @@
 **Tests**: 10 new tests (identity derivation, generation, replay, conflict, routes)
 **Suite**: 1311 passed CI-env (93.28% cov), 1300+11 SQLite-only
 **Gates**: ruff clean, mypy 95 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 89/89
+
+## 2026-10-13 - CLIP-084 Eval sandbox and safe promotion
+
+**Ticket**: CLIP-084 (M20)
+**Merge SHA**: 89b7909
+**Status**: COMPLETE (90/102)
+
+**What was built**:
+- eval_sandboxes table (migration 0061, CREATE-only, proposal link 404, required evaluator_alias, lifecycle CREATED->RUNNING->PASSED/FAILED re-runnable)
+- promotions table (safe gate: PASSED sandbox + ACCEPTED/IMPLEMENTED proposal, every decision persisted)
+- 5 routes: POST/GET /eval-sandboxes, POST /{sandbox_id}/transition, POST/GET /promotions
+- Audits: eval_sandboxes.registered, eval_sandboxes.status_changed, promotions.evaluated
+
+**Tests**: 13 new tests (pure lifecycle + gate matrix, store flows, routes)
+**Suite**: 1324 passed CI-env (93.34% cov), 1313+11 SQLite-only
+**Gates**: ruff clean, mypy 96 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 90/90, PG migration 0060->0061 verified

@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M20",
-  "current_ticket": "CLIP-084",
+  "current_ticket": "CLIP-085",
   "status": "M20_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -120,7 +120,8 @@
     "CLIP-080",
     "CLIP-081",
     "CLIP-082",
-    "CLIP-083"
+    "CLIP-083",
+    "CLIP-084"
   ],
   "blocked": [],
   "human_gates": {
@@ -131,19 +132,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-083",
-    "at": "2026-10-14T11:01:22+00:00",
-    "facts": "CLIP-083 Agent Architect proposal generator complete: derive_proposal_id gen-{sha1(org|weakness_ref)[:12]} + derive_evidence_id gen-{sha1(proposal_id|evidence_ref)[:12]} pure deterministic identities; generate_proposal registers PROPOSED proposal (changed wording for same weakness 409), links <=16 evidence refs via CLIP-082 store (created/replayed counts, per-row audits), audits proposal_generation.generated; no new tables, no LLM/network (migration-free ticket); route POST /improvement-proposals/generate (registered before GET /{proposal_id}, method-disjoint); OpenAPI probe 274 paths, land 297fea8 merge b5ab7b2, 10 new tests, suite 1311 passed CI-env full services (93.28% cov) and 1300+11 SQLite-only, ruff format/check clean, mypy clean 95 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 89/89 pre-advance"
+    "ticket": "CLIP-084",
+    "at": "2026-10-14T14:18:05+00:00",
+    "facts": "CLIP-084 eval sandbox and safe promotion complete: eval_sandboxes (migration 0061 CREATE-only 0060->0061 PG-verified, unique (org,sandbox_id), ix org+proposal_id, proposal link 404, required evaluator_alias registry ref never defaulted + scenario_ref, starts CREATED; pure sandbox_transition_allowed CREATED->RUNNING->PASSED|FAILED, FAILED->RUNNING re-run, PASSED/FAILED no regress, same-state noop, illegal 409; audited eval_sandboxes.registered + eval_sandboxes.status_changed actor/reason) + promotions (migration 0061, unique (org,promotion_id), ix org+proposal_id; pure evaluate_promotion gate: allowed only sandbox PASSED + proposal ACCEPTED/IMPLEMENTED, reasons sandbox_not_passed/proposal_not_ready; every attempt persisted PROMOTED-or-DENIED, proposal/sandbox 404, idempotent conflict 409, audited promotions.evaluated); 5 routes CLIP-033 pattern (POST/GET /eval-sandboxes, POST /{sandbox_id}/transition, POST/GET /promotions); land 0f8d9b9 merge 89b7909, 13 new tests, suite 1324 passed CI-env full services (93.34% cov) and 1313+11 SQLite-only, ruff format/check clean, mypy clean 96 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 90/90 pre-advance"
   },
-  "next_action": "Execute CLIP-084 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-085 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 89,
-  "updated_at": "2026-10-14T11:01:22+00:00",
+  "tickets_completed": 90,
+  "updated_at": "2026-10-14T14:18:05+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -399,6 +400,11 @@
       "ticket": "CLIP-083",
       "merge_sha": "b5ab7b2",
       "summary": "Agent Architect proposal generator: deterministic sha1 identities composing CLIP-082, replay-safe, 1 route, 10 tests; 1311 CI-env (93.28% cov); CI green b5ab7b2"
+    },
+    {
+      "ticket": "CLIP-084",
+      "merge_sha": "89b7909",
+      "summary": "Eval sandbox/safe promotion: sandbox lifecycle + promotion gate, migration 0061, 5 routes, 13 tests; 1324 CI-env (93.34% cov); CI green 89b7909"
     }
   ],
   "tickets_total": 102,
@@ -636,6 +642,12 @@
       "ticket": "CLIP-083",
       "action": "completed",
       "evidence_ref": "b5ab7b2"
+    },
+    {
+      "at": "2026-10-14T14:18:05+00:00",
+      "ticket": "CLIP-084",
+      "action": "completed",
+      "evidence_ref": "89b7909"
     }
   ]
 }
