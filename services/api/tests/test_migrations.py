@@ -98,6 +98,8 @@ _EXPECTED_TABLES = {
     "portfolio_allocations",
     "brand_lifecycles",
     "shutdown_policies",
+    "improvement_proposals",
+    "proposal_evidence",
 }
 
 

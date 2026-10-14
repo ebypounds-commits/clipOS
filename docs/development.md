@@ -1549,3 +1549,28 @@ Routes (CLIP-033 pattern): POST /brand-lifecycles, GET
 /brand-lifecycles?org_id=&status=, POST
 /brand-lifecycles/{lifecycle_id}/transition, POST /shutdown-policies,
 GET /shutdown-policies?org_id=. No LLM, no network.
+
+## Improvement proposal evidence model (M20)
+
+clipos_api.improvement (CLIP-082, M20 opener) implements PRD journey
+5 "self-improve safely". improvement_proposals (migration 0060, 0059
+-> 0060, CREATE-only, unique (org, proposal_id), ix org+status) carry
+a title, opaque weakness_ref, and summary; the pure lifecycle is
+PROPOSED -> IN_REVIEW -> ACCEPTED or REJECTED (one-shot review),
+ACCEPTED -> IMPLEMENTED, IMPLEMENTED -> VERIFIED or ROLLED_BACK;
+REJECTED / VERIFIED / ROLLED_BACK are terminal, same-state no-ops,
+anything else 409. Registration audits
+improvement_proposals.registered; every real move audits
+improvement_proposals.status_changed with actor/reason refs.
+
+proposal_evidence (same migration, unique (org, evidence_id), ix
+org+proposal_id) is the append-only evidence ledger: one evidence_ref
+(reference only — never evidence content) plus a generic
+evidence_kind slug and optional note_ref, linked to an existing
+proposal in the same org (404 otherwise); idempotent with conflict on
+changed fields (409); audited proposal_evidence.linked.
+
+Routes (CLIP-033 pattern): POST/GET /improvement-proposals, GET
+/improvement-proposals/{proposal_id} (404), POST
+/improvement-proposals/{proposal_id}/transition, POST/GET
+/proposal-evidence (+?proposal_id= filter). No LLM, no network.
