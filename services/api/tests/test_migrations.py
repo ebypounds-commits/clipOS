@@ -93,6 +93,7 @@ _EXPECTED_TABLES = {
     "finance_approvals",
     "brand_templates",
     "channel_templates",
+    "incubation_runs",
 }
 
 
