@@ -1662,3 +1662,28 @@ fallback chain via the Model Registry API (endpoints/models are
 env-overridable; MODEL_MIMO and MIMO_BASE_URL required for mimo);
 `scripts/test_llm_dispatch.py` probes each alias and reports
 PASS / KEY-MISSING / FAIL per provider.
+
+## Codex engineering-ticket generation/export (M20)
+
+clipos_api.codex_tickets (CLIP-085, M20 closer) turns an accepted
+CLIP-082 proposal into an implementation-ready Codex task packet.
+generate_packet_markdown is a pure renderer producing a full
+`# Codex Task Packet` document with every heading the repo validator
+requires (Lease / Objective / Acceptance criteria / Required reading /
+Allowed scope / Forbidden actions / Required gates / Completion
+output) — tests feed generated packets through
+scripts/validate_packet.validate_packet and require zero problems.
+
+engineering_tickets (migration 0062, 0061 -> 0062, CREATE-only,
+unique (org, ticket_id), ix org+status) store the rendered markdown
+per ticket, idempotent with conflict on changed lease inputs (409).
+Generation requires the proposal to exist (404) and be ACCEPTED or
+IMPLEMENTED (409 proposal not ready) — PROPOSED/REJECTED proposals
+never produce work. The pure lifecycle is GENERATED -> EXPORTED ->
+IMPLEMENTED (same-state no-ops, anything else 409); audits:
+engineering_tickets.generated and engineering_tickets.status_changed.
+
+Routes (CLIP-033 pattern): POST/GET /engineering-tickets, GET
+/engineering-tickets/{ticket_id}, GET
+/engineering-tickets/{ticket_id}/export (text/markdown attachment),
+POST /engineering-tickets/{ticket_id}/transition. No LLM, no network.
