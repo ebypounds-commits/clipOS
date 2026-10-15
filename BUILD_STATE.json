@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M20",
-  "current_ticket": "CLIP-085",
-  "status": "M20_IN_PROGRESS",
+  "current_milestone": "M21",
+  "current_ticket": "CLIP-086",
+  "status": "M21_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -29,7 +29,8 @@
     "M16",
     "M17",
     "M18",
-    "M19"
+    "M19",
+    "M20"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -121,7 +122,8 @@
     "CLIP-081",
     "CLIP-082",
     "CLIP-083",
-    "CLIP-084"
+    "CLIP-084",
+    "CLIP-085"
   ],
   "blocked": [],
   "human_gates": {
@@ -132,19 +134,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-084",
-    "at": "2026-10-14T14:18:05+00:00",
-    "facts": "CLIP-084 eval sandbox and safe promotion complete: eval_sandboxes (migration 0061 CREATE-only 0060->0061 PG-verified, unique (org,sandbox_id), ix org+proposal_id, proposal link 404, required evaluator_alias registry ref never defaulted + scenario_ref, starts CREATED; pure sandbox_transition_allowed CREATED->RUNNING->PASSED|FAILED, FAILED->RUNNING re-run, PASSED/FAILED no regress, same-state noop, illegal 409; audited eval_sandboxes.registered + eval_sandboxes.status_changed actor/reason) + promotions (migration 0061, unique (org,promotion_id), ix org+proposal_id; pure evaluate_promotion gate: allowed only sandbox PASSED + proposal ACCEPTED/IMPLEMENTED, reasons sandbox_not_passed/proposal_not_ready; every attempt persisted PROMOTED-or-DENIED, proposal/sandbox 404, idempotent conflict 409, audited promotions.evaluated); 5 routes CLIP-033 pattern (POST/GET /eval-sandboxes, POST /{sandbox_id}/transition, POST/GET /promotions); land 0f8d9b9 merge 89b7909, 13 new tests, suite 1324 passed CI-env full services (93.34% cov) and 1313+11 SQLite-only, ruff format/check clean, mypy clean 96 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 90/90 pre-advance"
+    "ticket": "CLIP-085",
+    "at": "2026-10-15T11:47:33+00:00",
+    "facts": "CLIP-085 Codex engineering-ticket generation/export complete (M20 MILESTONE CLOSED): generate_packet_markdown pure renderer produces validator-clean # Codex Task Packet (all headings: Lease/Objective/Acceptance criteria/Required reading/Allowed scope/Forbidden actions/Required gates/Completion output; objective + evidence links derive from CLIP-082 proposal; tests assert scripts/validate_packet.validate_packet == [] for generated packets); engineering_tickets (migration 0062 CREATE-only 0061->0062 PG-verified, unique (org,ticket_id), ix org+status, stores full markdown) register idempotent conflict 409, proposal must exist (404) and be ACCEPTED/IMPLEMENTED (409 proposal not ready); pure lifecycle GENERATED->EXPORTED->IMPLEMENTED (illegal 409, same-state noop, audited generated+status_changed); export route returns text/markdown attachment; 5 routes CLIP-033 pattern; OpenAPI probe 285 paths, land 05a893e merge ca9ac0b, 11 new tests, suite 1347 passed CI-env full services (93.33% cov) and 1336+11 SQLite-only, ruff format/check clean, mypy clean 98 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 91/91 pre-advance. M20 recorded in completed_milestones; current_milestone -> M21"
   },
-  "next_action": "Execute CLIP-085 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-086 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 90,
-  "updated_at": "2026-10-14T14:18:05+00:00",
+  "tickets_completed": 91,
+  "updated_at": "2026-10-15T11:47:33+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -405,6 +407,11 @@
       "ticket": "CLIP-084",
       "merge_sha": "89b7909",
       "summary": "Eval sandbox/safe promotion: sandbox lifecycle + promotion gate, migration 0061, 5 routes, 13 tests; 1324 CI-env (93.34% cov); CI green 89b7909"
+    },
+    {
+      "ticket": "CLIP-085",
+      "merge_sha": "ca9ac0b",
+      "summary": "Codex engineering-ticket generation/export (M20 closer): validator-clean packet renderer + lifecycle + markdown export, migration 0062, 5 routes, 11 tests; 1347 CI-env (93.33% cov); M20 recorded; CI green ca9ac0b"
     }
   ],
   "tickets_total": 102,
@@ -648,6 +655,12 @@
       "ticket": "CLIP-084",
       "action": "completed",
       "evidence_ref": "89b7909"
+    },
+    {
+      "at": "2026-10-15T11:47:33+00:00",
+      "ticket": "CLIP-085",
+      "action": "completed",
+      "evidence_ref": "ca9ac0b"
     }
   ]
 }

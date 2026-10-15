@@ -618,3 +618,23 @@
 **Tests**: 13 new tests (pure lifecycle + gate matrix, store flows, routes)
 **Suite**: 1324 passed CI-env (93.34% cov), 1313+11 SQLite-only
 **Gates**: ruff clean, mypy 96 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 90/90, PG migration 0060->0061 verified
+
+## 2026-10-14 - CLIP-085 Codex engineering-ticket generation/export
+
+**Ticket**: CLIP-085 (M20)
+**Merge SHA**: ca9ac0b
+**Status**: COMPLETE (91/102) - M20 MILESTONE CLOSED
+
+**What was built**:
+- generate_packet_markdown: pure renderer, validator-clean # Codex Task Packet (tests assert validate_packet == [])
+- engineering_tickets table (migration 0062, CREATE-only, unique (org, ticket_id), stores markdown packet)
+- Proposal gate: must exist (404) and be ACCEPTED/IMPLEMENTED (409 not ready)
+- Lifecycle: GENERATED -> EXPORTED -> IMPLEMENTED (audited generated + status_changed)
+- Export: GET .../export returns text/markdown attachment
+- 5 routes: POST/GET /engineering-tickets, GET /{ticket_id}, GET /{ticket_id}/export, POST /{ticket_id}/transition
+
+**Milestone bookkeeping**: M20 recorded in completed_milestones; current_milestone -> M21.
+
+**Tests**: 11 new tests (validator acceptance, pure lifecycle, store, routes)
+**Suite**: 1347 passed CI-env (93.33% cov), 1336+11 SQLite-only
+**Gates**: ruff clean, mypy 98 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 91/91, PG migration 0061->0062 verified

@@ -1737,7 +1737,7 @@ tickets:
 - id: CLIP-085
   milestone: M20
   title: Implement Codex engineering-ticket generation/export
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-084
