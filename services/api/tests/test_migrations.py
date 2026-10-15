@@ -104,6 +104,10 @@ _EXPECTED_TABLES = {
     "promotions",
     "engineering_tickets",
     "health_signals",
+    "runbooks",
+    "runbook_steps",
+    "incidents",
+    "incident_timeline",
 }
 
 

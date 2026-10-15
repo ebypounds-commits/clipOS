@@ -1,4 +1,4 @@
-# ClipOS local development
+﻿# ClipOS local development
 
 The M0 foundation intentionally contains no product features. It establishes package boundaries, typed contracts, local infrastructure definitions, and repeatable quality commands.
 
@@ -1709,3 +1709,31 @@ observation per subsystem (created_at order) and overall = worst rank
 Routes (CLIP-033 pattern): POST /health/probe (run probes, persist,
 return summary), GET /health/signals?org_id= (latest summary), POST
 /health/signals (operator-recorded signal). No LLM.
+
+## Incident lifecycle and runbooks (M21)
+
+clipos_api.incidents (CLIP-087) implements declared incident response
+(PRD §K). runbooks (migration 0064, 0063 -> 0064, CREATE-only, unique
+(org, runbook_id)) carry a category and ordered runbook_steps
+(append-only, unique (org, runbook_id, step_no)) so a procedure is
+numbered and stable; registration is idempotent with conflict on
+changed fields (409); audited runbooks.registered.
+
+incidents (unique (org, incident_id)) record title, subsystem,
+category, severity SEV1..SEV4 and an optional runbook whose category
+must match the incident (404 missing, 409 mismatch). The pure
+lifecycle is OPEN -> ACKNOWLEDGED -> MITIGATED -> RESOLVED -> CLOSED,
+with ACKNOWLEDGED/MITIGATED -> CLOSED (dismiss) and MITIGATED -> OPEN
+(regression reopen); CLOSED is terminal, same-state no-ops, anything
+else 409. Opening seeds a timeline entry and audits incidents.opened;
+every move audits incidents.status_changed (actor/reason refs) and
+appends a status timeline entry.
+
+incident_timeline is the append-only, idempotent (org, entry_id) event
+log (kind slug + bounded note_ref — references only, never secrets);
+audited incident_timeline.recorded.
+
+Routes (CLIP-033 pattern): POST/GET /runbooks, GET /runbooks/{id}
+(with steps), POST/GET /incidents (+?status=), GET
+/incidents/{id}, POST /incidents/{id}/transition, POST/GET
+/incidents/{id}/timeline. No LLM, no network.
