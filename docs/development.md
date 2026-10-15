@@ -1687,3 +1687,25 @@ Routes (CLIP-033 pattern): POST/GET /engineering-tickets, GET
 /engineering-tickets/{ticket_id}, GET
 /engineering-tickets/{ticket_id}/export (text/markdown attachment),
 POST /engineering-tickets/{ticket_id}/transition. No LLM, no network.
+
+## Health supervisor signals (M21)
+
+clipos_api.health_supervisor (CLIP-086, M21 opener) provides the
+operator health view (PRD §K). health_signals (migration 0063, 0062 ->
+0063, CREATE-only, unique (org, signal_id), ix org+subsystem) are
+append-only observations with status HEALTHY/DEGRADED/DOWN/UNKNOWN,
+bounded detail, and source LIVE (probes) or OPERATOR (manual);
+idempotent with conflict on changed fields (409); audited
+health_signals.recorded.
+
+run_live_probes never raises: `database` (SELECT 1), `cache` (Redis
+PING via CACHE_REDIS_URL), `storage` (MinIO /minio/health/live),
+`workflow` (Temporal port connect) — each with 2-3s timeouts; unset
+env yields UNKNOWN, failure yields DOWN/DEGRADED with the error class
+name only (never secrets). summarize_signals is pure: latest
+observation per subsystem (created_at order) and overall = worst rank
+(DOWN > DEGRADED > UNKNOWN > HEALTHY).
+
+Routes (CLIP-033 pattern): POST /health/probe (run probes, persist,
+return summary), GET /health/signals?org_id= (latest summary), POST
+/health/signals (operator-recorded signal). No LLM.
