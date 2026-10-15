@@ -35,6 +35,8 @@ jobs:
         run: |
           python3 scripts/validate_state.py
           python3 scripts/architecture_guard.py
+      - name: Validate deployment topology hardening
+        run: python3 scripts/deploy_topology_check.py --quiet
       - name: Validate task packets and state audit
         run: |
           python3 scripts/validate_packet.py .agent/CODEX_TASK_PACKET_TEMPLATE.md
