@@ -1772,3 +1772,32 @@ runs rather than errors. Audited remediation_runs.evaluated.
 Routes (CLIP-033 pattern): POST/GET /remediation-actions, POST
 /remediation-actions/{action_id}/run, GET
 /remediation-runs?org_id=&action_id=. No LLM, no network.
+
+## Credential/quota/disk/provider health monitors (M21)
+
+clipos_api.monitors (CLIP-089, M21 closer) implements the four
+resource-exhaustion monitors from PRD §K as pure functions:
+check_credential_expiry (days-until-expiry bands; warn_days <= 0 falls
+back to the 14-day default so the warning window cannot be disabled by
+accident; credentials are addressed by opaque vault credential_ref —
+never a secret value), check_quota_headroom (limit <= 0 reports
+`limit_invalid` DOWN instead of dividing by zero; DEGRADED from
+warn_ratio 0.8, DOWN at/over the limit), check_disk_usage (same bands
+over bytes; unknown capacity DOWN with `disk full` at 100%), and
+check_provider_health (probe boolean -> HEALTHY/DOWN with detail
+truncated to 255 chars). evaluate_monitor dispatches by monitor_kind
+and raises 422 when the required measurement for that kind is absent.
+
+monitor_checks (migration 0066, 0065 -> 0066, CREATE-only, unique
+(org, check_id), ix org+monitor_kind) is the append-only ledger:
+subsystem, monitor kind, opaque subject_ref, status, measured value and
+threshold, bounded detail. Identical replays return the stored row;
+different fields for the same check_id conflict (409); audited
+monitor_checks.recorded.
+
+summarize_monitors is pure: the latest check per monitor kind, the
+worst-rank overall status (DOWN > DEGRADED > UNKNOWN > HEALTHY), and an
+`attention` list of every monitor that is not HEALTHY — one call
+answers "what needs attention right now". Routes (CLIP-033 pattern):
+POST /monitors/check, GET /monitors?org_id=, GET
+/monitors/checks?org_id=&monitor_kind=. No LLM, no network.

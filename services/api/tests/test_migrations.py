@@ -110,6 +110,7 @@ _EXPECTED_TABLES = {
     "incident_timeline",
     "remediation_actions",
     "remediation_runs",
+    "monitor_checks",
 }
 
 
