@@ -672,3 +672,20 @@
 **Tests**: 15 new tests (pure lifecycle, runbook steps, incident flows, timeline, routes)
 **Suite**: 1374 passed CI-env (93.38% cov), 1363+11 SQLite-only
 **Gates**: ruff clean, mypy 100 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 93/93, PG migration 0063->0064 verified
+
+## 2026-10-15 - CLIP-088 Safe auto-remediation actions
+
+**Ticket**: CLIP-088 (M21)
+**Merge SHA**: 8a31bf8
+**Status**: COMPLETE (94/102)
+
+**What was built**:
+- remediation_actions table (migration 0065, CREATE-only, allow-listed action_kind + {param}-only template, max_attempts, requires_approval, enabled)
+- Template validation: placeholder names + shell-metacharacter rejection before persistence (422)
+- evaluate_remediation: pure injection-proof gate (kill switch > disabled > params > approval > rate cap)
+- remediation_runs table (denied persisted with empty command, executor never invoked, FAILD/SUCCEEDED recorded)
+- 4 routes: POST/GET /remediation-actions, POST /{action_id}/run, GET /remediation-runs
+
+**Tests**: 22 new tests incl. injection-attempt table (; && | $() backticks newline overlong nested braces)
+**Suite**: 1396 passed CI-env (93.43% cov), 1385+11 SQLite-only
+**Gates**: ruff clean, mypy 101 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 94/94, PG migration 0064->0065 verified

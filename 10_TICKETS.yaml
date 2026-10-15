@@ -1791,7 +1791,7 @@ tickets:
 - id: CLIP-088
   milestone: M21
   title: Implement safe auto-remediation actions
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-087

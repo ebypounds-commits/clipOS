@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M21",
-  "current_ticket": "CLIP-088",
+  "current_ticket": "CLIP-089",
   "status": "M21_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -125,7 +125,8 @@
     "CLIP-084",
     "CLIP-085",
     "CLIP-086",
-    "CLIP-087"
+    "CLIP-087",
+    "CLIP-088"
   ],
   "blocked": [],
   "human_gates": {
@@ -136,19 +137,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-087",
-    "at": "2026-10-15T13:24:59+00:00",
-    "facts": "CLIP-087 incident lifecycle and runbooks complete: runbooks (migration 0064 CREATE-only 0063->0064 PG-verified, unique (org,runbook_id), ix org+category) with ordered runbook_steps (append-only, unique (org,runbook_id,step_no), instruction<=2000 + optional command_ref) register idempotent conflict 409 audited runbooks.registered; incidents (unique (org,incident_id), ix org+status, severity SEV1..SEV4, optional runbook must exist 404 and category-match 409, opening seeds a timeline entry and audits incidents.opened) idempotent conflict 409; pure incident_transition_allowed OPEN->ACKNOWLEDGED->MITIGATED->RESOLVED->CLOSED plus ACKNOWLEDGED/MITIGATED->CLOSED dismiss and MITIGATED->OPEN regression reopen, CLOSED terminal, same-state noop, illegal 409, every move audited incidents.status_changed + appended to timeline; incident_timeline append-only refs-only (kind slug + note_ref, never secrets) idempotent conflict 409 audited incident_timeline.recorded; 8 routes CLIP-033 pattern (POST/GET /runbooks, GET /{id} with steps, POST/GET /incidents +status filter, GET /{id} 404, POST /{id}/transition, POST/GET /{id}/timeline); OpenAPI probe 297 paths, land c3894df merge a537a2a, 15 new tests, suite 1374 passed CI-env full services (93.38% cov) and 1363+11 SQLite-only, ruff format/check clean, mypy clean 100 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 93/93 pre-advance"
+    "ticket": "CLIP-088",
+    "at": "2026-10-15T13:42:45+00:00",
+    "facts": "CLIP-088 safe auto-remediation actions complete: remediation_actions (migration 0065 CREATE-only 0064->0065 PG-verified, unique (org,action_id), ix org+action_kind, action_kind generic slug never a shell command, {param}-only command_template with placeholder names validated [a-z][a-z0-9_]{0,31} and shell-metacharacter rejection (; | & $ backtick newline) at registration 422, max_attempts 1..10, required requires_approval flag, enabled flag, register idempotent conflict 409 audited remediation_actions.registered); pure evaluate_remediation gate with fixed denial order kill_switch_active -> action_disabled -> params_invalid -> approval_required -> rate_limited and SAFE_VALUE param validation [A-Za-z0-9._:@/=-]{1,128} with brace rejection so placeholder injection is impossible (verified against ; && | $( ) backtick newline overlong empty nested-brace table); remediation_runs (unique (org,run_id), ix org+action_id) record rendered command + outcome SUCCEEDED/FAILED/DENIED + reason, DENIED persisted with empty command and executor NEVER invoked, executor exceptions recorded as FAILED not raised, injectable RemediationExecutor Protocol with MockRemediationExecutor, idempotent conflict 409, insert-time race re-check, audited remediation_runs.evaluated; 4 routes CLIP-033 pattern (POST/GET /remediation-actions, POST /{action_id}/run, GET /remediation-runs); OpenAPI probe 301 paths, land 7849c38 merge 8a31bf8, 22 new tests, suite 1396 passed CI-env full services (93.43% cov) and 1385+11 SQLite-only, ruff format/check clean, mypy clean 101 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 94/94 pre-advance"
   },
-  "next_action": "Execute CLIP-088 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-089 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 93,
-  "updated_at": "2026-10-15T13:24:59+00:00",
+  "tickets_completed": 94,
+  "updated_at": "2026-10-15T13:42:45+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -424,6 +425,11 @@
       "ticket": "CLIP-087",
       "merge_sha": "a537a2a",
       "summary": "Incident lifecycle and runbooks: numbered runbook steps + guarded incident lifecycle bound to category-matched runbook + append-only timeline, migration 0064, 8 routes, 15 tests; 1374 CI-env (93.38% cov); CI green a537a2a"
+    },
+    {
+      "ticket": "CLIP-088",
+      "merge_sha": "8a31bf8",
+      "summary": "Safe auto-remediation actions: allow-listed templates + injection-proof pure gate + kill switch + attempt caps + recorded runs, migration 0065, 4 routes, 22 tests; 1396 CI-env (93.43% cov); CI green 8a31bf8"
     }
   ],
   "tickets_total": 102,
@@ -685,6 +691,12 @@
       "ticket": "CLIP-087",
       "action": "completed",
       "evidence_ref": "a537a2a"
+    },
+    {
+      "at": "2026-10-15T13:42:45+00:00",
+      "ticket": "CLIP-088",
+      "action": "completed",
+      "evidence_ref": "8a31bf8"
     }
   ]
 }
