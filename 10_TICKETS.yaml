@@ -1827,7 +1827,7 @@ tickets:
 - id: CLIP-090
   milestone: M22
   title: Create threat model and abuse cases
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-089

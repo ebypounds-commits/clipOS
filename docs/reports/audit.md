@@ -708,3 +708,20 @@
 **Tests**: 18 new tests (band boundaries, invalid limits, dispatcher errors, aggregation, routes)
 **Suite**: 1412 passed CI-env (93.49% cov), 1401+11 SQLite-only
 **Gates**: ruff clean, mypy 102 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 95/95, PG migration 0065->0066 verified
+
+## 2026-10-15 - CLIP-090 Threat model and abuse cases
+
+**Ticket**: CLIP-090 (M22)
+**Merge SHA**: 99da055
+**Status**: COMPLETE (96/102)
+
+**What was built**:
+- threats + threat_controls + threat_mitigations + abuse_cases (migration 0067, CREATE-only, unique identities)
+- STRIDE category enum, severity, abuse-case narrative, review lifecycle IDENTIFIED -> MITIGATED/ACCEPTED with reopen
+- Pure coverage audit: covered / unevidenced / uncovered using importlib spec resolution so a claim must point at real code
+- Mitigations map control_ref + evidence_ref (append-only, conflict 409); abuse cases carry attack_surface + detection_ref + threat link
+- 8 routes: POST/GET /threats (+category), GET /{id}, GET /coverage, POST /{id}/mitigations, POST /{id}/transition, POST/GET /abuse-cases
+
+**Tests**: 16 new tests (lifecycle, coverage verdicts incl. fake/real module and path-shaped evidence, store flows, routes)
+**Suite**: 1428 passed CI-env (93.57% cov), 1417+11 SQLite-only
+**Gates**: ruff clean, mypy 103 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 96/96, PG migration 0066->0067 verified
