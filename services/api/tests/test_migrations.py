@@ -111,6 +111,10 @@ _EXPECTED_TABLES = {
     "remediation_actions",
     "remediation_runs",
     "monitor_checks",
+    "threats",
+    "threat_controls",
+    "threat_mitigations",
+    "abuse_cases",
 }
 
 
