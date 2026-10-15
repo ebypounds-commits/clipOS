@@ -762,3 +762,23 @@
 **Tests**: 107 new tests
 **Suite**: 1560 passed CI-env (93.67% cov), 1549+12 SQLite-only
 **Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 98/98, OpenAPI unchanged at 316 paths
+
+## 2026-10-15 - CLIP-093 Production security qualification
+
+**Ticket**: CLIP-093 (M22)
+**Merge SHA**: cc793ca
+**Status**: COMPLETE (99/102) - M22 MILESTONE CLOSED
+
+**What was built**:
+- scripts/security_qualification.py: 11 controls checked against a LIVE instance over HTTP (reachability, operator health privacy, OBSERVE denial, PUBLIC-refused-by-default, rights gate, injection quarantine + false-positive guard, tool authorization, remediation kill switch, audit growth, secret scan)
+- Versioned JSON report with summary, per-check evidence, and findings (FAIL=HIGH, WARN=LOW)
+- Exit codes 0 pass / 1 FAIL (or WARN under --strict) / 2 unreachable, so a broken environment is never mistaken for a pass
+- Live run against the current service: VERDICT PASS 11/11
+
+**Finding**: an initial run against the pre-CLIP-091 server correctly reported FAIL on C6/C7/C8/C10, demonstrating the harness detects stale/broken targets rather than rubber-stamping them.
+
+**Milestone bookkeeping**: M22 recorded in completed_milestones; current_milestone -> M23.
+
+**Tests**: 10 new tests incl. two deliberate-regression tests
+**Suite**: 1570 passed CI-env (93.81% cov), 1559+12 SQLite-only
+**Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 99/99
