@@ -60,6 +60,7 @@ from clipos_api.media_ingestion import router as media_ingestion_router
 from clipos_api.metric_reconciliation import router as metric_reconciliation_router
 from clipos_api.model_registry import ModelRegistryStore
 from clipos_api.model_registry import router as model_registry_router
+from clipos_api.monitors import router as monitors_router
 from clipos_api.operator import OperatorSnapshot
 from clipos_api.opportunities import router as opportunity_router
 from clipos_api.performance_snapshots import router as performance_snapshots_router
@@ -113,6 +114,7 @@ app.router.routes.extend(architect_router.routes)
 app.router.routes.extend(agent_policy_router.routes)
 app.router.routes.extend(agent_evaluation_router.routes)
 app.router.routes.extend(model_registry_router.routes)
+app.router.routes.extend(monitors_router.routes)
 app.router.routes.extend(llm_cost_router.routes)
 app.router.routes.extend(llm_providers_router.routes)
 app.router.routes.extend(tool_registry_router.routes)
