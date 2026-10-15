@@ -34,10 +34,9 @@ exit non-zero on any FAIL.
 from __future__ import annotations
 
 import re
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Literal
-
-from pydantic import BaseModel, Field
 
 Severity = Literal["FAIL", "WARN", "PASS"]
 
@@ -72,7 +71,8 @@ _REFERENCE_ONLY_KEYS = (
 )
 
 
-class TopologyFinding(BaseModel):
+@dataclass
+class TopologyFinding:
     """One hardening invariant observation over a topology file."""
 
     invariant: str
@@ -82,21 +82,32 @@ class TopologyFinding(BaseModel):
     service: str | None = None
 
 
-class TopologyReport(BaseModel):
-    """Machine-checkable result of validating one Compose topology."""
+@dataclass
+class TopologyReport:
+    """Machine-checkable result of validating one Compose topology.
 
+    Plain dataclasses (not Pydantic) on purpose: this module is imported by
+    ``scripts/deploy_topology_check.py``, which runs in the dependency-light
+    CI `validate` job where only PyYAML is installed.
+    """
+
+    environment: str
+    path: str = ""
+    services: list[str] = field(default_factory=list)
+    summary: dict = field(default_factory=dict)
+    findings: list[TopologyFinding] = field(default_factory=list)
     tool: str = "clipos-deploy-topology-check"
     version: int = 1
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    environment: str
-    path: str
-    services: list[str] = Field(default_factory=list)
-    summary: dict = Field(default_factory=dict)
-    findings: list[TopologyFinding] = Field(default_factory=list)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def verdict(self) -> Severity:
         return "FAIL" if any(f.status == "FAIL" for f in self.findings) else "PASS"
+
+    def to_dict(self) -> dict:
+        data = asdict(self)
+        data["generated_at"] = self.generated_at.isoformat()
+        return data
 
 
 def _walk_strings(node: object) -> list[str]:
