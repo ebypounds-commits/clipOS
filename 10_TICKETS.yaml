@@ -1773,7 +1773,7 @@ tickets:
 - id: CLIP-087
   milestone: M21
   title: Implement incident lifecycle and runbooks
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-086

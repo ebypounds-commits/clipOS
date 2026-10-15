@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M21",
-  "current_ticket": "CLIP-087",
+  "current_ticket": "CLIP-088",
   "status": "M21_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -124,7 +124,8 @@
     "CLIP-083",
     "CLIP-084",
     "CLIP-085",
-    "CLIP-086"
+    "CLIP-086",
+    "CLIP-087"
   ],
   "blocked": [],
   "human_gates": {
@@ -135,19 +136,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-086",
-    "at": "2026-10-15T13:06:25+00:00",
-    "facts": "CLIP-086 health supervisor signals complete (M21 opener): health_signals (migration 0063 CREATE-only 0062->0063 PG-verified, unique (org,signal_id), ix org+subsystem, append-only status HEALTHY/DEGRADED/DOWN/UNKNOWN + bounded detail <=255 + source LIVE/OPERATOR, register idempotent conflict 409, audited health_signals.recorded); run_live_probes never raises for database (SELECT 1) / cache (Redis PING via CACHE_REDIS_URL) / storage (MinIO /minio/health/live) / workflow (Temporal port connect) with 2-3s timeouts, unset env -> UNKNOWN, failures -> DOWN/DEGRADED carrying error class name only (no secrets); pure summarize_signals latest-per-subsystem by created_at with worst-rank overall (DOWN > DEGRADED > UNKNOWN > HEALTHY); 3 routes CLIP-033 pattern (POST /health/probe run+persist+summary, GET /health/signals?org_id=, POST /health/signals operator signal); OpenAPI probe 288 paths, land b9635b5 merge 99e2003, 13 new tests, suite 1359 passed CI-env full services (93.31% cov) and 1348+11 SQLite-only, ruff format/check clean, mypy clean 99 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 92/92 pre-advance"
+    "ticket": "CLIP-087",
+    "at": "2026-10-15T13:24:59+00:00",
+    "facts": "CLIP-087 incident lifecycle and runbooks complete: runbooks (migration 0064 CREATE-only 0063->0064 PG-verified, unique (org,runbook_id), ix org+category) with ordered runbook_steps (append-only, unique (org,runbook_id,step_no), instruction<=2000 + optional command_ref) register idempotent conflict 409 audited runbooks.registered; incidents (unique (org,incident_id), ix org+status, severity SEV1..SEV4, optional runbook must exist 404 and category-match 409, opening seeds a timeline entry and audits incidents.opened) idempotent conflict 409; pure incident_transition_allowed OPEN->ACKNOWLEDGED->MITIGATED->RESOLVED->CLOSED plus ACKNOWLEDGED/MITIGATED->CLOSED dismiss and MITIGATED->OPEN regression reopen, CLOSED terminal, same-state noop, illegal 409, every move audited incidents.status_changed + appended to timeline; incident_timeline append-only refs-only (kind slug + note_ref, never secrets) idempotent conflict 409 audited incident_timeline.recorded; 8 routes CLIP-033 pattern (POST/GET /runbooks, GET /{id} with steps, POST/GET /incidents +status filter, GET /{id} 404, POST /{id}/transition, POST/GET /{id}/timeline); OpenAPI probe 297 paths, land c3894df merge a537a2a, 15 new tests, suite 1374 passed CI-env full services (93.38% cov) and 1363+11 SQLite-only, ruff format/check clean, mypy clean 100 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 93/93 pre-advance"
   },
-  "next_action": "Execute CLIP-087 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-088 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 92,
-  "updated_at": "2026-10-15T13:06:25+00:00",
+  "tickets_completed": 93,
+  "updated_at": "2026-10-15T13:24:59+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -418,6 +419,11 @@
       "ticket": "CLIP-086",
       "merge_sha": "99e2003",
       "summary": "Health supervisor signals (M21 opener): live probes (db/cache/storage/workflow) never raising + append-only signals + worst-rank summary, migration 0063, 3 routes, 13 tests; 1359 CI-env (93.31% cov); CI green 99e2003"
+    },
+    {
+      "ticket": "CLIP-087",
+      "merge_sha": "a537a2a",
+      "summary": "Incident lifecycle and runbooks: numbered runbook steps + guarded incident lifecycle bound to category-matched runbook + append-only timeline, migration 0064, 8 routes, 15 tests; 1374 CI-env (93.38% cov); CI green a537a2a"
     }
   ],
   "tickets_total": 102,
@@ -673,6 +679,12 @@
       "ticket": "CLIP-086",
       "action": "completed",
       "evidence_ref": "99e2003"
+    },
+    {
+      "at": "2026-10-15T13:24:59+00:00",
+      "ticket": "CLIP-087",
+      "action": "completed",
+      "evidence_ref": "a537a2a"
     }
   ]
 }

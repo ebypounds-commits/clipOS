@@ -655,3 +655,20 @@
 **Tests**: 13 new tests (live probes, aggregation, store, routes)
 **Suite**: 1359 passed CI-env (93.31% cov), 1348+11 SQLite-only
 **Gates**: ruff clean, mypy 99 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 92/92, PG migration 0062->0063 verified
+
+## 2026-10-15 - CLIP-087 Incident lifecycle and runbooks
+
+**Ticket**: CLIP-087 (M21)
+**Merge SHA**: a537a2a
+**Status**: COMPLETE (93/102)
+
+**What was built**:
+- runbooks + runbook_steps (migration 0064, CREATE-only, ordered steps append-only, unique (org, runbook_id, step_no))
+- incidents (unique (org, incident_id), severity SEV1-4, optional runbook category must match 409, opening seeds timeline)
+- Pure lifecycle OPEN -> ACKNOWLEDGED -> MITIGATED -> RESOLVED -> CLOSED (dismiss + regression reopen, CLOSED terminal)
+- incident_timeline append-only refs-only log (idempotent, audited)
+- 8 routes: POST/GET /runbooks, GET /{id}, POST/GET /incidents (+status), GET /{id}, POST /{id}/transition, POST/GET /{id}/timeline
+
+**Tests**: 15 new tests (pure lifecycle, runbook steps, incident flows, timeline, routes)
+**Suite**: 1374 passed CI-env (93.38% cov), 1363+11 SQLite-only
+**Gates**: ruff clean, mypy 100 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 93/93, PG migration 0063->0064 verified
