@@ -108,6 +108,8 @@ _EXPECTED_TABLES = {
     "runbook_steps",
     "incidents",
     "incident_timeline",
+    "remediation_actions",
+    "remediation_runs",
 }
 
 

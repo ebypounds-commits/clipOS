@@ -69,6 +69,7 @@ from clipos_api.portfolio_quotas import router as portfolio_quotas_router
 from clipos_api.profitability import router as profitability_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.publishing import router as publishing_router
+from clipos_api.remediation import router as remediation_router
 from clipos_api.render_pipeline import router as render_pipeline_router
 from clipos_api.render_project import router as render_project_router
 from clipos_api.render_variants import router as render_variants_router
@@ -118,6 +119,7 @@ app.router.routes.extend(tool_registry_router.routes)
 app.router.routes.extend(plugin_registry_router.routes)
 app.router.routes.extend(portfolio_quotas_router.routes)
 app.router.routes.extend(profitability_router.routes)
+app.router.routes.extend(remediation_router.routes)
 app.router.routes.extend(platform_accounts_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)
