@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M21",
-  "current_ticket": "CLIP-089",
-  "status": "M21_IN_PROGRESS",
+  "current_milestone": "M22",
+  "current_ticket": "CLIP-090",
+  "status": "M22_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -30,7 +30,8 @@
     "M17",
     "M18",
     "M19",
-    "M20"
+    "M20",
+    "M21"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -126,7 +127,8 @@
     "CLIP-085",
     "CLIP-086",
     "CLIP-087",
-    "CLIP-088"
+    "CLIP-088",
+    "CLIP-089"
   ],
   "blocked": [],
   "human_gates": {
@@ -137,19 +139,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-088",
-    "at": "2026-10-15T13:42:45+00:00",
-    "facts": "CLIP-088 safe auto-remediation actions complete: remediation_actions (migration 0065 CREATE-only 0064->0065 PG-verified, unique (org,action_id), ix org+action_kind, action_kind generic slug never a shell command, {param}-only command_template with placeholder names validated [a-z][a-z0-9_]{0,31} and shell-metacharacter rejection (; | & $ backtick newline) at registration 422, max_attempts 1..10, required requires_approval flag, enabled flag, register idempotent conflict 409 audited remediation_actions.registered); pure evaluate_remediation gate with fixed denial order kill_switch_active -> action_disabled -> params_invalid -> approval_required -> rate_limited and SAFE_VALUE param validation [A-Za-z0-9._:@/=-]{1,128} with brace rejection so placeholder injection is impossible (verified against ; && | $( ) backtick newline overlong empty nested-brace table); remediation_runs (unique (org,run_id), ix org+action_id) record rendered command + outcome SUCCEEDED/FAILED/DENIED + reason, DENIED persisted with empty command and executor NEVER invoked, executor exceptions recorded as FAILED not raised, injectable RemediationExecutor Protocol with MockRemediationExecutor, idempotent conflict 409, insert-time race re-check, audited remediation_runs.evaluated; 4 routes CLIP-033 pattern (POST/GET /remediation-actions, POST /{action_id}/run, GET /remediation-runs); OpenAPI probe 301 paths, land 7849c38 merge 8a31bf8, 22 new tests, suite 1396 passed CI-env full services (93.43% cov) and 1385+11 SQLite-only, ruff format/check clean, mypy clean 101 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 94/94 pre-advance"
+    "ticket": "CLIP-089",
+    "at": "2026-10-15T14:13:28+00:00",
+    "facts": "CLIP-089 credential/quota/disk/provider health monitors complete (M21 MILESTONE CLOSED): four pure monitors — check_credential_expiry (bands HEALTHY/DEGRADED/DOWN, warn_days<=0 falls back to 14d, credentials addressed by opaque vault credential_ref never a secret value), check_quota_headroom (limit<=0 -> limit_invalid DOWN no division by zero, DEGRADED at warn_ratio 0.8, DOWN at/over limit), check_disk_usage (same bands over bytes, unknown capacity DOWN, 'disk full' at 100%), check_provider_health (probe boolean -> HEALTHY/DOWN, detail truncated 255); evaluate_monitor dispatcher raises ValueError->422 when the measurement required by monitor_kind is absent; monitor_checks (migration 0066 CREATE-only 0065->0066 PG-verified, unique (org,check_id), ix org+monitor_kind, append-only subsystem/subject_ref/status/measured/threshold/detail, idempotent conflict 409, audited monitor_checks.recorded); pure summarize_monitors latest-per-kind + worst-rank overall + attention list of every non-HEALTHY monitor; 3 routes CLIP-033 pattern (POST /monitors/check, GET /monitors, GET /monitors/checks +kind filter); OpenAPI probe 304 paths, land e7ca2c9 merge 61ad68a, 18 new tests, suite 1412 passed CI-env full services (93.49% cov) and 1401+11 SQLite-only, ruff format/check clean, mypy clean 102 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 95/95 pre-advance. M21 recorded in completed_milestones; current_milestone -> M22"
   },
-  "next_action": "Execute CLIP-089 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-090 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 94,
-  "updated_at": "2026-10-15T13:42:45+00:00",
+  "tickets_completed": 95,
+  "updated_at": "2026-10-15T14:13:28+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -430,6 +432,11 @@
       "ticket": "CLIP-088",
       "merge_sha": "8a31bf8",
       "summary": "Safe auto-remediation actions: allow-listed templates + injection-proof pure gate + kill switch + attempt caps + recorded runs, migration 0065, 4 routes, 22 tests; 1396 CI-env (93.43% cov); CI green 8a31bf8"
+    },
+    {
+      "ticket": "CLIP-089",
+      "merge_sha": "61ad68a",
+      "summary": "Credential/quota/disk/provider health monitors (M21 closer): four pure monitors + append-only ledger + attention summary, migration 0066, 3 routes, 18 tests; 1412 CI-env (93.49% cov); M21 recorded; CI green 61ad68a"
     }
   ],
   "tickets_total": 102,
@@ -697,6 +704,12 @@
       "ticket": "CLIP-088",
       "action": "completed",
       "evidence_ref": "8a31bf8"
+    },
+    {
+      "at": "2026-10-15T14:13:28+00:00",
+      "ticket": "CLIP-089",
+      "action": "completed",
+      "evidence_ref": "61ad68a"
     }
   ]
 }

@@ -689,3 +689,22 @@
 **Tests**: 22 new tests incl. injection-attempt table (; && | $() backticks newline overlong nested braces)
 **Suite**: 1396 passed CI-env (93.43% cov), 1385+11 SQLite-only
 **Gates**: ruff clean, mypy 101 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 94/94, PG migration 0064->0065 verified
+
+## 2026-10-15 - CLIP-089 Credential/quota/disk/provider health monitors
+
+**Ticket**: CLIP-089 (M21)
+**Merge SHA**: 61ad68a
+**Status**: COMPLETE (95/102) - M21 MILESTONE CLOSED
+
+**What was built**:
+- Four pure monitors: credential expiry bands (vault credential_ref only, never secrets), quota headroom (limit_invalid guard, no division), disk usage (capacity unknown DOWN, disk full at 100%), provider health boolean mapping
+- evaluate_monitor dispatcher: 422 when the measurement required by the kind is missing
+- monitor_checks table (migration 0066, CREATE-only, append-only, unique (org, check_id))
+- summarize_monitors: latest per kind + worst-rank overall + attention list of every non-HEALTHY monitor
+- 3 routes: POST /monitors/check, GET /monitors, GET /monitors/checks (+kind filter)
+
+**Milestone bookkeeping**: M21 recorded in completed_milestones; current_milestone -> M22.
+
+**Tests**: 18 new tests (band boundaries, invalid limits, dispatcher errors, aggregation, routes)
+**Suite**: 1412 passed CI-env (93.49% cov), 1401+11 SQLite-only
+**Gates**: ruff clean, mypy 102 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 95/95, PG migration 0065->0066 verified
