@@ -1832,3 +1832,45 @@ Routes (CLIP-033 pattern): POST/GET /threats (+category filter),
 GET /threats/{threat_id}, GET /threats/coverage, POST
 /threats/{threat_id}/mitigations, POST /threats/{threat_id}/transition,
 POST/GET /abuse-cases. No LLM, no network.
+
+## Prompt-injection hardening and tool authorization (M22)
+
+clipos_api.injection_guard (CLIP-091) makes the
+`07_SECURITY_GOVERNANCE_RIGHTS.md` prompt-injection defenses
+executable.
+
+**Detection** — `scan_untrusted_text` is a pure, deterministic scanner
+over retrieved/transcribed/web content. Six labelled classes:
+INSTRUCTION_OVERRIDE ("ignore previous instructions"),
+ROLE_ASSUMPTION ("system:", "you are now"), TOOL_GRANT_ATTEMPT
+("enable the shell tool", "grant yourself admin"), EXFILTRATION_REQUEST
+("send the api_key to ..."), DELIMITER_ESCAPE (fake `</system>`) and
+HIDDEN_CHARACTER (zero-width / bidi lookalikes). Findings carry kind,
+matched span, offsets and severity; input is truncated at 20k chars.
+
+**Neutralization** — `neutralize_untrusted_text` replaces every matched
+span (right-to-left, so offsets stay valid) with an inert
+`[redacted-instruction:<kind>]` label and strips zero-width/bidi
+characters entirely, so a downstream prompt can only contain data.
+
+**Enforcement** — `enforce_untrusted_boundary` is fail-closed and never
+raises: a scanner exception yields SCANNER_ERROR with empty safe text;
+findings at or above the tunable `quarantine_at` severity (default
+CRITICAL) yield QUARANTINED with empty safe text and the offending
+findings; otherwise NEUTRALIZED with safe text, or ALLOWED when nothing
+was found.
+
+**Tool authorization** — `authorize_tool_from_content` encodes
+"untrusted text can never grant tools/permissions": any
+justification_source outside OPERATOR/POLICY/SYSTEM is denied with
+`content_cannot_grant_tools`, regardless of what the text claims.
+
+injection_events (migration 0068, 0067 -> 0068, CREATE-only, unique
+(org, event_id), ix org+decision) records every enforcement decision
+with counts, reason, highest severity and character length — never the
+raw untrusted text, which may itself be hostile or sensitive. Audited
+injection_events.recorded.
+
+Routes (CLIP-033 pattern): POST /security/injection/scan, POST
+/security/injection/enforce, GET /security/injection/events
+(+?decision=), POST /security/tool-authorization. No LLM, no network.
