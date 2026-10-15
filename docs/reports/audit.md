@@ -638,3 +638,20 @@
 **Tests**: 11 new tests (validator acceptance, pure lifecycle, store, routes)
 **Suite**: 1347 passed CI-env (93.33% cov), 1336+11 SQLite-only
 **Gates**: ruff clean, mypy 98 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 91/91, PG migration 0061->0062 verified
+
+## 2026-10-15 - CLIP-086 Health supervisor signals
+
+**Ticket**: CLIP-086 (M21)
+**Merge SHA**: 99e2003
+**Status**: COMPLETE (92/102)
+
+**What was built**:
+- health_signals table (migration 0063, CREATE-only, unique (org, signal_id), append-only, status + bounded detail + LIVE/OPERATOR source)
+- run_live_probes: database (SELECT 1), cache (Redis PING), storage (MinIO health), workflow (Temporal port) - never raises, 2-3s timeouts, errors carry class name only
+- summarize_signals: pure latest-per-subsystem + worst-rank overall (DOWN > DEGRADED > UNKNOWN > HEALTHY)
+- 3 routes: POST /health/probe, GET /health/signals, POST /health/signals
+- Audited: health_signals.recorded
+
+**Tests**: 13 new tests (live probes, aggregation, store, routes)
+**Suite**: 1359 passed CI-env (93.31% cov), 1348+11 SQLite-only
+**Gates**: ruff clean, mypy 99 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 92/92, PG migration 0062->0063 verified

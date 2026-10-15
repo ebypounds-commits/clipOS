@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M21",
-  "current_ticket": "CLIP-086",
+  "current_ticket": "CLIP-087",
   "status": "M21_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -123,7 +123,8 @@
     "CLIP-082",
     "CLIP-083",
     "CLIP-084",
-    "CLIP-085"
+    "CLIP-085",
+    "CLIP-086"
   ],
   "blocked": [],
   "human_gates": {
@@ -134,19 +135,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-085",
-    "at": "2026-10-15T11:47:33+00:00",
-    "facts": "CLIP-085 Codex engineering-ticket generation/export complete (M20 MILESTONE CLOSED): generate_packet_markdown pure renderer produces validator-clean # Codex Task Packet (all headings: Lease/Objective/Acceptance criteria/Required reading/Allowed scope/Forbidden actions/Required gates/Completion output; objective + evidence links derive from CLIP-082 proposal; tests assert scripts/validate_packet.validate_packet == [] for generated packets); engineering_tickets (migration 0062 CREATE-only 0061->0062 PG-verified, unique (org,ticket_id), ix org+status, stores full markdown) register idempotent conflict 409, proposal must exist (404) and be ACCEPTED/IMPLEMENTED (409 proposal not ready); pure lifecycle GENERATED->EXPORTED->IMPLEMENTED (illegal 409, same-state noop, audited generated+status_changed); export route returns text/markdown attachment; 5 routes CLIP-033 pattern; OpenAPI probe 285 paths, land 05a893e merge ca9ac0b, 11 new tests, suite 1347 passed CI-env full services (93.33% cov) and 1336+11 SQLite-only, ruff format/check clean, mypy clean 98 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 91/91 pre-advance. M20 recorded in completed_milestones; current_milestone -> M21"
+    "ticket": "CLIP-086",
+    "at": "2026-10-15T13:06:25+00:00",
+    "facts": "CLIP-086 health supervisor signals complete (M21 opener): health_signals (migration 0063 CREATE-only 0062->0063 PG-verified, unique (org,signal_id), ix org+subsystem, append-only status HEALTHY/DEGRADED/DOWN/UNKNOWN + bounded detail <=255 + source LIVE/OPERATOR, register idempotent conflict 409, audited health_signals.recorded); run_live_probes never raises for database (SELECT 1) / cache (Redis PING via CACHE_REDIS_URL) / storage (MinIO /minio/health/live) / workflow (Temporal port connect) with 2-3s timeouts, unset env -> UNKNOWN, failures -> DOWN/DEGRADED carrying error class name only (no secrets); pure summarize_signals latest-per-subsystem by created_at with worst-rank overall (DOWN > DEGRADED > UNKNOWN > HEALTHY); 3 routes CLIP-033 pattern (POST /health/probe run+persist+summary, GET /health/signals?org_id=, POST /health/signals operator signal); OpenAPI probe 288 paths, land b9635b5 merge 99e2003, 13 new tests, suite 1359 passed CI-env full services (93.31% cov) and 1348+11 SQLite-only, ruff format/check clean, mypy clean 99 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 92/92 pre-advance"
   },
-  "next_action": "Execute CLIP-086 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-087 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 91,
-  "updated_at": "2026-10-15T11:47:33+00:00",
+  "tickets_completed": 92,
+  "updated_at": "2026-10-15T13:06:25+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -412,6 +413,11 @@
       "ticket": "CLIP-085",
       "merge_sha": "ca9ac0b",
       "summary": "Codex engineering-ticket generation/export (M20 closer): validator-clean packet renderer + lifecycle + markdown export, migration 0062, 5 routes, 11 tests; 1347 CI-env (93.33% cov); M20 recorded; CI green ca9ac0b"
+    },
+    {
+      "ticket": "CLIP-086",
+      "merge_sha": "99e2003",
+      "summary": "Health supervisor signals (M21 opener): live probes (db/cache/storage/workflow) never raising + append-only signals + worst-rank summary, migration 0063, 3 routes, 13 tests; 1359 CI-env (93.31% cov); CI green 99e2003"
     }
   ],
   "tickets_total": 102,
@@ -661,6 +667,12 @@
       "ticket": "CLIP-085",
       "action": "completed",
       "evidence_ref": "ca9ac0b"
+    },
+    {
+      "at": "2026-10-15T13:06:25+00:00",
+      "ticket": "CLIP-086",
+      "action": "completed",
+      "evidence_ref": "99e2003"
     }
   ]
 }
