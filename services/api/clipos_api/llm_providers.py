@@ -365,6 +365,16 @@ def _gateway(engine) -> LLMGateway:
     return build_llm_gateway(engine)
 
 
+def _missing_key_envs(routes) -> list[str]:
+    """Env names (never values) for chain routes whose credential is unset."""
+    missing: set[str] = set()
+    for route in routes:
+        env_name = dict(route.metadata or {}).get("api_key_env")
+        if isinstance(env_name, str) and env_name and not os.environ.get(env_name):
+            missing.add(env_name)
+    return sorted(missing)
+
+
 def dispatch_alias(
     alias: str,
     request: DispatchRequest,
@@ -393,6 +403,15 @@ def dispatch_alias(
     try:
         return gateway.dispatch(llm_request)
     except LLMDispatchError as exc:
+        missing = _missing_key_envs(routes)
+        if missing:
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    f"dispatch failed for alias {alias}: all routes failed — "
+                    f"missing api key env: {', '.join(missing)}"
+                ),
+            ) from exc
         raise HTTPException(
             status_code=502, detail=f"dispatch failed for alias {alias}: {exc}"
         ) from exc

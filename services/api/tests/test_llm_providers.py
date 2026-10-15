@@ -105,7 +105,9 @@ def test_openai_wire_and_usage(monkeypatch: pytest.MonkeyPatch) -> None:
         "https://wire.example/v1",
         "OPENAI_API_KEY",
         "gpt-test",
-        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
+        client_factory=lambda **kw: httpx.Client(
+            transport=httpx.MockTransport(handler), **kw
+        ),
     )
     response = adapter.send(_request())
     assert response.content == "pong"
@@ -150,7 +152,9 @@ def test_anthropic_wire_and_system_hoist(monkeypatch: pytest.MonkeyPatch) -> Non
         "https://wire.example/v1",
         "ANTHROPIC_API_KEY",
         "claude-test",
-        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
+        client_factory=lambda **kw: httpx.Client(
+            transport=httpx.MockTransport(handler), **kw
+        ),
     )
     response = adapter.send(_request())
     assert response.content == "hey there"
@@ -188,7 +192,9 @@ def test_gemini_wire(monkeypatch: pytest.MonkeyPatch) -> None:
         "https://generativelanguage.example/v1beta",
         "GEMINI_API_KEY",
         "gemini-test",
-        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
+        client_factory=lambda **kw: httpx.Client(
+            transport=httpx.MockTransport(handler), **kw
+        ),
     )
     response = adapter.send(_request())
     assert response.content == "hi from gemini"
@@ -379,3 +385,43 @@ def test_dispatch_all_routes_fail_502(client, engine: Engine, monkeypatch):
     )
     assert resp.status_code == 502
     assert "dispatch failed" in resp.json()["detail"]
+
+
+def test_dispatch_missing_key_env_named_in_detail(
+    client,
+    engine: Engine,
+    monkeypatch,
+) -> None:
+    """502 names the unset env var (env name only, never a value)."""
+    import clipos_api.llm_providers as lp
+
+    store = ModelRegistryStore.from_engine(engine)
+    store.register(
+        ModelRoute(
+            alias="chat",
+            provider="claude",
+            endpoint_ref="https://wire.example/v1",
+            model_ref="claude-test",
+            priority=0,
+            metadata={"protocol": "messages", "api_key_env": "NEVER_SET_KEY_XYZ"},
+        )
+    )
+    monkeypatch.delenv("NEVER_SET_KEY_XYZ", raising=False)
+
+    def _broken_gateway(_engine):
+        gw = LLMGateway(
+            ModelRegistryStore.from_engine(_engine),
+            AdapterRegistry(),
+        )
+        gw.register_adapter("claude", lambda route: _FailingAdapter())
+        return gw
+
+    monkeypatch.setattr(lp, "_gateway", _broken_gateway)
+    resp = client.post(
+        "/models/chat/dispatch",
+        json={"execution_id": "dispatch-3", "messages": [{"role": "user", "content": "hi"}]},
+    )
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert "missing api key env: NEVER_SET_KEY_XYZ" in detail
+    assert "NEVER_SET_KEY_XYZ" in detail
