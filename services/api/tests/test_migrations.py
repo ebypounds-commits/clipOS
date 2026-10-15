@@ -115,6 +115,7 @@ _EXPECTED_TABLES = {
     "threat_controls",
     "threat_mitigations",
     "abuse_cases",
+    "injection_events",
 }
 
 

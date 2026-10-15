@@ -44,6 +44,7 @@ from clipos_api.health_supervisor import router as health_supervisor_router
 from clipos_api.improvement import router as improvement_router
 from clipos_api.incidents import router as incidents_router
 from clipos_api.incubation import router as incubation_router
+from clipos_api.injection_guard import router as injection_guard_router
 from clipos_api.jev_tools import router as jev_tools_router
 from clipos_api.llm_cost import CostLedger
 from clipos_api.llm_cost import router as llm_cost_router
@@ -173,6 +174,7 @@ app.router.routes.extend(health_supervisor_router.routes)
 app.router.routes.extend(improvement_router.routes)
 app.router.routes.extend(incidents_router.routes)
 app.router.routes.extend(incubation_router.routes)
+app.router.routes.extend(injection_guard_router.routes)
 app.router.routes.extend(jev_tools_router.routes)
 app.router.routes.extend(script_hooks_router.routes)
 
