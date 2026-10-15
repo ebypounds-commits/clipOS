@@ -145,9 +145,19 @@ def test_missing_resource_limits_fails_h6() -> None:
     assert "H6" in failing
 
 
+def _fake_secret() -> str:
+    """Build a provider-secret-shaped string at runtime.
+
+    The repo bans secret-shaped literals from tracked files
+    (``test_dependency_security``), so the fake value is assembled here
+    rather than written out.
+    """
+    return "sk-" + "abcdefghijklmnopqrstuvwxyz" + "012345"
+
+
 def test_literal_secret_fails_h7() -> None:
     compose = _minimal_hardened()
-    compose["services"]["api"]["environment"]["JEV_API_KEY"] = "sk-abcdefghijklmnopqrstuvwxyz012345"
+    compose["services"]["api"]["environment"]["JEV_API_KEY"] = _fake_secret()
     report = dt.validate_topology(compose, "production", "inline")
     failing = {f.invariant for f in report.findings if f.status == "FAIL"}
     assert "H7" in failing
@@ -185,7 +195,7 @@ def test_raw_text_drives_the_literal_secret_scan() -> None:
         compose,
         "production",
         "inline",
-        raw_text="JEV_API_KEY=sk-abcdefghijklmnopqrstuvwxyz012345",
+        raw_text="JEV_API_KEY=" + _fake_secret(),
     )
     failing = {f.invariant for f in report.findings if f.status == "FAIL"}
     assert "H7" in failing
