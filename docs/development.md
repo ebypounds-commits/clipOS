@@ -1874,3 +1874,42 @@ injection_events.recorded.
 Routes (CLIP-033 pattern): POST /security/injection/scan, POST
 /security/injection/enforce, GET /security/injection/events
 (+?decision=), POST /security/tool-authorization. No LLM, no network.
+
+
+## Deployment topology (M23, CLIP-094)
+
+ClipOS ships three Compose topologies: `docker-compose.dev.yml` (local
+development), `deploy/compose.staging.yml` and
+`deploy/compose.production.yml`. Staging mirrors production
+service-for-service; only credentials and resource budgets differ, so a
+change validated in staging behaves the same in production.
+
+Two bridges isolate the data plane. `clipos_edge` faces the host and is
+the only network any service publishes ports on (the `edge` Caddy
+container). `clipos_internal` is declared `internal: true`, so Postgres,
+Redis, MinIO and Temporal have no route off the host.
+
+Hardening invariants are enforced in CI by
+`scripts/deploy_topology_check.py`, which validates both hardened
+topologies against H1..H8 defined in `clipos_api.deployment_topology`:
+internal services publish no host port (H1); no development credential
+marker (`clipos_dev`, `*_local_only`) appears (H2); every long-running
+service declares a non-'no' restart policy (H3), a healthcheck (H4) and
+cpu/memory limits (H6); no service is privileged or mounts docker.sock
+(H5); no secret-like literal is present (H7); reference-only keys such as
+DATABASE_URL and STORAGE_SECRET_KEY use ${VAR} injection (H8). One-shot
+init containers (label `clipos.role: one-shot-init`) are exempt from H3,
+H4 and H6 because they run once and exit.
+
+The check is pure -- it never contacts a Docker daemon -- and also asserts
+that the two hardened topologies define the same service set, so staging
+cannot silently drift from production. It emits a machine-checkable JSON
+report (summary total/passed/warnings/failed/verdict/mirror, per-invariant
+evidence) and exits 0 pass / 1 any FAIL or mirror drift / 2 a topology
+could not be read. It runs in the CI `validate` job.
+
+Secrets are never literalled: `deploy/env.production.example` and
+`deploy/env.staging.example` hold variable names only (they are
+committed; the filled `.env.*` files they are copied to are not). Real
+secret injection and TLS issuance are human gates -- the topology only
+declares the shape they fill.

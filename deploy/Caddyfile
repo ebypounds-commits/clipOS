@@ -1,0 +1,35 @@
+# Production edge configuration (CLIP-094).
+#
+# Terminates TLS with an automatically-provisioned certificate for
+# ${CLIPOS_DOMAIN} and reverse-proxies the public surface to the API and
+# web containers. Internal services are not exposed here: they live on the
+# `clipos_internal` network, which is declared `internal: true` so it has no
+# route off the host.
+{
+	email {$CLIPOS_ACME_EMAIL}
+}
+
+{$CLIPOS_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:8000
+	}
+
+	handle /health {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

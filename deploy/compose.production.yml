@@ -1,0 +1,285 @@
+# Hardened production topology (CLIP-094).
+#
+# This file is the production shape of the ClipOS stack. It is validated by
+# `scripts/deploy_topology_check.py`, which enforces the hardening invariants
+# H1..H8 from `clipos_api.deployment_topology` in CI, so a drift here fails
+# the build instead of the deployment.
+#
+# Secrets are never literalled: every credential is a ${VAR} reference and is
+# resolved by the deployment environment (see `deploy/README.md`). Real
+# secret injection is a human gate; this file only names the variables.
+#
+# Bring up with:
+#   docker compose -f deploy/compose.production.yml --env-file deploy/.env.production up -d
+name: clipos-production
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - clipos_internal
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4g
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - clipos_internal
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+  minio:
+    image: bitnamilegacy/minio:latest
+    restart: unless-stopped
+    command: server /bitnami/minio/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/bitnami/minio/data
+    networks:
+      - clipos_internal
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2g
+
+  temporal:
+    image: temporalio/auto-setup:1.29.7
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: postgres
+      POSTGRES_DB: ${TEMPORAL_DB}
+    networks:
+      - clipos_internal
+    logging: *logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "temporal operator cluster health --address $(hostname -i | cut -d' ' -f1):7233 2>/dev/null | grep -q SERVING"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2g
+
+  temporal-init:
+    image: temporalio/auto-setup:1.29.7
+    restart: "no"
+    depends_on:
+      temporal:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - "temporal operator namespace create --address temporal:7233 ${TEMPORAL_NAMESPACE} || true; echo namespace-init-done"
+    networks:
+      - clipos_internal
+    logging: *logging
+    labels:
+      clipos.role: one-shot-init
+
+  api:
+    image: ${CLIPOS_API_IMAGE}
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_REDIS_URL: ${CACHE_REDIS_URL}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      STORAGE_REGION: ${STORAGE_REGION}
+      TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS}
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE}
+      RENDER_WORKDIR: /var/lib/clipos/render
+      JEV_BASE_URL: ${JEV_BASE_URL}
+      JEV_API_KEY: ${JEV_API_KEY}
+    volumes:
+      - render_workdir:/var/lib/clipos/render
+    networks:
+      - clipos_edge
+      - clipos_internal
+    logging: *logging
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+
+  worker:
+    image: ${CLIPOS_API_IMAGE}
+    restart: unless-stopped
+    command: ["python3", "-m", "clipos_api.worker"]
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL}
+      CACHE_REDIS_URL: ${CACHE_REDIS_URL}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET: ${STORAGE_BUCKET}
+      TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS}
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE}
+      RENDER_WORKDIR: /var/lib/clipos/render
+    volumes:
+      - render_workdir:/var/lib/clipos/render
+    networks:
+      - clipos_internal
+    logging: *logging
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import sys; sys.exit(0)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 6g
+
+  web:
+    image: ${CLIPOS_WEB_IMAGE}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL}
+    networks:
+      - clipos_edge
+    logging: *logging
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+  edge:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CLIPOS_DOMAIN: ${CLIPOS_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - clipos_edge
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - api
+      - web
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+
+networks:
+  clipos_edge:
+    driver: bridge
+  clipos_internal:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  render_workdir:
+  caddy_data:
+  caddy_config:

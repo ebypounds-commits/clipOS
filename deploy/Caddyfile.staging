@@ -1,0 +1,32 @@
+# Staging edge configuration (CLIP-094).
+#
+# Mirrors the production Caddyfile but serves plain HTTP on the staging
+# edge port; staging does not hold a public certificate. The upstream and
+# header policy are identical so a change that works here works there.
+{
+	auto_https off
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:8000
+	}
+
+	handle /health {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
