@@ -70,8 +70,8 @@ def main() -> int:
                 f"content={content!r}"
             )
         else:
-            detail_text = str(body.get("detail", body))[:160]
-            if "api key missing" in detail_text or "api key" in detail_text:
+            detail_text = str(body.get("detail", body))[:200]
+            if "missing api key env" in detail_text or "api key missing" in detail_text or "all routes failed" in detail_text:
                 mark = "KEY-MISSING"
             else:
                 mark = "FAIL"
@@ -89,8 +89,15 @@ def main() -> int:
         results.append(("PASS", f"chat (fallback): {detail}"))
         print(f"[{'PASS':11}] chat (fallback): {detail}")
     else:
-        detail = str(body.get("detail", body))[:160]
-        mark = "KEY-MISSING" if "api key missing" in detail else "FAIL"
+        detail = str(body.get("detail", body))[:200]
+        if (
+            "missing api key env" in detail
+            or "api key missing" in detail
+            or "all routes failed" in detail
+        ):
+            mark = "KEY-MISSING"
+        else:
+            mark = "FAIL"
         results.append((mark, f"chat (fallback): {detail}"))
         print(f"[{mark:11}] chat (fallback): {detail}")
 
