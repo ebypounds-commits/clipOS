@@ -105,9 +105,7 @@ def test_openai_wire_and_usage(monkeypatch: pytest.MonkeyPatch) -> None:
         "https://wire.example/v1",
         "OPENAI_API_KEY",
         "gpt-test",
-        client_factory=lambda **kw: httpx.Client(
-            transport=httpx.MockTransport(handler), **kw
-        ),
+        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
     )
     response = adapter.send(_request())
     assert response.content == "pong"
@@ -152,9 +150,7 @@ def test_anthropic_wire_and_system_hoist(monkeypatch: pytest.MonkeyPatch) -> Non
         "https://wire.example/v1",
         "ANTHROPIC_API_KEY",
         "claude-test",
-        client_factory=lambda **kw: httpx.Client(
-            transport=httpx.MockTransport(handler), **kw
-        ),
+        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
     )
     response = adapter.send(_request())
     assert response.content == "hey there"
@@ -192,9 +188,7 @@ def test_gemini_wire(monkeypatch: pytest.MonkeyPatch) -> None:
         "https://generativelanguage.example/v1beta",
         "GEMINI_API_KEY",
         "gemini-test",
-        client_factory=lambda **kw: httpx.Client(
-            transport=httpx.MockTransport(handler), **kw
-        ),
+        client_factory=lambda **kw: httpx.Client(transport=httpx.MockTransport(handler), **kw),
     )
     response = adapter.send(_request())
     assert response.content == "hi from gemini"
