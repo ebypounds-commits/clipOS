@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M23",
-  "current_ticket": "CLIP-094",
+  "current_ticket": "CLIP-095",
   "status": "M23_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -133,7 +133,8 @@
     "CLIP-090",
     "CLIP-091",
     "CLIP-092",
-    "CLIP-093"
+    "CLIP-093",
+    "CLIP-094"
   ],
   "blocked": [],
   "human_gates": {
@@ -144,19 +145,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-093",
-    "at": "2026-10-15T16:56:40+00:00",
-    "facts": "CLIP-093 production security qualification complete (M22 MILESTONE CLOSED): scripts/security_qualification.py checks 11 controls against a LIVE instance over HTTP and emits a versioned JSON report — C1 API reachable (health + version), C2 operator health 200 with no secret-like material, C3 OBSERVE-mode submission DENIED (reason mode_OBSERVE_denies_publishing), C4 PUBLIC refused under public_enabled=False, C5 rights gate refuses an uncleared item (404 no rights record), C6 critical injection payload QUARANTINED with empty safe_text and severity CRITICAL, C7 benign document still ALLOWED (false-positive guard), C8 retrieved content denied tool authorization (content_cannot_grant_tools), C9 remediation kill switch DENIED with no rendered command, C10 audit event count grows on a privileged action (2->3), C11 secret-pattern scan over all 15 observed responses clean; report schema summary{total,passed,warnings,failed,verdict} + per-check evidence + findings (FAIL->HIGH, WARN->LOW with recommendations); exit codes 0 pass / 1 any FAIL or WARN under --strict / 2 target unreachable so a broken environment can never be mistaken for a pass; live run against the restarted current service VERDICT PASS 11/11 with 0 warnings and 0 failures (a first run against the pre-CLIP-091 server correctly reported FAIL on C6/C7/C8/C10 proving the harness detects a stale/broken target rather than rubber-stamping); test_security_qualification.py (10 tests) drives the harness through a TestClient transport — all-PASS live, schema stability, C1-C11 coverage, JSON serializability, findings/non-pass parity, two deliberate-regression tests proving a broken quarantine or tool-authorization rule flips the verdict to FAIL, unreachable target -> exit 2, CLI JSON output, --strict warning semantics — and resolves the repo root by marker file so it loads from both the canonical clone and a worktree; no migration; land fe0e67e merge cc793ca, 10 new tests (suite 1570 passed CI-env full services 93.81% cov, 1559+12 SQLite-only), ruff format/check clean, mypy clean 104 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 99/99 pre-advance. M22 recorded in completed_milestones; current_milestone -> M23"
+    "ticket": "CLIP-094",
+    "at": "2026-10-15T19:50:00+00:00",
+    "facts": "Tickets 100/102 complete; M-1..M22 closed, M23 in progress. CLIP-094 delivered the hardened staging and production Compose topologies: deploy/compose.production.yml and deploy/compose.staging.yml, plus a Caddy edge (deploy/Caddyfile, deploy/Caddyfile.staging) and name-only env examples (deploy/env.production.example, deploy/env.staging.example). Two bridges: clipos_edge faces the host; clipos_internal is declared internal: true so postgres/redis/minio/temporal have no route off the host. Only the edge service publishes host ports (80/443 production, 8080 staging). clipos_api/deployment_topology.py encodes hardening invariants H1..H8 as pure functions over a parsed Compose mapping; one-shot init containers are exempt from H3/H4/H6. scripts/deploy_topology_check.py validates both topologies plus a ninth staging/production mirror check; VERDICT PASS, 8/8 invariants each, 9 services mirror; wired into the CI validate job. pyyaml>=6.0 declared as an API dependency (the CI test job installs only services/api[dev]); no migration. 26 new tests; ruff format+check clean; mypy clean over baseline (2 pre-existing unused-ignore errors; identical with and without types-PyYAML installed). SQLite 1584 passed / 12 skipped / 93.56% cov; CI-env 1596 passed / 1 skipped / 93.85% cov; alembic at head; secret_scan clean; architecture_guard 6/6 OK. Merge fcebb64 into main."
   },
-  "next_action": "Execute CLIP-094 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-095 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M14",
-  "tickets_completed": 99,
-  "updated_at": "2026-10-15T16:56:40+00:00",
+  "milestone": "M23",
+  "tickets_completed": 100,
+  "updated_at": "2026-10-15T19:50:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -462,6 +463,11 @@
       "ticket": "CLIP-093",
       "merge_sha": "cc793ca",
       "summary": "Production security qualification (M22 closer): 11-control live harness + versioned JSON report + 10 harness tests incl. regression detection; live VERDICT PASS 11/11; 1570 CI-env (93.81% cov); M22 recorded; CI green cc793ca"
+    },
+    {
+      "ticket": "CLIP-094",
+      "merge_sha": "fcebb64",
+      "summary": "Hardened production Compose/staging topology (M23 opener): two hardened topologies (edge + internal bridge, immutable images, restart/healthcheck/resource limits, read-only rootfs, secret-by-reference) validated by deploy_topology_check.py against H1..H8 plus a staging/production mirror check, wired into CI; 26 tests; SQLite 1584 (93.56% cov); CI-env 1596 (93.85% cov)"
     }
   ],
   "tickets_total": 102,
@@ -759,6 +765,12 @@
       "ticket": "CLIP-093",
       "action": "completed",
       "evidence_ref": "cc793ca"
+    },
+    {
+      "at": "2026-10-15T19:50:00+00:00",
+      "ticket": "CLIP-094",
+      "action": "completed",
+      "evidence_ref": "fcebb64"
     }
   ]
 }

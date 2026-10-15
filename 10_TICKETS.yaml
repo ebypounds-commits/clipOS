@@ -1899,7 +1899,7 @@ tickets:
 - id: CLIP-094
   milestone: M23
   title: Create hardened production Compose/staging topology
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-093

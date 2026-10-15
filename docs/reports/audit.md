@@ -782,3 +782,28 @@
 **Tests**: 10 new tests incl. two deliberate-regression tests
 **Suite**: 1570 passed CI-env (93.81% cov), 1559+12 SQLite-only
 **Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 99/99
+
+
+## 2026-10-15 - CLIP-094 Hardened production Compose/staging topology
+
+**Ticket**: CLIP-094 (M23 opener)
+**Merge SHA**: fcebb64
+**Status**: COMPLETE (100/102) - M23 IN PROGRESS
+
+**What was built**:
+- deploy/compose.production.yml and deploy/compose.staging.yml: hardened staging and production stacks
+- Two bridges: clipos_edge faces the host; clipos_internal declared internal: true so postgres/redis/minio/temporal have no route off the host. Only the edge service publishes host ports (80/443 production, 8080 staging)
+- Immutable digest-pinned images, non-'no' restart policies, healthchecks, cpu/memory limits, read-only app rootfs with tmpfs /tmp, secret-by-reference configuration
+- deploy/Caddyfile (TLS, security headers) and deploy/Caddyfile.staging (plain HTTP, same header/upstream policy) so staging mirrors production service-for-service
+- deploy/env.production.example and deploy/env.staging.example: variable names only, committed; filled .env.* is gitignored and secret-scanned
+- services/api/clipos_api/deployment_topology.py: hardening invariants H1..H8 as pure functions over a parsed Compose mapping (one-shot init containers exempt from H3/H4/H6)
+- scripts/deploy_topology_check.py: validates both topologies plus a staging/production mirror check; versioned JSON report; exit 0 pass / 1 FAIL or mirror drift / 2 unreadable; wired into the CI validate job
+- pyyaml>=6.0 added to services/api deps (the CI test job installs only services/api[dev])
+
+**Invariants**: H1 internal services not host-published; H2 no dev credential marker; H3 restart policy; H4 healthcheck; H5 no privileged/docker.sock; H6 resource limits; H7 no secret-like literal; H8 reference-only keys injected as ${VAR}
+
+**Note**: the module deliberately holds no yaml import so mypy behaves identically whether or not types-PyYAML is installed; parsing lives in the CLI.
+
+**Tests**: 26 new tests (pure invariants incl. regression cases, CLI harness, real repo topologies)
+**Suite**: 1596 passed CI-env (93.85% cov), 1584 passed +12 skipped SQLite-only
+**Gates**: ruff format+check clean, mypy clean over baseline (2 pre-existing unused-ignore errors), alembic at head, secret_scan clean, arch_guard 6/6 OK, state_audit verify 99/99
