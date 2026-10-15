@@ -725,3 +725,23 @@
 **Tests**: 16 new tests (lifecycle, coverage verdicts incl. fake/real module and path-shaped evidence, store flows, routes)
 **Suite**: 1428 passed CI-env (93.57% cov), 1417+11 SQLite-only
 **Gates**: ruff clean, mypy 103 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 96/96, PG migration 0066->0067 verified
+
+## 2026-10-15 - CLIP-091 Prompt-injection hardening and tool authorization
+
+**Ticket**: CLIP-091 (M22)
+**Merge SHA**: e901fde
+**Status**: COMPLETE (97/102)
+
+**What was built**:
+- scan_untrusted_text: six labelled detector classes (instruction override, role assumption, tool-grant attempt, exfiltration request, delimiter escape, hidden characters)
+- neutralize_untrusted_text: offset-safe labelling of matched spans; control chars stripped last
+- enforce_untrusted_boundary: fail-closed, never raises (SCANNER_ERROR / QUARANTINED / NEUTRALIZED / ALLOWED)
+- authorize_tool_from_content: content_cannot_grant_tools for anything outside OPERATOR/POLICY/SYSTEM
+- injection_events table (migration 0068, content-free: counts/decision/reason/severity/chars, never raw text)
+- 4 routes: POST /security/injection/scan, POST /security/injection/enforce, GET /security/injection/events, POST /security/tool-authorization
+
+**Bug caught by tests**: hidden-character deletion by range shifted offsets and removed a legitimate character; neutralizer now labels spans first and strips control characters last.
+
+**Tests**: 25 new tests incl. benign false-positive check, all six classes, threshold tuning, scanner-failure fail-closed, tool-auth matrix, audit-privacy assertion
+**Suite**: 1453 passed CI-env (93.64% cov), 1442+11 SQLite-only
+**Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 97/97, PG migration 0067->0068 verified

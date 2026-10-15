@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M22",
-  "current_ticket": "CLIP-091",
+  "current_ticket": "CLIP-092",
   "status": "M22_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -129,7 +129,8 @@
     "CLIP-087",
     "CLIP-088",
     "CLIP-089",
-    "CLIP-090"
+    "CLIP-090",
+    "CLIP-091"
   ],
   "blocked": [],
   "human_gates": {
@@ -140,19 +141,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-090",
-    "at": "2026-10-15T14:34:11+00:00",
-    "facts": "CLIP-090 threat model and abuse cases complete (M22 opener): threats + threat_controls + threat_mitigations + abuse_cases (migration 0067 CREATE-only 0066->0067 PG-verified, unique (org,threat_id)/(org,threat_id,control_id)/(org,threat_id,mitigation_id)/(org,abuse_case_id), ix org+category / org+attack_surface, PG-verified) storing STRIDE category (SPOOFING/TAMPERING/REPUDIATION/INFORMATION_DISCLOSURE/DENIAL_OF_SERVICE/ELEVATION_OF_PRIVILEGE), severity, abuse-case narrative, declared controls, review lifecycle IDENTIFIED->MITIGATED/ACCEPTED with reopen (illegal 409, same-state noop, audited threats.registered + threats.status_changed); mitigations map control_ref + evidence_ref append-only idempotent conflict 409 audited; abuse cases carry attack_surface + scenario + detection_ref + optional threat link (404 missing threat, 409 conflict, audited registered); pure audit_threat_coverage with _module_exists (importlib.util.find_spec resolving clipos_api.module / path / .py forms) yielding verdicts covered (non-empty control_ref AND real module) / unevidenced (mitigations exist but none resolve, ids listed in missing) / uncovered (no mitigations) so unbacked security claims become visible; 8 routes CLIP-033 pattern (POST/GET /threats +category, GET /threats/{id} 404, GET /threats/coverage, POST /threats/{id}/mitigations, POST /threats/{id}/transition, POST/GET /abuse-cases); OpenAPI probe 312 paths, land 8615074 merge 99da055, 16 new tests, suite 1428 passed CI-env full services (93.57% cov) and 1417+11 SQLite-only, ruff format/check clean, mypy clean 103 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 96/96 pre-advance"
+    "ticket": "CLIP-091",
+    "at": "2026-10-15T14:54:37+00:00",
+    "facts": "CLIP-091 prompt-injection hardening and tool authorization complete: injection_guard.py implements the 07_SECURITY prompt-injection defenses as code — scan_untrusted_text pure scanner with six labelled classes (INSTRUCTION_OVERRIDE ignore/disregard previous instructions, ROLE_ASSUMPTION system:/you-are-now, TOOL_GRANT_ATTEMPT enable/grant tool-capability-admin, EXFILTRATION_REQUEST send/reveal api_key-secret-token-vault, DELIMITER_ESCAPE fake </system> tags, HIDDEN_CHARACTER zero-width/bidi) each with severity+offsets, counts and 20k truncation; neutralize_untrusted_text labels spans right-to-left over the original text and strips control characters LAST (fixes a real offset-shift bug caught by test_neutralize_strips_hidden_characters where deleting hidden ranges first removed a legitimate character); enforce_untrusted_boundary is fail-closed and never raises (scanner exception -> SCANNER_ERROR with empty safe text, findings at/above tunable quarantine_at -> QUARANTINED with empty safe text and offending findings, else NEUTRALIZED or ALLOWED with safe text); authorize_tool_from_content denies with content_cannot_grant_tools for any justification_source outside OPERATOR/POLICY/SYSTEM (verified across RETRIEVED_CONTENT/TRANSCRIPT/WEB_RESULT) enforcing 'untrusted text can never grant tools'; injection_events (migration 0068 CREATE-only 0067->0068 PG-verified, unique (org,event_id), ix org+decision) persists counts/decision/reason/highest_severity/content_chars and NEVER the raw untrusted text (test asserts the hostile string is absent from the audit log), idempotent replay with 409 conflict, audited injection_events.recorded; 4 routes CLIP-033 pattern (POST /security/injection/scan, POST /security/injection/enforce, GET /security/injection/events +?decision=, POST /security/tool-authorization); OpenAPI probe 316 paths, land 8e8feeb merge e901fde, 25 new tests, suite 1453 passed CI-env full services (93.64% cov) and 1442+11 SQLite-only, ruff format/check clean, mypy clean 104 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 97/97 pre-advance"
   },
-  "next_action": "Execute CLIP-091 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-092 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 96,
-  "updated_at": "2026-10-15T14:34:11+00:00",
+  "tickets_completed": 97,
+  "updated_at": "2026-10-15T14:54:37+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -443,6 +444,11 @@
       "ticket": "CLIP-090",
       "merge_sha": "99da055",
       "summary": "Threat model and abuse cases (M22 opener): STRIDE threats + evidence-backed mitigations + code-resolving coverage audit + abuse cases, migration 0067, 8 routes, 16 tests; 1428 CI-env (93.57% cov); CI green 99da055"
+    },
+    {
+      "ticket": "CLIP-091",
+      "merge_sha": "e901fde",
+      "summary": "Prompt-injection hardening + tool authorization: six-class pure scanner, offset-safe neutralizer, fail-closed boundary, content-cannot-grant-tools rule, content-free injection_events, migration 0068, 4 routes, 25 tests; 1453 CI-env (93.64% cov); CI green e901fde"
     }
   ],
   "tickets_total": 102,
@@ -722,6 +728,12 @@
       "ticket": "CLIP-090",
       "action": "completed",
       "evidence_ref": "99da055"
+    },
+    {
+      "at": "2026-10-15T14:54:37+00:00",
+      "ticket": "CLIP-091",
+      "action": "completed",
+      "evidence_ref": "e901fde"
     }
   ]
 }

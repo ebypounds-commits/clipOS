@@ -1845,7 +1845,7 @@ tickets:
 - id: CLIP-091
   milestone: M22
   title: Harden prompt injection/tool authorization
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-090
