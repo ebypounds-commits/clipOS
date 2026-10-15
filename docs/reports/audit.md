@@ -745,3 +745,20 @@
 **Tests**: 25 new tests incl. benign false-positive check, all six classes, threshold tuning, scanner-failure fail-closed, tool-auth matrix, audit-privacy assertion
 **Suite**: 1453 passed CI-env (93.64% cov), 1442+11 SQLite-only
 **Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 97/97, PG migration 0067->0068 verified
+
+## 2026-10-15 - CLIP-092 Security/tenant/fuzz/dependency tests
+
+**Ticket**: CLIP-092 (M22)
+**Merge SHA**: 30c3c32
+**Status**: COMPLETE (98/102)
+
+**What was built** (test-only: no new module, no migration):
+- test_security_tenant.py: deny-by-default membership (unknown user/org, suspended org, removed member), final-active-owner floor, cross-tenant isolation across 8 stores
+- test_fuzz_security.py: 26-item hostile corpus + constant-seeded PRNG; boundary never raises, CRITICAL always quarantined, no 500 on hostile HTTP input, safe-charset exactly enforced
+- test_dependency_security.py: bounded deps, no non-PyPI index/pip config, CI lanes intact, non-root container, no docker.sock, in-process secret scan
+
+**Defects found and fixed while writing the suites**: Organization exposes .id not .org_id; store tables needed the main import before create_all; hidden-character deletion by range shifted offsets (fixed in CLIP-091's neutralizer).
+
+**Tests**: 107 new tests
+**Suite**: 1560 passed CI-env (93.67% cov), 1549+12 SQLite-only
+**Gates**: ruff clean, mypy 104 files clean, secret_scan clean, arch_guard 5/5, state_audit verify 98/98, OpenAPI unchanged at 316 paths

@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M22",
-  "current_ticket": "CLIP-092",
+  "current_ticket": "CLIP-093",
   "status": "M22_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -130,7 +130,8 @@
     "CLIP-088",
     "CLIP-089",
     "CLIP-090",
-    "CLIP-091"
+    "CLIP-091",
+    "CLIP-092"
   ],
   "blocked": [],
   "human_gates": {
@@ -141,19 +142,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-091",
-    "at": "2026-10-15T14:54:37+00:00",
-    "facts": "CLIP-091 prompt-injection hardening and tool authorization complete: injection_guard.py implements the 07_SECURITY prompt-injection defenses as code — scan_untrusted_text pure scanner with six labelled classes (INSTRUCTION_OVERRIDE ignore/disregard previous instructions, ROLE_ASSUMPTION system:/you-are-now, TOOL_GRANT_ATTEMPT enable/grant tool-capability-admin, EXFILTRATION_REQUEST send/reveal api_key-secret-token-vault, DELIMITER_ESCAPE fake </system> tags, HIDDEN_CHARACTER zero-width/bidi) each with severity+offsets, counts and 20k truncation; neutralize_untrusted_text labels spans right-to-left over the original text and strips control characters LAST (fixes a real offset-shift bug caught by test_neutralize_strips_hidden_characters where deleting hidden ranges first removed a legitimate character); enforce_untrusted_boundary is fail-closed and never raises (scanner exception -> SCANNER_ERROR with empty safe text, findings at/above tunable quarantine_at -> QUARANTINED with empty safe text and offending findings, else NEUTRALIZED or ALLOWED with safe text); authorize_tool_from_content denies with content_cannot_grant_tools for any justification_source outside OPERATOR/POLICY/SYSTEM (verified across RETRIEVED_CONTENT/TRANSCRIPT/WEB_RESULT) enforcing 'untrusted text can never grant tools'; injection_events (migration 0068 CREATE-only 0067->0068 PG-verified, unique (org,event_id), ix org+decision) persists counts/decision/reason/highest_severity/content_chars and NEVER the raw untrusted text (test asserts the hostile string is absent from the audit log), idempotent replay with 409 conflict, audited injection_events.recorded; 4 routes CLIP-033 pattern (POST /security/injection/scan, POST /security/injection/enforce, GET /security/injection/events +?decision=, POST /security/tool-authorization); OpenAPI probe 316 paths, land 8e8feeb merge e901fde, 25 new tests, suite 1453 passed CI-env full services (93.64% cov) and 1442+11 SQLite-only, ruff format/check clean, mypy clean 104 files, secret_scan clean, architecture_guard 5/5 OK, state_audit verify 97/97 pre-advance"
+    "ticket": "CLIP-092",
+    "at": "2026-10-15T15:16:36+00:00",
+    "facts": "CLIP-092 security/tenant/fuzz/dependency test suites complete (test-only ticket, no new module, no migration): test_security_tenant.py verifies deny-by-default require_membership (unknown user in real org, known user in unknown org, suspended org, removed member all -> None; restore to ACTIVE re-grants), the final-active-owner privilege floor (demoting or removing the last owner raises ValueError; demotion succeeds once a second owner exists), cross-tenant isolation across 8 stores (analytics metrics, budgets, experiments, threats+coverage, injection events, monitor checks, incidents, platform accounts all return nothing for a foreign org), and fail-closed gates (remediation placeholder allow-list + hostile values denied + kill switch precedence, injection scanner-error fail-closed, content_cannot_grant_tools); test_fuzz_security.py drives a 26-item hostile corpus (NUL bytes, 100k repetition, unbalanced braces, path traversal, SQL/HTML injection strings, bidi/zero-width, NaN/Infinity, malformed JSON) plus a constant-seeded PRNG (seed 20261015, reproducible) proving the injection boundary never raises, that any CRITICAL verdict is always QUARANTINED with empty safe_text (no bypass under random input), that hostile/oversized/blank remediation values are always denied while the accepted charset stays exactly [A-Za-z0-9._:@/=-] (path-shaped values documented as a path-policy concern handled by CLIP-039 confine_path, not shell injection), that dangerous templates are rejected and benign static/escaped-brace templates accepted, and that no endpoint returns 500 on hostile input incl malformed JSON and unicode path segments; test_dependency_security.py verifies dependencies are version-bounded (no bare pins), no non-PyPI index or in-repo pip config, CI still runs dependency-audit + secret-scan + cyclonedx SBOM + ruff format/check + mypy + pytest lanes, the API Dockerfile switches to a non-root USER, docker.sock is never mounted in dev compose, and an in-process scan of every tracked file finds no private key or provider-shaped secret; land 3c72a4f merge 30c3c32, 107 new tests (suite 1560 passed CI-env full services 93.67% cov, 1549+12 SQLite-only), ruff format/check clean, mypy clean 104 files, secret_scan clean, architecture_guard 5/5 OK, OpenAPI probe unchanged 316 paths, state_audit verify 98/98 pre-advance. Three real defects surfaced by the new suites during development and were fixed in-test: Organization exposes .id (not .org_id), store tables required the main import before create_all, and hidden-character deletion by range shifted offsets"
   },
-  "next_action": "Execute CLIP-092 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-093 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M14",
-  "tickets_completed": 97,
-  "updated_at": "2026-10-15T14:54:37+00:00",
+  "tickets_completed": 98,
+  "updated_at": "2026-10-15T15:16:36+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -449,6 +450,11 @@
       "ticket": "CLIP-091",
       "merge_sha": "e901fde",
       "summary": "Prompt-injection hardening + tool authorization: six-class pure scanner, offset-safe neutralizer, fail-closed boundary, content-cannot-grant-tools rule, content-free injection_events, migration 0068, 4 routes, 25 tests; 1453 CI-env (93.64% cov); CI green e901fde"
+    },
+    {
+      "ticket": "CLIP-092",
+      "merge_sha": "30c3c32",
+      "summary": "Security/tenant/fuzz/dependency regression suites: 107 tests covering tenant isolation across 8 stores, owner privilege floor, deterministic hostile-input fuzzing, and supply-chain/CI controls; 1560 CI-env (93.67% cov); CI green 30c3c32"
     }
   ],
   "tickets_total": 102,
@@ -734,6 +740,12 @@
       "ticket": "CLIP-091",
       "action": "completed",
       "evidence_ref": "e901fde"
+    },
+    {
+      "at": "2026-10-15T15:16:36+00:00",
+      "ticket": "CLIP-092",
+      "action": "completed",
+      "evidence_ref": "30c3c32"
     }
   ]
 }

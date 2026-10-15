@@ -1863,7 +1863,7 @@ tickets:
 - id: CLIP-092
   milestone: M22
   title: Implement security/tenant/fuzz/dependency tests
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-091
