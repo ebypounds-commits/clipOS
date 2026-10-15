@@ -185,7 +185,7 @@ def test_environment_list_form_is_understood_by_h8() -> None:
 
 def test_report_is_json_serializable() -> None:
     report = dt.validate_topology(_minimal_hardened(), "production", "inline")
-    json.dumps(report.model_dump(mode="json"))
+    json.dumps(report.to_dict())
 
 
 def test_raw_text_drives_the_literal_secret_scan() -> None:
@@ -271,6 +271,20 @@ def _load_harness():
         sys.modules.pop("deploy_topology_check", None)
         raise
     return module
+
+
+def test_module_imports_without_third_party_dependencies() -> None:
+    """The validate CI job installs only PyYAML.
+
+    ``deployment_topology`` is imported by ``scripts/deploy_topology_check.py``,
+    which runs in the dependency-light `validate` job, so it must not pull in
+    Pydantic (or anything else) at import time.
+    """
+    source = (REPO_ROOT / "services" / "api" / "clipos_api" / "deployment_topology.py").read_text(
+        encoding="utf-8"
+    )
+    assert "import pydantic" not in source
+    assert "from pydantic" not in source
 
 
 def test_harness_reports_pass_on_real_topologies() -> None:

@@ -105,7 +105,7 @@ def run_check() -> dict:
         },
         "mirror_evidence": mirror_evidence,
         "topologies": {
-            environment: report.model_dump(mode="json")
+            environment: report.to_dict()
             for environment, report in reports.items()
         },
     }
