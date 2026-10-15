@@ -1801,3 +1801,34 @@ worst-rank overall status (DOWN > DEGRADED > UNKNOWN > HEALTHY), and an
 answers "what needs attention right now". Routes (CLIP-033 pattern):
 POST /monitors/check, GET /monitors?org_id=, GET
 /monitors/checks?org_id=&monitor_kind=. No LLM, no network.
+
+## Threat model and abuse cases (M22)
+
+clipos_api.threat_model (CLIP-090, M22 opener) is the machine-readable
+threat model grounded in `07_SECURITY_GOVERNANCE_RIGHTS.md`. threats
+(migration 0067, 0066 -> 0067, CREATE-only, unique (org, threat_id),
+ix org+category) store a STRIDE-style category
+(SPOOFING/TAMPERING/REPUDIATION/INFORMATION_DISCLOSURE/DENIAL_OF_SERVICE/
+ELEVATION_OF_PRIVILEGE), severity, the concrete abuse case narrative,
+declared control names (append-only threat_controls) and a review
+status (IDENTIFIED -> MITIGATED / ACCEPTED, with reopen); audited
+threats.registered and threats.status_changed.
+
+threat_mitigations map each mitigation to a control_ref and the
+enforcing evidence_ref (module/route/gate), append-only with conflict
+on changed fields. abuse_cases record an attack_surface, scenario and
+optional detection_ref/threat link. All three writes are idempotent
+with 409 conflicts and 404 on missing parents.
+
+`audit_threat_coverage` (GET /threats/coverage) is the pure drift
+check: a threat is `covered` only when at least one mitigation has a
+non-empty control_ref AND an evidence_ref that resolves to a real
+importable clipos_api module; mitigations that exist but do not resolve
+are reported as `unevidenced` (with the offending mitigation ids) and
+threats without mitigations as `uncovered`. That makes an unbacked
+security claim visible instead of assumed.
+
+Routes (CLIP-033 pattern): POST/GET /threats (+category filter),
+GET /threats/{threat_id}, GET /threats/coverage, POST
+/threats/{threat_id}/mitigations, POST /threats/{threat_id}/transition,
+POST/GET /abuse-cases. No LLM, no network.
