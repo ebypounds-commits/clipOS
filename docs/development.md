@@ -1737,3 +1737,38 @@ Routes (CLIP-033 pattern): POST/GET /runbooks, GET /runbooks/{id}
 (with steps), POST/GET /incidents (+?status=), GET
 /incidents/{id}, POST /incidents/{id}/transition, POST/GET
 /incidents/{id}/timeline. No LLM, no network.
+
+## Safe auto-remediation actions (M21)
+
+clipos_api.remediation (CLIP-088) bounds incident response so the
+platform can act without unrestricted command execution (PRD §K).
+remediation_actions (migration 0065, 0064 -> 0065, CREATE-only, unique
+(org, action_id), ix org+action_kind) declare an action_kind slug
+(restart-service, clear-cache, drain-node, ... — never a shell
+command), a bounded command_template whose only dynamic parts are
+`{param}` placeholders validated against `[a-z][a-z0-9_]{0,31}`, a
+max_attempts cap (1..10), a required requires_approval flag, and an
+enabled flag. Templates containing shell metacharacters are rejected
+(422) before persistence; registration is idempotent with conflict on
+changed fields (409); audited remediation_actions.registered.
+
+evaluate_remediation is the pure safety gate with a fixed denial
+order: kill_switch_active -> action_disabled -> params_invalid ->
+approval_required -> rate_limited, and `allowed` only when every check
+passes. Parameter values must match `[A-Za-z0-9._:@/=-]{1,128}` and
+may not contain braces, so injection through a placeholder is
+impossible (tested against a table of `;`, `&&`, `|`, `$(...)`,
+backticks, newlines, over-long values and nested braces). The kill
+switch disables every remediation org-wide without redeploy.
+
+remediation_runs record every attempt (unique (org, run_id), ix
+org+action_id) with the rendered command, outcome
+SUCCEEDED/FAILED/DENIED and reason; denied runs are persisted with an
+empty rendered command and the executor is never invoked. Execution is
+injectable via the RemediationExecutor Protocol
+(MockRemediationExecutor for CI); executor exceptions become FAILED
+runs rather than errors. Audited remediation_runs.evaluated.
+
+Routes (CLIP-033 pattern): POST/GET /remediation-actions, POST
+/remediation-actions/{action_id}/run, GET
+/remediation-runs?org_id=&action_id=. No LLM, no network.
