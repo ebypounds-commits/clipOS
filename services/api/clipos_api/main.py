@@ -29,6 +29,7 @@ from clipos_api.clip_candidates_router import router as clip_candidates_router
 from clipos_api.clip_dedup import router as clip_dedup_router
 from clipos_api.clip_review import router as clip_review_router
 from clipos_api.clip_scores import router as clip_scores_router
+from clipos_api.codex_tickets import router as codex_tickets_router
 from clipos_api.collection_schedules import router as collection_schedules_router
 from clipos_api.content_evals import router as content_evals_router
 from clipos_api.content_planning import router as content_planning_router
@@ -149,6 +150,7 @@ app.router.routes.extend(clip_candidates_router.routes)
 app.router.routes.extend(clip_dedup_router.routes)
 app.router.routes.extend(clip_review_router.routes)
 app.router.routes.extend(clip_scores_router.routes)
+app.router.routes.extend(codex_tickets_router.routes)
 app.router.routes.extend(collection_schedules_router.routes)
 app.router.routes.extend(content_evals_router.routes)
 app.router.routes.extend(content_planning_router.routes)
