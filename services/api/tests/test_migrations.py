@@ -103,6 +103,7 @@ _EXPECTED_TABLES = {
     "eval_sandboxes",
     "promotions",
     "engineering_tickets",
+    "health_signals",
 }
 
 
