@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M23",
-  "current_ticket": "CLIP-095",
+  "current_ticket": "CLIP-096",
   "status": "M23_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -134,7 +134,8 @@
     "CLIP-091",
     "CLIP-092",
     "CLIP-093",
-    "CLIP-094"
+    "CLIP-094",
+    "CLIP-095"
   ],
   "blocked": [],
   "human_gates": {
@@ -145,19 +146,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-094",
-    "at": "2026-10-15T19:50:00+00:00",
-    "facts": "Tickets 100/102 complete; M-1..M22 closed, M23 in progress. CLIP-094 delivered the hardened staging and production Compose topologies: deploy/compose.production.yml and deploy/compose.staging.yml, plus a Caddy edge (deploy/Caddyfile, deploy/Caddyfile.staging) and name-only env examples (deploy/env.production.example, deploy/env.staging.example). Two bridges: clipos_edge faces the host; clipos_internal is declared internal: true so postgres/redis/minio/temporal have no route off the host. Only the edge service publishes host ports (80/443 production, 8080 staging). clipos_api/deployment_topology.py encodes hardening invariants H1..H8 as pure functions over a parsed Compose mapping; one-shot init containers are exempt from H3/H4/H6. scripts/deploy_topology_check.py validates both topologies plus a ninth staging/production mirror check; VERDICT PASS, 8/8 invariants each, 9 services mirror; wired into the CI validate job. pyyaml>=6.0 declared as an API dependency (the CI test job installs only services/api[dev]); no migration. 26 new tests; ruff format+check clean; mypy clean over baseline (2 pre-existing unused-ignore errors; identical with and without types-PyYAML installed). SQLite 1584 passed / 12 skipped / 93.56% cov; CI-env 1596 passed / 1 skipped / 93.85% cov; alembic at head; secret_scan clean; architecture_guard 6/6 OK. Merge fcebb64 into main."
+    "ticket": "CLIP-095",
+    "at": "2026-10-16T14:10:00+00:00",
+    "facts": "Tickets 101/102 complete; M-1..M22 closed, M23 in progress. CLIP-095 delivered CI/CD canary rollout and rollback: clipos_api/deployments.py records each release as an immutable (commit SHA, image digest) pair, org-scoped and idempotent per (org, deployment_id), with a parent_deployment_id that must exist in the same org; re-registering an id with a different SHA or digest is a 409 rather than an update. Rollout is a pure transition table PENDING -> CANARY -> PROMOTED, with FAILED from PENDING/CANARY and ROLLED_BACK from CANARY/PROMOTED/FAILED; ROLLED_BACK is terminal, same-state is a no-op, anything else is 409. Promotion out of CANARY is gated by health_window_passed: the window must be non-empty and every observation HEALTHY, so a canary is promoted on evidence rather than silence; observations persist on the row and are reused. Rollback is a one-command image re-pin enforcing expand/contract: rollback_conflicts refuses with a 409 naming the offending migration when the target predates migrations this release applied; rolling back to the deployment's own revision is refused; backup restore is deliberately not modelled (DR, not rollback). release_evidence rows are append-only and idempotent per (org, deployment_id), carrying exactly the spec's Release evidence fields; rolled_back_at is stamped automatically when the deployment is already ROLLED_BACK. Audited deployments.registered, deployments.status_changed, deployments.rolled_back, release_evidence.recorded. Migration 0069 (CREATE-only: deployments + release_evidence), applied on Postgres 0068 -> 0069; OpenAPI 243 paths with 7 new deployment routes. 31 new tests; ruff format+check clean; mypy clean (106 source files); CI-env 1628 passed / 1 skipped / 93.86% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 100/100. Merge ab6ffb7 into main."
   },
-  "next_action": "Execute CLIP-095 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-096 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M23",
-  "tickets_completed": 100,
-  "updated_at": "2026-10-15T19:50:00+00:00",
+  "tickets_completed": 101,
+  "updated_at": "2026-10-16T14:10:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -468,6 +469,11 @@
       "ticket": "CLIP-094",
       "merge_sha": "fcebb64",
       "summary": "Hardened production Compose/staging topology (M23 opener): two hardened topologies (edge + internal bridge, immutable images, restart/healthcheck/resource limits, read-only rootfs, secret-by-reference) validated by deploy_topology_check.py against H1..H8 plus a staging/production mirror check, wired into CI; 26 tests; SQLite 1584 (93.56% cov); CI-env 1596 (93.85% cov)"
+    },
+    {
+      "ticket": "CLIP-095",
+      "merge_sha": "ab6ffb7",
+      "summary": "CI/CD canary rollout and rollback (M23): immutable deployment identity pairs, a gated canary health window, a one-command rollback enforcing expand/contract migration discipline, and the full Release evidence bundle; migration 0069; 7 routes (243 OpenAPI paths); 31 tests; CI-env 1628 passed 93.86% cov"
     }
   ],
   "tickets_total": 102,
@@ -771,6 +777,12 @@
       "ticket": "CLIP-094",
       "action": "completed",
       "evidence_ref": "fcebb64"
+    },
+    {
+      "at": "2026-10-16T14:10:00+00:00",
+      "ticket": "CLIP-095",
+      "action": "completed",
+      "evidence_ref": "ab6ffb7"
     }
   ]
 }

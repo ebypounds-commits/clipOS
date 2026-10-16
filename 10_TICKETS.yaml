@@ -1917,7 +1917,7 @@ tickets:
 - id: CLIP-095
   milestone: M23
   title: Implement CI/CD canary and rollback
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-094

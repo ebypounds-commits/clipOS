@@ -807,3 +807,27 @@
 **Tests**: 26 new tests (pure invariants incl. regression cases, CLI harness, real repo topologies)
 **Suite**: 1596 passed CI-env (93.85% cov), 1584 passed +12 skipped SQLite-only
 **Gates**: ruff format+check clean, mypy clean over baseline (2 pre-existing unused-ignore errors), alembic at head, secret_scan clean, arch_guard 6/6 OK, state_audit verify 99/99
+
+
+## 2026-10-16 - CLIP-095 CI/CD canary and rollback
+
+**Ticket**: CLIP-095 (M23)
+**Merge SHA**: ab6ffb7
+**Status**: COMPLETE (101/102) - M23 IN PROGRESS
+
+**What was built**:
+- services/api/clipos_api/deployments.py: deployments and release_evidence persistence, pure rollout predicates, and the routes
+- Immutable deployment identity: (commit SHA, image digest) pair, org-scoped, idempotent per (org, deployment_id); re-registering with a different SHA or digest is a 409, not an update
+- Rollout state machine (pure): PENDING -> CANARY -> PROMOTED; FAILED from PENDING/CANARY; ROLLED_BACK from CANARY/PROMOTED/FAILED; ROLLED_BACK terminal, same-state no-op, else 409
+- Promotion gate health_window_passed: non-empty window, every observation HEALTHY — promoted on evidence, not silence
+- Rollback: one-command image re-pin enforcing expand/contract via rollback_conflicts; a target predating migrations this release applied is refused 409 naming the migration; self-rollback refused; backup restore deliberately not modelled (disaster recovery, not rollback)
+- release_evidence: append-only, idempotent per (org, deployment_id), carrying the exact §Release evidence fields; rolled_back_at stamped when already ROLLED_BACK
+- Audited deployments.registered, deployments.status_changed, deployments.rolled_back, release_evidence.recorded
+
+**Migration**: 0069 (CREATE-only: deployments, release_evidence); applied on Postgres 0068 -> 0069
+
+**Routes**: POST/GET /deployments, GET /deployments/{id}, POST /deployments/{id}/canary, /promote, /fail, /rollback, POST/GET /deployments/{id}/evidence (OpenAPI 243 paths, 7 new)
+
+**Tests**: 31 new tests
+**Suite**: 1628 passed CI-env (93.86% cov), 1 skipped
+**Gates**: ruff format+check clean, mypy clean (106 source files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 100/100
