@@ -1957,3 +1957,54 @@ Routes (CLIP-033 pattern): POST/GET /deployments, GET
 /deployments/{deployment_id}, POST /deployments/{deployment_id}/canary,
 /promote, /fail, /rollback and POST/GET /deployments/{deployment_id}/evidence.
 No LLM, no network.
+
+
+## Encrypted backup and restore verification (M23, CLIP-096)
+
+The operations runbook's backup baseline requires a daily encrypted full
+backup and a weekly automated restore test in an isolated environment.
+CLIP-013 shipped the manifest primitives with encryption explicitly deferred;
+this module closes that gap.
+
+backup_crypto builds the encryption envelope from stdlib primitives only --
+the repository carries no third-party crypto dependency. A SHA-256
+counter-mode keystream (keystream_block_i = SHA256(key || nonce || counter_i))
+is XORed with the plaintext, and the result is authenticated with
+encrypt-then-MAC: HMAC-SHA256 over the canonical header AND the ciphertext,
+so header tampering is caught as well as ciphertext tampering. Subkeys are
+purpose-separated with SHA256(label || key) so the master key is never used
+directly for both encryption and MAC, and the tag is compared with
+hmac.compare_digest. The envelope is framed as
+MAGIC | version | header_len | header(JSON) | ciphertext, and the header
+carries explicit alg and version fields so the construction can be migrated
+without breaking existing backups.
+
+This is a correct encrypt-then-MAC AEAD assembled from a hash and a MAC, not
+a substitute for a vetted AEAD: a future revision should switch alg to
+AES-GCM or ChaCha20-Poly1305 once a crypto dependency is acceptable, keeping
+version 1 readable. Nothing here claims side-channel resistance beyond
+constant-time tag comparison. The master key is read from CLIPOS_BACKUP_KEY
+(64 hex characters) or supplied as bytes; it is never written to disk, never
+placed in a manifest or audit event and never logged -- backup_artifacts
+persists only the opaque key_ref (the variable NAME) and a truncated
+key_fingerprint. Empty plaintext is refused rather than producing an
+unverifiable "successful" artifact.
+
+backup_artifacts records each encrypted artifact (kind, key_ref,
+key_fingerprint, plaintext and ciphertext digests and byte counts), org-scoped
+and idempotent per (org, artifact_id) with drift a 409. restore_tests is
+append-only and idempotent per (org, test_id); the outcome is COMPUTED from
+the observations via evaluate_restore rather than trusted from the caller, so
+a runner cannot record a PASS by asserting one. evaluate_restore keeps two
+failure modes distinct: wrong bytes versus byte-correct-but-over-RTO.
+check_backup_freshness maps age against the daily cadence to
+HEALTHY/DEGRADED/DOWN reusing MonitorStatus, so backup freshness reads the
+same as every other unattended check; restore_test_due and
+evaluate_drill_cadence apply the weekly and monthly cadences;
+summarize_backup_status folds them into one posture with an attention list.
+Audited backup_artifacts.recorded and restore_tests.recorded.
+
+Routes (CLIP-033 pattern): POST/GET /backups/artifacts, GET
+/backups/artifacts/{artifact_id}, POST/GET /backups/restore-tests, GET
+/backups/status. No LLM, no network -- callers supply artifact digests and
+restore observations from their own runners.

@@ -21,6 +21,7 @@ from clipos_api.analytics import router as analytics_router
 from clipos_api.analytics_dashboards import router as analytics_dashboards_router
 from clipos_api.architect import router as architect_router
 from clipos_api.asset_validation import router as asset_validation_router
+from clipos_api.backup_verification import router as backup_verification_router
 from clipos_api.brand_lifecycle import router as brand_lifecycle_router
 from clipos_api.brand_templates import router as brand_templates_router
 from clipos_api.budgets import router as budgets_router
@@ -152,6 +153,7 @@ app.router.routes.extend(media_ingestion_router.routes)
 app.router.routes.extend(metric_reconciliation_router.routes)
 app.router.routes.extend(watchlist_router.routes)
 app.router.routes.extend(asset_validation_router.routes)
+app.router.routes.extend(backup_verification_router.routes)
 app.router.routes.extend(brand_lifecycle_router.routes)
 app.router.routes.extend(brand_templates_router.routes)
 app.router.routes.extend(budgets_router.routes)

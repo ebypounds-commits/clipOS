@@ -118,6 +118,8 @@ _EXPECTED_TABLES = {
     "injection_events",
     "deployments",
     "release_evidence",
+    "backup_artifacts",
+    "restore_tests",
 }
 
 
