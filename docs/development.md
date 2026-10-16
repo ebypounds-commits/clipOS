@@ -2054,3 +2054,42 @@ Routes (CLIP-033 pattern): POST/GET /production/bootstrap, GET
 declaration, including a secret_refs mapping, has no sensible query-string
 encoding). No LLM, no network. Operator procedure:
 docs/PRODUCTION_BOOTSTRAP.md.
+
+
+## End-to-end private-mode qualification (M24, CLIP-098)
+
+scripts/private_mode_qualification.py is the M24 counterpart to
+scripts/security_qualification.py (CLIP-093): that harness checks the
+security controls, this one walks the whole pipeline against a LIVE instance
+over HTTP and then proves the private-mode guarantees hold end to end.
+
+The pipeline walk covers 28 steps across 8 stages -- research, planning,
+produce, render, publish, analytics, revenue, experiments. Each stage is a
+sequence of HTTP steps; a step may be optional where its upstream produced
+nothing to work with, but a REQUIRED step failing fails the qualification,
+and the report records every step's observed HTTP status so an operator can
+see exactly how far the pipeline got.
+
+Independently of how far the walk got, six private-mode invariants are
+asserted: OBSERVE mode denies all publishing (P1); PRIVATE_TEST cannot
+publish PUBLIC (P2); PUBLIC is refused while the policy's public_enabled is
+false (P3); the rights gate refuses uncleared content (P4); an active kill
+switch denies a normally-allowed private post (P5); and no secret-shaped
+material appears in any response observed (P6).
+
+Each invariant that registers a publishing policy uses its OWN platform.
+Policy is unique per (org, platform), so sharing one platform would let an
+earlier probe's policy decide a later probe's outcome -- the check would be
+measuring leftover state rather than the rule under test. P5 exercises the
+real kill-switch enforcement path (a policy with kill_switch True) rather
+than a standalone endpoint, since the control lives on the policy.
+
+The report is versioned and machine-checkable: summary (steps,
+steps_failed, invariants, invariants_failed, failed, skipped, verdict),
+per-stage step counts, every step, every invariant, and findings for each
+FAIL. Exit codes are 0 pass / 1 any required-step or invariant failure / 2
+target unreachable, so a broken environment is never mistaken for a pass.
+Tests drive the harness through a TestClient transport (all-PASS live,
+stage coverage, schema stability, JSON serializability, findings parity)
+and include three deliberate-regression tests that patch
+evaluate_publish_policy and prove P1/P3/P5 flip the verdict to FAIL.
