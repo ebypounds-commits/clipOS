@@ -124,8 +124,33 @@ def test_public_requires_public_enabled() -> None:
         allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED, Visibility.PUBLIC],
         public_enabled=True,
     )
-    allowed2, _ = evaluate_publish_policy(policy2, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC)
+    # account_approved isolates the public_enabled rule; the owner gate
+    # (CLIP-099) is covered in test_public_publishing_gate.py.
+    allowed2, _ = evaluate_publish_policy(
+        policy2, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC, account_approved=True
+    )
     assert allowed2 is True
+
+
+def test_public_denied_without_owner_approval() -> None:
+    """public_enabled alone is not sufficient for PUBLIC (CLIP-099)."""
+    policy = _policy(
+        allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED, Visibility.PUBLIC],
+        public_enabled=True,
+    )
+    allowed, reason = evaluate_publish_policy(
+        policy, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC
+    )
+    assert allowed is False
+    assert reason == "owner_approval_required"
+
+
+def test_private_visibility_ignores_the_owner_gate() -> None:
+    """A non-public visibility never consults the owner gate."""
+    policy = _policy()
+    for vis in (Visibility.PRIVATE, Visibility.UNLISTED):
+        allowed, _ = evaluate_publish_policy(policy, vis, OperatingMode.PRIVATE_TEST)
+        assert allowed is True
 
 
 def test_visibility_not_in_allowed_denied() -> None:
@@ -210,7 +235,9 @@ def test_submit_allowed_persists_succeeded(
             public_enabled=True,
         )
     )
-    job = submit_publication(MockPublishingAdapter(), store, _submission())
+    # account_approved models the owner gate (CLIP-099) having been satisfied;
+    # this test is about the submit/persist mechanics.
+    job = submit_publication(MockPublishingAdapter(), store, _submission(), account_approved=True)
     assert job.status is PublishStatus.SUCCEEDED
     assert job.external_id is not None
     assert job.decision_reason == "allowed"
@@ -269,7 +296,9 @@ def test_adapter_failure_persists_failed(store: PublishingStore, engine: Engine)
         def get_status(self, ext_id):
             return PublishStatus.FAILED
 
-    job = submit_publication(BrokenAdapter(), store, _submission())
+    # account_approved models the owner gate (CLIP-099) having been satisfied;
+    # this test is about adapter-failure persistence.
+    job = submit_publication(BrokenAdapter(), store, _submission(), account_approved=True)
     assert job.status is PublishStatus.FAILED
     assert "provider timeout" in (job.error_ref or "")
 
@@ -312,6 +341,29 @@ def test_route_full_publish_roundtrip(client) -> None:
             "allowed_visibilities": ["PRIVATE", "UNLISTED", "PUBLIC"],
             "public_enabled": True,
             "kill_switch": False,
+        },
+    )
+    # Satisfy the owner gate (CLIP-099): public publishing requires a live
+    # owner approval for the account after a passing private test.
+    client.post(
+        "/publishing/private-tests",
+        json={
+            "test_ref": "rt-pt",
+            "org_id": "org-1",
+            "platform": "youtube",
+            "account_ref": "acct-1",
+            "outcome": "PASSED",
+        },
+    )
+    client.post(
+        "/publishing/owner-approvals",
+        json={
+            "approval_id": "rt-appr",
+            "org_id": "org-1",
+            "platform": "youtube",
+            "account_ref": "acct-1",
+            "owner_ref": "owner://rt",
+            "private_test_ref": "rt-pt",
         },
     )
     response = client.post(

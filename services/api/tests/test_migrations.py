@@ -123,6 +123,8 @@ _EXPECTED_TABLES = {
     "bootstrap_manifests",
     "bootstrap_validations",
     "secret_rotations",
+    "owner_approvals",
+    "private_tests",
 }
 
 

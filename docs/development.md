@@ -1,4 +1,4 @@
-﻿# ClipOS local development
+# ClipOS local development
 
 The M0 foundation intentionally contains no product features. It establishes package boundaries, typed contracts, local infrastructure definitions, and repeatable quality commands.
 
@@ -2093,3 +2093,46 @@ Tests drive the harness through a TestClient transport (all-PASS live,
 stage coverage, schema stability, JSON serializability, findings parity)
 and include three deliberate-regression tests that patch
 evaluate_publish_policy and prove P1/P3/P5 flip the verdict to FAIL.
+
+
+## Owner-gated public publishing (M24, CLIP-099) — human gate
+
+07_SECURITY_GOVERNANCE_RIGHTS requires that a new platform account starts in
+PRIVATE_TEST and that public mode needs explicit owner approval after a
+successful private test; 00_README_FIRST requires an owner gate before the
+FIRST public posting per real platform account. GUARDED_PUBLIC and
+AUTONOMOUS_PUBLIC previously existed as policy modes with no approval
+requirement at all; public_publishing_gate.py adds it.
+
+An owner approval is a RECORD, not a configuration flag. owner_approvals is
+org-scoped, idempotent per (org, approval_id) and binds one
+(org, platform, account_ref) to an explicit owner decision carrying the
+evidence of the private test it follows, an owner reference and an optional
+expiry; it can be revoked (append-only status change) so one account can be
+closed without touching others. private_tests records private-test outcomes
+per account. Audited owner_approvals.granted, owner_approvals.revoked and
+private_tests.recorded.
+
+evaluate_public_gate is pure and fail-closed, requiring ALL of: a granted
+approval for that exact account, not revoked, not expired, and a recorded
+successful private test for the same account. Each missing precondition has
+its own machine reason (no_owner_approval, owner_approval_revoked,
+owner_approval_expired, no_successful_private_test) so an operator sees the
+next action rather than a bare denial. The gate is per real platform
+account, so approving one channel cannot unlock another; a re-granted
+approval supersedes an earlier revoked one; a private or unlisted visibility
+never consults the gate. gate_summary folds approvals and private-test
+history into a per-account readiness view with allowed/denied counts.
+
+Enforcement lives in evaluate_publish_policy, which gained
+account_approved: bool = False so a caller that does not consult the gate
+cannot publish publicly by omission -- the fail-closed default is denial
+(owner_approval_required). The route resolves the decision from the gate
+store for PUBLIC visibility and passes it in, keeping the policy function
+pure and free of persistence. Because public posting to a real account is
+this ticket human gate, the machinery is built and tested against the Mock
+adapter only: nothing in this repository posts publicly to a real account.
+
+Routes (CLIP-033 pattern): POST/GET /publishing/owner-approvals, POST
+/publishing/owner-approvals/{approval_id}/revoke, POST/GET
+/publishing/private-tests, GET /publishing/gate-summary. No LLM, no network.
