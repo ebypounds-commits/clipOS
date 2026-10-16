@@ -1973,7 +1973,7 @@ tickets:
 - id: CLIP-098
   milestone: M24
   title: Run end-to-end qualification in private mode
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-097

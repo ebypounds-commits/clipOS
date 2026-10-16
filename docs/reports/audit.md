@@ -891,3 +891,34 @@
 **Tests**: 45 new tests
 **Suite**: 1726 passed CI-env (93.94% cov), 1 skipped
 **Gates**: ruff format+check clean, mypy clean (109 files; 2 pre-existing baseline unused-ignore errors only), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 102/102
+
+
+## 2026-10-17 - CLIP-098 End-to-end qualification in private mode (M24 opened)
+
+**Ticket**: CLIP-098 (M24 opener)
+**Merge SHA**: 3ea0479
+**Status**: COMPLETE
+
+**What was built**:
+- scripts/private_mode_qualification.py: the M24 counterpart to the CLIP-093 security harness
+- Pipeline walk: 28 steps across 8 stages (research, planning, produce, render, publish, analytics, revenue, experiments) against a LIVE instance over HTTP. A required step failing fails the qualification; optional steps are recorded as skipped; every step's observed HTTP status is captured
+- Six private-mode invariants checked independently of how far the walk got: P1 OBSERVE denies all publishing; P2 PRIVATE_TEST cannot publish PUBLIC; P3 PUBLIC refused while public_enabled is false; P4 rights gate refuses uncleared content; P5 active kill switch denies a normally-allowed private post; P6 no secret-shaped material in any observed response
+- Each policy-registering invariant uses its OWN platform: policy is unique per (org, platform), so sharing one would let an earlier probe's policy decide a later probe's outcome
+- P5 exercises the real enforcement path (a policy with kill_switch True) rather than a standalone endpoint, since the control lives on the policy
+- Versioned machine-checkable report (summary, per-stage counts, every step, every invariant, findings); exit 0 pass / 1 any required-step or invariant failure / 2 unreachable
+
+**Findings on the first live run — all HARNESS defects, not product defects** (chasing that distinction was the substance of this work):
+1. P3 "PUBLIC succeeded with public_enabled=False" looked like a real policy bypass. Cause: state bleed — P2 had already registered a public_enabled=True policy for the same (org, platform). Reading the evaluator on current main confirmed it does enforce public_disabled_by_default. Fixed by giving each invariant its own platform.
+2. P1 "-> 404" was a server started days earlier from an older build. Restarting from current main gave DENIED (mode_OBSERVE_denies_publishing).
+3. Render 422 was a genuine harness bug: inputs.candidate_id is required (1..128 chars). The walk now extracts clip candidates first and references a real candidate id.
+Also fixed: per-stage counts always rendered zero because the aggregation keyed on status.lower() ("pass") against passed/failed/skipped buckets.
+Operational note: two scp transfers silently failed mid-ticket, serving stale content and producing misleading runs. Verified on the server after every transfer.
+
+**Live result**: VERDICT PASS — 28 steps / 0 failed; 6 invariants / 0 failed; 38 responses scanned, no secret-shaped material.
+
+**Tests**: 11 new tests, including three deliberate-regression tests that patch evaluate_publish_policy and prove P1/P3/P5 flip the verdict to FAIL
+**Suite**: 1737 passed CI-env (94.00% cov), 1 skipped
+**Gates**: ruff format+check clean (API and script), mypy clean (109 files), secret_scan clean, arch_guard 6/6 OK
+**Migration**: none
+
+**Milestone bookkeeping**: M24 opened; current_milestone = M24.
