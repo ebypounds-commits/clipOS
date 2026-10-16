@@ -120,6 +120,9 @@ _EXPECTED_TABLES = {
     "release_evidence",
     "backup_artifacts",
     "restore_tests",
+    "bootstrap_manifests",
+    "bootstrap_validations",
+    "secret_rotations",
 }
 
 

@@ -70,6 +70,7 @@ from clipos_api.performance_snapshots import router as performance_snapshots_rou
 from clipos_api.platform_accounts import router as platform_accounts_router
 from clipos_api.plugin_registry import router as plugin_registry_router
 from clipos_api.portfolio_quotas import router as portfolio_quotas_router
+from clipos_api.production_bootstrap import router as production_bootstrap_router
 from clipos_api.profitability import router as profitability_router
 from clipos_api.provenance import router as provenance_router
 from clipos_api.publishing import router as publishing_router
@@ -127,6 +128,7 @@ app.router.routes.extend(portfolio_quotas_router.routes)
 app.router.routes.extend(profitability_router.routes)
 app.router.routes.extend(remediation_router.routes)
 app.router.routes.extend(platform_accounts_router.routes)
+app.router.routes.extend(production_bootstrap_router.routes)
 app.router.routes.extend(rights_entities_router.routes)
 app.router.routes.extend(rights_ledger_router.routes)
 app.router.routes.extend(rights_gate_router.routes)

@@ -2008,3 +2008,49 @@ Routes (CLIP-033 pattern): POST/GET /backups/artifacts, GET
 /backups/artifacts/{artifact_id}, POST/GET /backups/restore-tests, GET
 /backups/status. No LLM, no network -- callers supply artifact digests and
 restore observations from their own runners.
+
+
+## Production bootstrap, secret references, TLS and rotation (M23, CLIP-097)
+
+production_bootstrap turns production bring-up into a validated declaration
+rather than an operator checklist, while keeping real secret injection and
+TLS issuance at the execution-time human gates the spec assigns them --
+the module never accepts or stores a secret VALUE.
+
+A bootstrap manifest declares an environment, the secret REFERENCES (name ->
+reference form), TLS material references and a domain. Every required secret
+(DATABASE_URL, POSTGRES_PASSWORD, CACHE_REDIS_URL, STORAGE_ACCESS_KEY,
+STORAGE_SECRET_KEY, MINIO_ROOT_PASSWORD) must be expressed with an accepted
+scheme -- ${VAR}, vault://, sops://, aws-sm://, gcp-sm://, azure-kv://. A
+bare literal is SECRET_NOT_A_REFERENCE and anything that looks like a secret
+is SECRET_LITERAL; both are blocking, and the store refuses a manifest
+carrying a secret-shaped literal outright so a value cannot reach
+persistence even by mistake. TLS material must be referenced (never inline
+PEM), the certificate and key must not share a reference, and a self-signed
+certificate is refused for production while being permitted in staging.
+
+evaluate_bootstrap_readiness folds these checks into a verdict AND returns
+human_gates_remaining (production secret import, TLS issuance), so a READY
+verdict never reads as "safe to deploy unaided". rotation_gaps is pure and
+reports connectors with no registered rotation; a validation asked to check
+a connector list raises each as a blocking ROTATION_MISSING finding, per the
+spec requirement that a rotation procedure exists for every connector.
+Rotation cadence days are DERIVED from the RotationCadence enum rather than
+supplied, so a caller cannot register a 30-day cadence with a 365-day
+number.
+
+bootstrap_manifests is org-scoped and idempotent per (org, manifest_id) with
+the whole identity (including domain_ref and tls_self_signed) covered by the
+drift check. bootstrap_validations is append-only and idempotent per (org,
+validation_id), recording the verdict, findings and blocking count.
+secret_rotations is idempotent per (org, connector_id). Audited
+bootstrap_manifests.registered, bootstrap_validations.recorded and
+secret_rotations.registered.
+
+Routes (CLIP-033 pattern): POST/GET /production/bootstrap, GET
+/production/bootstrap/{manifest_id}, POST/GET
+/production/bootstrap/validations, POST/GET /production/rotations and POST
+/production/readiness (a POST because a readiness evaluation over a full
+declaration, including a secret_refs mapping, has no sensible query-string
+encoding). No LLM, no network. Operator procedure:
+docs/PRODUCTION_BOOTSTRAP.md.
