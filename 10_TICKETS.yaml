@@ -1953,7 +1953,7 @@ tickets:
 - id: CLIP-097
   milestone: M23
   title: Create production bootstrap/secrets/TLS/runbook
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-096

@@ -860,3 +860,34 @@
 **Tests**: 49 new tests
 **Suite**: 1677 passed CI-env (93.90% cov), 1 skipped
 **Gates**: ruff format+check clean, mypy clean (108 source files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 101/101
+
+
+## 2026-10-17 - CLIP-097 Production bootstrap/secrets/TLS/runbook (M23 CLOSED)
+
+**Ticket**: CLIP-097 (M23 closer)
+**Merge SHA**: 39ff9a9
+**Status**: COMPLETE - M23 MILESTONE CLOSED
+
+**What was built**:
+- services/api/clipos_api/production_bootstrap.py: contracts, pure validators, store, routes
+- Bootstrap manifests declare environment, secret REFERENCES (name -> reference form), TLS material references and a domain — never a value
+- Required secrets (DATABASE_URL, POSTGRES_PASSWORD, CACHE_REDIS_URL, STORAGE_ACCESS_KEY, STORAGE_SECRET_KEY, MINIO_ROOT_PASSWORD) must use an accepted scheme: ${VAR}, vault://, sops://, aws-sm://, gcp-sm://, azure-kv://
+- A bare literal is SECRET_NOT_A_REFERENCE; anything secret-shaped is SECRET_LITERAL — both blocking. The store refuses a manifest carrying a secret-shaped literal outright, so a value cannot reach persistence even by mistake
+- TLS: material must be referenced (never inline PEM), certificate and key must not share a reference, self-signed refused for production (permitted in staging)
+- evaluate_bootstrap_readiness returns human_gates_remaining (production secret import, TLS issuance) alongside the verdict, so READY never reads as "safe to deploy unaided"
+- rotation_gaps is pure; a validation checking a connector list raises each rotation-less connector as blocking ROTATION_MISSING, per the spec requirement that a rotation procedure exists for every connector. cadence_days is DERIVED from the RotationCadence enum, not supplied
+- Audited bootstrap_manifests.registered, bootstrap_validations.recorded, secret_rotations.registered
+- docs/PRODUCTION_BOOTSTRAP.md: operator runbook (inventory, TLS, rotation, validation, bring-up order, and an explicit "what the automated checks do not do")
+
+**Fixed during the ticket**:
+- /production/readiness became a POST: a readiness evaluation over a full declaration (including a secret_refs mapping) has no sensible query-string encoding, and FastAPI rejects a `dict` as a query parameter
+- The manifest drift check was widened to cover domain_ref and tls_self_signed, which are part of the manifest identity
+
+**Migration**: 0071 (CREATE-only: bootstrap_manifests, bootstrap_validations, secret_rotations); applied on Postgres 0070 -> 0071
+**Routes**: POST/GET /production/bootstrap, GET /production/bootstrap/{manifest_id}, POST/GET /production/bootstrap/validations, POST/GET /production/rotations, POST /production/readiness (OpenAPI 252 paths, 5 new)
+
+**Milestone bookkeeping**: M23 recorded in completed_milestones; current_milestone -> M24.
+
+**Tests**: 45 new tests
+**Suite**: 1726 passed CI-env (93.94% cov), 1 skipped
+**Gates**: ruff format+check clean, mypy clean (109 files; 2 pre-existing baseline unused-ignore errors only), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 102/102

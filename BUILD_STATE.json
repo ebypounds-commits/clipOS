@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M23",
-  "current_ticket": "CLIP-097",
-  "status": "M23_IN_PROGRESS",
+  "current_milestone": "M24",
+  "current_ticket": "CLIP-098",
+  "status": "M24_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -32,7 +32,8 @@
     "M19",
     "M20",
     "M21",
-    "M22"
+    "M22",
+    "M23"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -136,7 +137,8 @@
     "CLIP-093",
     "CLIP-094",
     "CLIP-095",
-    "CLIP-096"
+    "CLIP-096",
+    "CLIP-097"
   ],
   "blocked": [],
   "human_gates": {
@@ -147,19 +149,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-096",
-    "at": "2026-10-16T21:30:00+00:00",
-    "facts": "Tickets 102/102 complete; M-1..M22 closed, M23 in progress. CLIP-096 closed the gap CLIP-013 left open (manifest primitives with encryption explicitly deferred) against the operations runbook requirement for a daily ENCRYPTED full backup plus a weekly automated restore test in an isolated environment. clipos_api/backup_crypto.py builds the envelope from stdlib primitives only, because the repository carries no third-party crypto dependency: SHA-256 counter-mode keystream, encrypt-then-MAC HMAC-SHA256 over the canonical header AND the ciphertext, purpose-separated subkeys, constant-time tag comparison. Envelope framing MAGIC|version|header_len|header(JSON)|ciphertext carries explicit alg and version fields so the construction can be migrated without breaking existing backups; the module docstring states plainly it is a correct encrypt-then-MAC AEAD built from a hash and a MAC, not a substitute for a vetted AEAD, and names the AES-GCM/ChaCha20-Poly1305 migration path. The master key (CLIPOS_BACKUP_KEY, 64 hex) is never written to disk, never placed in a manifest or audit event and never logged; backup_artifacts persists only the opaque key_ref (the variable NAME) and a truncated key_fingerprint. Empty plaintext is refused rather than producing an unverifiable successful artifact. backup_artifacts is org-scoped and idempotent per (org, artifact_id) with drift a 409; restore_tests is append-only and idempotent per (org, test_id) with the outcome COMPUTED from the observations via evaluate_restore rather than trusted from the caller, so a runner cannot record a PASS by asserting one. evaluate_restore keeps wrong-bytes distinct from byte-correct-but-over-RTO; check_backup_freshness maps age against the daily cadence to HEALTHY/DEGRADED/DOWN reusing MonitorStatus; restore_test_due and evaluate_drill_cadence apply the weekly and monthly cadences; summarize_backup_status folds them into one posture with an attention list. Audited backup_artifacts.recorded and restore_tests.recorded. Migration 0070 (CREATE-only: backup_artifacts, restore_tests), applied on Postgres 0069 -> 0070; OpenAPI 247 paths with 4 new backup routes. 49 new tests; ruff format+check clean; mypy clean (108 source files); CI-env 1677 passed / 1 skipped / 93.90% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 101/101. Merge 3697e34 into main."
+    "ticket": "CLIP-097",
+    "at": "2026-10-17T00:20:00+00:00",
+    "facts": "Tickets 103/108 complete; M-1..M23 closed, M24 in progress. CLIP-097 (M23 closer) turned production bring-up into a validated declaration rather than an operator checklist, while keeping real secret injection and TLS issuance at the execution-time human gates the spec assigns them: the module never accepts or stores a secret VALUE. Every required production secret must be expressed as an injected reference (${VAR} / vault:// / sops:// / aws-sm:// / gcp-sm:// / azure-kv://); a bare literal is SECRET_NOT_A_REFERENCE and anything secret-shaped is SECRET_LITERAL, both blocking, with the store refusing a manifest carrying a secret-shaped literal outright so a value cannot reach persistence even by mistake. TLS material must be referenced (never inline PEM), certificate and key must not share a reference, and a self-signed certificate is refused for production while permitted in staging. evaluate_bootstrap_readiness returns human_gates_remaining alongside the verdict, so READY never reads as safe-to-deploy-unaided; rotation_gaps is pure and a validation checking a connector list raises each connector without a rotation as a blocking ROTATION_MISSING finding, with cadence_days derived from the RotationCadence enum rather than supplied. bootstrap_manifests org-scoped and idempotent per (org, manifest_id) with the whole identity (domain_ref, tls_self_signed included) covered by the drift check; bootstrap_validations append-only and idempotent per (org, validation_id); secret_rotations idempotent per (org, connector_id); audited bootstrap_manifests.registered, bootstrap_validations.recorded, secret_rotations.registered. Migration 0071 (CREATE-only), applied on Postgres 0070 -> 0071; OpenAPI 252 paths with 5 new production routes; operator runbook docs/PRODUCTION_BOOTSTRAP.md. Fixed during the ticket: /production/readiness became a POST because a readiness evaluation over a full declaration (including a secret_refs mapping) has no sensible query-string encoding; the manifest drift check was widened to cover domain_ref and tls_self_signed. 45 new tests; ruff format+check clean; mypy clean (109 files; 2 pre-existing baseline unused-ignore errors only); CI-env 1726 passed / 1 skipped / 93.94% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 102/102. Merge 39ff9a9 into main."
   },
-  "next_action": "Execute CLIP-097 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-098 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
-  "milestone": "M23",
-  "tickets_completed": 102,
-  "updated_at": "2026-10-16T21:30:00+00:00",
+  "milestone": "M24",
+  "tickets_completed": 103,
+  "updated_at": "2026-10-17T00:20:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -480,6 +482,11 @@
       "ticket": "CLIP-096",
       "merge_sha": "3697e34",
       "summary": "Encrypted backup and restore verification (M23): stdlib-only authenticated-encryption envelope with a documented vetted-AEAD migration path, key material never persisted or logged, restore-test outcomes computed rather than asserted, and the runbook's daily/weekly/monthly cadences as pure predicates; migration 0070; 4 routes (247 OpenAPI paths); 49 tests; CI-env 1677 passed 93.90% cov"
+    },
+    {
+      "ticket": "CLIP-097",
+      "merge_sha": "39ff9a9",
+      "summary": "Production bootstrap/secrets/TLS/runbook (M23 closer): a validated bootstrap declaration with reference-only secrets, TLS material rules, per-connector rotation coverage, and explicit human_gates_remaining so a READY verdict never implies unaided deployment; migration 0071; 5 routes (252 OpenAPI paths); 45 tests; CI-env 1726 passed 93.94% cov; M23 closed, M24 opened"
     }
   ],
   "tickets_total": 102,
@@ -795,6 +802,12 @@
       "ticket": "CLIP-096",
       "action": "completed",
       "evidence_ref": "3697e34"
+    },
+    {
+      "at": "2026-10-17T00:20:00+00:00",
+      "ticket": "CLIP-097",
+      "action": "completed",
+      "evidence_ref": "39ff9a9"
     }
   ]
 }
