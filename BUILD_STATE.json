@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M23",
-  "current_ticket": "CLIP-096",
+  "current_ticket": "CLIP-097",
   "status": "M23_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -135,7 +135,8 @@
     "CLIP-092",
     "CLIP-093",
     "CLIP-094",
-    "CLIP-095"
+    "CLIP-095",
+    "CLIP-096"
   ],
   "blocked": [],
   "human_gates": {
@@ -146,19 +147,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-095",
-    "at": "2026-10-16T14:10:00+00:00",
-    "facts": "Tickets 101/102 complete; M-1..M22 closed, M23 in progress. CLIP-095 delivered CI/CD canary rollout and rollback: clipos_api/deployments.py records each release as an immutable (commit SHA, image digest) pair, org-scoped and idempotent per (org, deployment_id), with a parent_deployment_id that must exist in the same org; re-registering an id with a different SHA or digest is a 409 rather than an update. Rollout is a pure transition table PENDING -> CANARY -> PROMOTED, with FAILED from PENDING/CANARY and ROLLED_BACK from CANARY/PROMOTED/FAILED; ROLLED_BACK is terminal, same-state is a no-op, anything else is 409. Promotion out of CANARY is gated by health_window_passed: the window must be non-empty and every observation HEALTHY, so a canary is promoted on evidence rather than silence; observations persist on the row and are reused. Rollback is a one-command image re-pin enforcing expand/contract: rollback_conflicts refuses with a 409 naming the offending migration when the target predates migrations this release applied; rolling back to the deployment's own revision is refused; backup restore is deliberately not modelled (DR, not rollback). release_evidence rows are append-only and idempotent per (org, deployment_id), carrying exactly the spec's Release evidence fields; rolled_back_at is stamped automatically when the deployment is already ROLLED_BACK. Audited deployments.registered, deployments.status_changed, deployments.rolled_back, release_evidence.recorded. Migration 0069 (CREATE-only: deployments + release_evidence), applied on Postgres 0068 -> 0069; OpenAPI 243 paths with 7 new deployment routes. 31 new tests; ruff format+check clean; mypy clean (106 source files); CI-env 1628 passed / 1 skipped / 93.86% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 100/100. Merge ab6ffb7 into main."
+    "ticket": "CLIP-096",
+    "at": "2026-10-16T21:30:00+00:00",
+    "facts": "Tickets 102/102 complete; M-1..M22 closed, M23 in progress. CLIP-096 closed the gap CLIP-013 left open (manifest primitives with encryption explicitly deferred) against the operations runbook requirement for a daily ENCRYPTED full backup plus a weekly automated restore test in an isolated environment. clipos_api/backup_crypto.py builds the envelope from stdlib primitives only, because the repository carries no third-party crypto dependency: SHA-256 counter-mode keystream, encrypt-then-MAC HMAC-SHA256 over the canonical header AND the ciphertext, purpose-separated subkeys, constant-time tag comparison. Envelope framing MAGIC|version|header_len|header(JSON)|ciphertext carries explicit alg and version fields so the construction can be migrated without breaking existing backups; the module docstring states plainly it is a correct encrypt-then-MAC AEAD built from a hash and a MAC, not a substitute for a vetted AEAD, and names the AES-GCM/ChaCha20-Poly1305 migration path. The master key (CLIPOS_BACKUP_KEY, 64 hex) is never written to disk, never placed in a manifest or audit event and never logged; backup_artifacts persists only the opaque key_ref (the variable NAME) and a truncated key_fingerprint. Empty plaintext is refused rather than producing an unverifiable successful artifact. backup_artifacts is org-scoped and idempotent per (org, artifact_id) with drift a 409; restore_tests is append-only and idempotent per (org, test_id) with the outcome COMPUTED from the observations via evaluate_restore rather than trusted from the caller, so a runner cannot record a PASS by asserting one. evaluate_restore keeps wrong-bytes distinct from byte-correct-but-over-RTO; check_backup_freshness maps age against the daily cadence to HEALTHY/DEGRADED/DOWN reusing MonitorStatus; restore_test_due and evaluate_drill_cadence apply the weekly and monthly cadences; summarize_backup_status folds them into one posture with an attention list. Audited backup_artifacts.recorded and restore_tests.recorded. Migration 0070 (CREATE-only: backup_artifacts, restore_tests), applied on Postgres 0069 -> 0070; OpenAPI 247 paths with 4 new backup routes. 49 new tests; ruff format+check clean; mypy clean (108 source files); CI-env 1677 passed / 1 skipped / 93.90% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 101/101. Merge 3697e34 into main."
   },
-  "next_action": "Execute CLIP-096 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-097 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M23",
-  "tickets_completed": 101,
-  "updated_at": "2026-10-16T14:10:00+00:00",
+  "tickets_completed": 102,
+  "updated_at": "2026-10-16T21:30:00+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -474,6 +475,11 @@
       "ticket": "CLIP-095",
       "merge_sha": "ab6ffb7",
       "summary": "CI/CD canary rollout and rollback (M23): immutable deployment identity pairs, a gated canary health window, a one-command rollback enforcing expand/contract migration discipline, and the full Release evidence bundle; migration 0069; 7 routes (243 OpenAPI paths); 31 tests; CI-env 1628 passed 93.86% cov"
+    },
+    {
+      "ticket": "CLIP-096",
+      "merge_sha": "3697e34",
+      "summary": "Encrypted backup and restore verification (M23): stdlib-only authenticated-encryption envelope with a documented vetted-AEAD migration path, key material never persisted or logged, restore-test outcomes computed rather than asserted, and the runbook's daily/weekly/monthly cadences as pure predicates; migration 0070; 4 routes (247 OpenAPI paths); 49 tests; CI-env 1677 passed 93.90% cov"
     }
   ],
   "tickets_total": 102,
@@ -783,6 +789,12 @@
       "ticket": "CLIP-095",
       "action": "completed",
       "evidence_ref": "ab6ffb7"
+    },
+    {
+      "at": "2026-10-16T21:30:00+00:00",
+      "ticket": "CLIP-096",
+      "action": "completed",
+      "evidence_ref": "3697e34"
     }
   ]
 }

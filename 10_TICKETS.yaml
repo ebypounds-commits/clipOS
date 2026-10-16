@@ -1935,7 +1935,7 @@ tickets:
 - id: CLIP-096
   milestone: M23
   title: Implement encrypted backup/restore verification
-  status: TODO
+  status: DONE
   priority: CRITICAL
   depends_on:
   - CLIP-095

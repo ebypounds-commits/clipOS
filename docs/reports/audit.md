@@ -831,3 +831,32 @@
 **Tests**: 31 new tests
 **Suite**: 1628 passed CI-env (93.86% cov), 1 skipped
 **Gates**: ruff format+check clean, mypy clean (106 source files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 100/100
+
+
+## 2026-10-16 - CLIP-096 Encrypted backup/restore verification
+
+**Ticket**: CLIP-096 (M23)
+**Merge SHA**: 3697e34
+**Status**: COMPLETE
+
+**What was built**:
+- services/api/clipos_api/backup_crypto.py: stdlib-only authenticated-encryption envelope
+- SHA-256 counter-mode keystream XORed with the plaintext, then encrypt-then-MAC (HMAC-SHA256 over the canonical header AND the ciphertext, so header tampering is caught too)
+- Purpose-separated subkeys SHA256(label||key); constant-time tag comparison via hmac.compare_digest
+- Envelope framing MAGIC|version|header_len|header(JSON)|ciphertext with explicit alg + version fields for migration
+- Master key from CLIPOS_BACKUP_KEY (64 hex); never written to disk, never in a manifest or audit event, never logged — only an opaque key_ref (the variable NAME) and a truncated fingerprint are persisted
+- Empty plaintext refused rather than producing an unverifiable "successful" artifact
+- services/api/clipos_api/backup_verification.py: backup_artifacts (org-scoped, idempotent per (org, artifact_id), drift 409) and restore_tests (append-only, idempotent per (org, test_id))
+- Restore outcome is COMPUTED from observations via evaluate_restore, never trusted from the caller
+- Pure predicates: evaluate_restore (wrong-bytes distinct from byte-correct-but-over-RTO), check_backup_freshness (daily cadence -> HEALTHY/DEGRADED/DOWN), restore_test_due (weekly), evaluate_drill_cadence (monthly), summarize_backup_status
+- Audited backup_artifacts.recorded, restore_tests.recorded
+
+**Honesty note (recorded in the module docstring and docs/development.md)**: this is a correct encrypt-then-MAC AEAD assembled from a hash and a MAC, NOT a substitute for a vetted AEAD. The repository carries no third-party crypto dependency, so the envelope is stdlib-only by necessity; a future revision should switch `alg` to AES-GCM or ChaCha20-Poly1305, keeping version 1 readable. No claim of side-channel resistance beyond constant-time tag comparison.
+
+**Migration**: 0070 (CREATE-only: backup_artifacts, restore_tests); applied on Postgres 0069 -> 0070
+
+**Routes**: POST/GET /backups/artifacts, GET /backups/artifacts/{id}, POST/GET /backups/restore-tests, GET /backups/status (OpenAPI 247 paths, 4 new)
+
+**Tests**: 49 new tests
+**Suite**: 1677 passed CI-env (93.90% cov), 1 skipped
+**Gates**: ruff format+check clean, mypy clean (108 source files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 101/101
