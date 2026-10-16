@@ -1913,3 +1913,47 @@ Secrets are never literalled: `deploy/env.production.example` and
 committed; the filled `.env.*` files they are copied to are not). Real
 secret injection and TLS issuance are human gates -- the topology only
 declares the shape they fill.
+
+
+## Deployments, canary rollout and rollback (M23, CLIP-095)
+
+`deployments` records each CI/CD release as an immutable identity pair
+(commit SHA, image digest), org-scoped and idempotent per
+(org_id, deployment_id) with client slug ids. Re-registering an id with a
+different SHA or digest is a 409 rather than an update, because images are
+immutable and tagged by commit SHA. A deployment may name a
+parent_deployment_id, which must already exist in the same org.
+
+Rollout is a pure transition table in `clipos_api.deployments`:
+PENDING -> CANARY -> PROMOTED, with FAILED reachable from PENDING/CANARY
+and ROLLED_BACK reachable from CANARY/PROMOTED/FAILED. ROLLED_BACK is
+terminal; same-state is a no-op; anything else is 409. A CANARY-strategy
+deployment registers directly at CANARY, a FULL-strategy one at PROMOTED.
+
+Promotion out of CANARY is gated by health_window_passed: the window must
+be non-empty and every observation HEALTHY, so a canary is promoted on
+evidence rather than on silence. The observations are persisted on the row
+and reused when a later promote call omits them.
+
+Rollback is a one-command image re-pin, and it enforces the expand/contract
+discipline. rollback_conflicts returns the migrations the rollback target
+lacks; a non-empty result refuses the rollback with a 409 naming the
+offending migration, because rolling back onto a schema missing migrations
+this release applied would break the older application. Rolling back to the
+deployment's own revision is refused outright. Backup restore is disaster
+recovery, not ordinary rollback, so it is deliberately not modelled here.
+
+release_evidence rows are append-only and idempotent per
+(org_id, deployment_id), carrying exactly the fields §Release evidence
+requires: commit SHA, image digest, migrations, config version, agent
+versions, policy versions, CI run refs, security scan summary, deploy and
+rollback timestamps, rollback target and operator approvals.
+rolled_back_at is stamped automatically when the deployment is already
+ROLLED_BACK. All material moves audit deployments.registered,
+deployments.status_changed, deployments.rolled_back and
+release_evidence.recorded. Reference strings only, never secrets.
+
+Routes (CLIP-033 pattern): POST/GET /deployments, GET
+/deployments/{deployment_id}, POST /deployments/{deployment_id}/canary,
+/promote, /fail, /rollback and POST/GET /deployments/{deployment_id}/evidence.
+No LLM, no network.

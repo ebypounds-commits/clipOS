@@ -34,6 +34,7 @@ from clipos_api.collection_schedules import router as collection_schedules_route
 from clipos_api.content_evals import router as content_evals_router
 from clipos_api.content_planning import router as content_planning_router
 from clipos_api.cost_ledger import router as cost_ledger_router
+from clipos_api.deployments import router as deployments_router
 from clipos_api.eval_sandbox import router as eval_sandbox_router
 from clipos_api.experiment_evaluations import router as experiment_evaluations_router
 from clipos_api.experiment_orchestration import router as experiment_orchestration_router
@@ -166,6 +167,7 @@ app.router.routes.extend(content_planning_router.routes)
 app.router.routes.extend(experiments_router.routes)
 app.router.routes.extend(finance_controls_router.routes)
 app.router.routes.extend(cost_ledger_router.routes)
+app.router.routes.extend(deployments_router.routes)
 app.router.routes.extend(eval_sandbox_router.routes)
 app.router.routes.extend(experiment_evaluations_router.routes)
 app.router.routes.extend(experiment_orchestration_router.routes)
