@@ -1991,7 +1991,7 @@ tickets:
 - id: CLIP-099
   milestone: M24
   title: Qualify guarded public publishing with owner gate
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-098

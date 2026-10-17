@@ -922,3 +922,36 @@ Operational note: two scp transfers silently failed mid-ticket, serving stale co
 **Migration**: none
 
 **Milestone bookkeeping**: M24 opened; current_milestone = M24.
+
+
+## 2026-10-17 - CLIP-099 Owner-gated public publishing (HUMAN GATE)
+
+**Ticket**: CLIP-099 (M24) - the ONLY human-gated ticket in the build
+**Merge SHA**: 43de2a9
+**Status**: COMPLETE (guard built and qualified; no real public post made)
+
+**Gate handling**: public posting to a real platform account is the owner's act. Per the
+operator's direction this ticket was built and tested against the Mock adapter only, with
+`public_enabled` false and `public_publishing` false at deployment level. Nothing in this
+repository posted publicly to a real account; `human_gates.first_public_post` remains false.
+
+**What was built**:
+- services/api/clipos_api/public_publishing_gate.py: owner approvals, private-test records, the pure gate, and routes
+- owner_approvals: org-scoped, idempotent per (org, approval_id), binds one (org, platform, account_ref) to an explicit owner decision carrying the private-test evidence it follows, an owner reference and an optional expiry; revocable as an append-only status change
+- private_tests: private-test outcomes per account
+- evaluate_public_gate: pure, fail-closed; requires a granted + un-revoked + un-expired approval AND a successful private test for that same account, each missing precondition with its own reason code
+- Per real platform account, so approving one channel cannot unlock another; a re-granted approval supersedes an earlier revoked one; private/unlisted visibility never consults the gate
+- Enforcement in evaluate_publish_policy via account_approved: bool = False (fail-closed: omitting the gate denies publication), with the route resolving the decision from the gate store so the policy function stays pure
+
+**Blast radius**: four pre-existing PUBLIC tests now correctly receive DENIED and were updated to assert what they actually test; two new tests pin the tightened contract. CLIP-098 harness patches updated for the new parameter; CLIP-093 security qualification unchanged and passing.
+
+**Migration**: 0072 (CREATE-only: owner_approvals, private_tests); applied on Postgres 0071 -> 0072
+**Routes**: POST/GET /publishing/owner-approvals, POST /publishing/owner-approvals/{approval_id}/revoke, POST/GET /publishing/private-tests, GET /publishing/gate-summary
+
+**Tests**: 34 new tests
+**Suite**: 1765 passed CI-env (94.01% cov), 1 skipped
+**Gates**: ruff format+check clean from the repo root (299 files), mypy clean (110 files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 104/104
+
+**Note for reviewers**: services/api/clipos_api/publishing.py shows large line churn in this
+diff; the semantic change is 28 insertions / 5 deletions (verify with `git diff -w`), the
+remainder being ruff format reflow of pre-existing long lines.
