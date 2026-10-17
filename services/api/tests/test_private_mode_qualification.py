@@ -126,7 +126,7 @@ def test_pipeline_walks_every_stage(live_client: TestClient) -> None:
     ):
         assert expected in stages, f"stage not walked: {expected}"
     # Every stage must be recorded with at least one PASS or SKIP step, and
-    # no stage may record a failure — a stage that cannot run in this
+    # no stage may record a failure â€” a stage that cannot run in this
     # environment is reported as skipped, never silently dropped.
     for stage, counts in report["stages"].items():
         assert counts["failed"] == 0, f"stage recorded failures: {stage}"
@@ -218,7 +218,7 @@ def test_observe_invariant_fails_when_mode_check_is_broken(
 
     original = publishing.evaluate_publish_policy
 
-    def leaky(policy, visibility, operating_mode):
+    def leaky(policy, visibility, operating_mode, account_approved=False):
         # Simulate a regression: mode restrictions are ignored.
         return True, "allowed"
 
@@ -241,7 +241,7 @@ def test_public_default_invariant_fails_when_public_is_allowed(
 
     original = publishing.evaluate_publish_policy
 
-    def leaky(policy, visibility, operating_mode):
+    def leaky(policy, visibility, operating_mode, account_approved=False):
         if str(getattr(operating_mode, "value", operating_mode)) in ("OBSERVE", "DRAFT"):
             return False, f"mode_{operating_mode}_denies_publishing"
         return True, "allowed"
@@ -264,8 +264,8 @@ def test_kill_switch_invariant_fails_when_switch_is_ignored(
 
     original = publishing.evaluate_publish_policy
 
-    def leaky(policy, visibility, operating_mode):
-        allowed, reason = original(policy, visibility, operating_mode)
+    def leaky(policy, visibility, operating_mode, account_approved=False):
+        allowed, reason = original(policy, visibility, operating_mode, account_approved)
         if reason == "kill_switch_active":
             return True, "allowed"
         return allowed, reason

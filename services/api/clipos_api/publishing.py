@@ -212,13 +212,19 @@ def evaluate_publish_policy(
     policy: PublishPolicy,
     visibility: Visibility,
     operating_mode: OperatingMode,
+    account_approved: bool = False,
 ) -> tuple[bool, str]:
     """Pure fail-closed policy evaluation (PRD §7 + defaults).
 
     Returns (allowed, reason). Kill switch denies everything; OBSERVE and
-    DRAFT never publish; PRIVATE_TEST allows only PRIVATE/UNLISTED;
-    PUBLIC requires public_enabled; visibility must also be inside the
-    policy's allowed set.
+    DRAFT never publish; PRIVATE_TEST allows only PRIVATE/UNLISTED; PUBLIC
+    requires public_enabled *and* a live owner approval for the account
+    (CLIP-099: "public mode requires explicit owner approval after
+    successful private test"); visibility must also be inside the policy's
+    allowed set.
+
+    ``account_approved`` defaults to False so a caller that does not consult
+    the owner gate cannot publish publicly by omission.
     """
     if policy.kill_switch:
         return False, "kill_switch_active"
@@ -231,6 +237,8 @@ def evaluate_publish_policy(
             return False, "private_test_forbids_public"
         if not policy.public_enabled:
             return False, "public_disabled_by_default"
+        if not account_approved:
+            return False, "owner_approval_required"
     return True, "allowed"
 
 
@@ -432,6 +440,7 @@ def submit_publication(
     adapter: PublishingAdapter,
     store: PublishingStore,
     request: PublishSubmission,
+    account_approved: bool = False,
 ) -> PublicationJob:
     """Evaluate policy then publish once (idempotent, fail-closed).
 
@@ -476,7 +485,9 @@ def submit_publication(
             raise ValueError(f"publish policy not found: {request.org_id}/{request.platform}")
         policy = _policy_from_row(policy_row)
 
-    allowed, reason = evaluate_publish_policy(policy, request.visibility, request.operating_mode)
+    allowed, reason = evaluate_publish_policy(
+        policy, request.visibility, request.operating_mode, account_approved
+    )
 
     job_id = str(uuid4())[:12]
     if not allowed:
@@ -632,14 +643,26 @@ def list_publish_policies_route(
 def submit_publication_route(
     request: PublishSubmission,
     store: Annotated[PublishingStore, Depends(_store)],
+    engine: Annotated[Engine, Depends(_database_engine)],
 ) -> PublicationJob:
     """Evaluate policy then publish once (Mock adapter; idempotent).
 
     DENIED submissions return a DENIED job (200) with the decision
     reason — the attempt is recorded and the adapter never runs.
+
+    For PUBLIC visibility the owner gate is consulted (CLIP-099): public
+    publishing requires a live owner approval for the account. The gate is
+    resolved here rather than inside the pure policy function so the policy
+    function stays free of persistence.
     """
+    account_approved = False
+    if request.visibility is Visibility.PUBLIC:
+        from clipos_api.public_publishing_gate import PublicGateStore
+
+        decision = PublicGateStore.from_engine(engine).decide(request.org_id, request.account_ref)
+        account_approved = decision.decision.value == "ALLOWED"
     try:
-        return submit_publication(get_adapter(request.platform), store, request)
+        return submit_publication(get_adapter(request.platform), store, request, account_approved)
     except ValueError as exc:
         raise _map_error(exc) from exc
 
