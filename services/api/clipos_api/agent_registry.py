@@ -421,7 +421,11 @@ class AgentRegistryStore:
                 raise ValueError("agent version already registered with a different definition")
             return stored
         row = _record_version(definition, agent_id, version, now)
-        session.add(row)
+        # The agent root must be queued BEFORE the version row. A session.get
+        # while a child row is pending triggers an autoflush, which INSERTs
+        # agent_versions before agent_records exists and violates the
+        # agent_versions_agent_ref FK. SQLite does not enforce that FK, so
+        # only a real Postgres run surfaces it.
         agent_record = session.get(AgentRecordModel, agent_id)
         if agent_record is None:
             session.add(
@@ -431,6 +435,7 @@ class AgentRegistryStore:
             )
         else:
             agent_record.updated_at = now
+        session.add(row)
         session.flush()
         _audit(
             "agent_registry.version_registered",
