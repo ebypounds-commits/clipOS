@@ -125,6 +125,8 @@ _EXPECTED_TABLES = {
     "secret_rotations",
     "owner_approvals",
     "private_tests",
+    "slo_objectives",
+    "ops_drills",
 }
 
 

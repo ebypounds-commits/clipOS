@@ -2136,3 +2136,49 @@ adapter only: nothing in this repository posts publicly to a real account.
 Routes (CLIP-033 pattern): POST/GET /publishing/owner-approvals, POST
 /publishing/owner-approvals/{approval_id}/revoke, POST/GET
 /publishing/private-tests, GET /publishing/gate-summary. No LLM, no network.
+
+## SLO objectives and operational qualification (M24, CLIP-100)
+
+M24 is Autonomous Operations Qualification, whose exit gate lists SLOs
+alongside end-to-end production qualification, guarded public mode, the
+operator runbook and autonomy evidence. Until this ticket there was no notion
+of an SLO anywhere in the codebase -- the only occurrence was the milestone
+sentence itself -- and the other operational controls (cost caps in budgets,
+kill switches in publishing and remediation, incident lifecycle and runbooks,
+monitor checks, backup restore tests) each lived in their own module with
+nothing asserting they actually work together.
+
+slo_qualification.py adds the missing pieces. slo_objectives rows are
+org-scoped and idempotent per (org, objective_id); each names a generic
+service indicator slug, a target in BASIS POINTS (integer, never a float), a
+window in days and a minimum sample count, so an objective cannot be declared
+unsatisfiable or vacuous by typo. Audited slo_objectives.registered.
+
+evaluate_slo is pure and keeps TWO failure modes distinct on purpose. A
+breached objective (measured attainment below target) and an insufficient
+one (fewer observations than the objective minimum) are separate statuses,
+MET / BREACHED / INSUFFICIENT_DATA. Reporting "we did not measure enough to
+know" as a pass is precisely the dishonesty this gate exists to prevent, so
+INSUFFICIENT_DATA is its own status and it fails the qualification.
+
+verify_cost_cap takes the budgets authorizer as an argument rather than
+importing budgets, and asks one question: does the cap actually REFUSE an
+over-cap request? An authorizer that allows spend beyond its cap is reported
+as broken (beyond the cap), and one that refuses a within-cap request is
+also broken (that would stall legitimate work). Taking the authorizer as a
+parameter keeps the module free of cross-module import ordering and makes
+both failure directions testable with a stub.
+
+ops_drills is append-only and idempotent per (org, drill_id), recording one
+exercised control per row with its outcome and an evidence reference;
+audited ops_drills.recorded. qualify_operations then folds objectives and
+drills into a single PASS/FAIL verdict with controls_verified,
+controls_unverified and findings. The three REQUIRED_CONTROLS are
+kill_switch_closed, cost_cap_refused and incident_drill. A control with no
+VERIFIED drill is reported as unverified and fails the verdict -- an
+untested control is never rendered as working.
+
+Routes (CLIP-033 pattern): POST/GET /slo/objectives, GET
+/slo/objectives/{objective_id}, POST /slo/objectives/{objective_id}/evaluate,
+POST/GET /slo/drills, GET /slo/qualification. No LLM, no network -- callers
+supply measurements and drill observations from their own runners.
