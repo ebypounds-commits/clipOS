@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M24",
-  "current_ticket": "CLIP-100",
+  "current_ticket": "CLIP-101",
   "status": "M24_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -140,7 +140,8 @@
     "CLIP-096",
     "CLIP-097",
     "CLIP-098",
-    "CLIP-099"
+    "CLIP-099",
+    "CLIP-100"
   ],
   "blocked": [],
   "human_gates": {
@@ -151,19 +152,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-099",
-    "at": "2026-10-17T07:48:51+00:00",
-    "facts": "Tickets 105/108 complete; M-1..M23 closed, M24 in progress. CLIP-099 is the ONLY human-gated ticket in the build. Per the operator's direction it was built and qualified with public posting left disabled: the guard machinery is implemented and tested against the Mock adapter only, and nothing in this repository posts publicly to a real account. human_gates.first_public_post remains false. It implements the owner gate that 07_SECURITY_GOVERNANCE_RIGHTS requires (a new platform account starts PRIVATE_TEST; public mode needs explicit owner approval after a successful private test) and 00_README_FIRST requires before the FIRST public posting per real platform account. GUARDED_PUBLIC and AUTONOMOUS_PUBLIC previously existed as policy modes with no approval requirement at all. An owner approval is a RECORD rather than a config flag: owner_approvals is org-scoped and idempotent per (org, approval_id), binds one (org, platform, account_ref) to an explicit owner decision carrying the evidence of the private test it follows plus an owner reference and optional expiry, and can be revoked as an append-only status change so one account closes without touching others. private_tests records private-test outcomes per account. Audited owner_approvals.granted, owner_approvals.revoked, private_tests.recorded. evaluate_public_gate is pure and fail-closed: it requires ALL of a granted approval for that exact account, not revoked, not expired, and a recorded successful private test for the same account, with a distinct machine reason per missing precondition (no_owner_approval, owner_approval_revoked, owner_approval_expired, no_successful_private_test). The gate is per real platform account so approving one channel cannot unlock another; a re-granted approval supersedes an earlier revoked one; private/unlisted visibility never consults the gate. Enforcement lives in evaluate_publish_policy, which gained account_approved: bool = False so a caller that does not consult the gate cannot publish publicly by omission (fail-closed denial with owner_approval_required); the route resolves the decision from the gate store for PUBLIC visibility, keeping the policy function pure and free of persistence. Blast radius handled explicitly: four pre-existing tests that published PUBLIC with public_enabled=True and no approval now correctly receive DENIED and were updated to say what they actually test, with two new tests pinning the tightened contract; the CLIP-098 harness regression patches were updated for the new parameter and the CLIP-093 security qualification still passes unchanged. Migration 0072 (CREATE-only: owner_approvals, private_tests) applied on Postgres 0071 -> 0072; routes POST/GET /publishing/owner-approvals, POST /publishing/owner-approvals/{id}/revoke, POST/GET /publishing/private-tests, GET /publishing/gate-summary. 34 new tests; ruff format+check clean from the repo root (299 files); mypy clean (110 files); CI-env 1765 passed / 1 skipped / 94.01% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 104/104. Merge 43de2a9 into main."
+    "ticket": "CLIP-100",
+    "at": "2026-10-19T11:59:53+00:00",
+    "facts": "Tickets 106/108 complete; M-1..M23 closed, M24 in progress. CLIP-100 closed the M24 exit-gate requirement for SLOs, which previously had NO implementation anywhere - the only occurrence of the term was the milestone sentence itself - while the other operational controls lived in separate modules with nothing asserting they actually work. slo_objectives rows are org-scoped and idempotent per (org, objective_id), declaring a generic service indicator, a target in BASIS POINTS as an integer never a float, a window in days and a minimum sample count, so an objective cannot be unsatisfiable or vacuous by typo; audited slo_objectives.registered. evaluate_slo is pure with THREE distinct statuses - MET, BREACHED, INSUFFICIENT_DATA - because reporting we-did-not-measure-enough as a pass is the dishonesty this gate exists to prevent: an objective below its min_samples returns INSUFFICIENT_DATA, fails the verdict, and is reported as SLO unmeasured rather than SLO met. verify_cost_cap takes the budgets authorizer as a parameter (no cross-module import ordering, stub-friendly) and fails in BOTH directions: an authorizer allowing over-cap spend is broken, and so is one refusing a within-cap request that would stall legitimate work. ops_drills is append-only and idempotent per (org, drill_id); qualify_operations folds objectives and drills into one PASS/FAIL verdict over REQUIRED_CONTROLS = (kill_switch_closed, cost_cap_refused, incident_drill). A control with no VERIFIED drill appears in controls_unverified and fails the verdict, so an untested control is never rendered as working. Migration 0073 (CREATE-only: slo_objectives, ops_drills) applied on Postgres 0072 -> 0073; routes POST/GET /slo/objectives, GET /slo/objectives/{id}, POST /slo/objectives/{id}/evaluate, POST/GET /slo/drills, GET /slo/qualification. 34 new tests; ruff format+check clean (302 files); mypy clean (111 files); CI-env 1799 passed / 1 skipped / 94.02% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 105/105. Environment fixes during the ticket: the compose stack had stopped (Postgres connection refused) and was restarted with docker compose up -d; running pytest as root had created /tmp/clipos-100-slo-audit.log root-owned, causing PermissionError for the clipos user on the next run - the suite must always run as clipos. Merge 46b24d8 into main."
   },
-  "next_action": "Execute CLIP-100 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-101 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M24",
-  "tickets_completed": 105,
-  "updated_at": "2026-10-17T07:48:51+00:00",
+  "tickets_completed": 106,
+  "updated_at": "2026-10-19T11:59:53+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -499,6 +500,11 @@
       "ticket": "CLIP-099",
       "merge_sha": "43de2a9",
       "summary": "Owner-gated public publishing (M24, HUMAN GATE): a per-account owner approval record plus private-test history, a pure fail-closed gate with a distinct reason per missing precondition, and enforcement in evaluate_publish_policy via a fail-closed account_approved default; built and qualified against the Mock adapter with public posting disabled and no real account touched; migration 0072; 4 routes; 34 tests; CI-env 1765 passed 94.01% cov"
+    },
+    {
+      "ticket": "CLIP-100",
+      "merge_sha": "46b24d8",
+      "summary": "SLOs/cost caps/kill switches/incident drills (M24): SLO objectives with basis-point targets, a three-status evaluation where insufficient data is never a pass, a two-direction cost-cap verification over the real budgets authorizer, append-only drill records, and an aggregate verdict that fails any control nobody exercised; migration 0073; 6 routes; 34 tests; CI-env 1799 passed 94.02% cov"
     }
   ],
   "tickets_total": 102,
@@ -832,6 +838,12 @@
       "ticket": "CLIP-099",
       "action": "completed",
       "evidence_ref": "43de2a9"
+    },
+    {
+      "at": "2026-10-19T11:59:53+00:00",
+      "ticket": "CLIP-100",
+      "action": "completed",
+      "evidence_ref": "46b24d8"
     }
   ]
 }

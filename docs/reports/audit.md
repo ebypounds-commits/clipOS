@@ -955,3 +955,28 @@ repository posted publicly to a real account; `human_gates.first_public_post` re
 **Note for reviewers**: services/api/clipos_api/publishing.py shows large line churn in this
 diff; the semantic change is 28 insertions / 5 deletions (verify with `git diff -w`), the
 remainder being ruff format reflow of pre-existing long lines.
+
+
+## 2026-10-19 - CLIP-100 SLOs/cost caps/kill switches/incident drills
+
+**Ticket**: CLIP-100 (M24)
+**Merge SHA**: 46b24d8
+**Status**: COMPLETE (106/108)
+
+**What was built**:
+- services/api/clipos_api/slo_qualification.py: the missing SLO concept plus one operator-visible verdict over the operational controls
+- slo_objectives: org-scoped, idempotent per (org, objective_id); indicator slug, target in basis points (integer, never float), window in days, minimum sample count
+- evaluate_slo: pure, three statuses MET / BREACHED / INSUFFICIENT_DATA - insufficient data fails the verdict and is reported as SLO unmeasured, never as a pass
+- verify_cost_cap: takes the budgets authorizer as a parameter and fails in both directions (over-cap allowed is broken; within-cap refused is broken)
+- ops_drills: append-only, idempotent per (org, drill_id), one exercised control per row with an evidence reference
+- qualify_operations: aggregate PASS/FAIL over REQUIRED_CONTROLS = (kill_switch_closed, cost_cap_refused, incident_drill); an unexercised control appears in controls_unverified and fails the verdict
+- Audited slo_objectives.registered and ops_drills.recorded
+
+**Migration**: 0073 (CREATE-only: slo_objectives, ops_drills); applied on Postgres 0072 -> 0073
+**Routes**: POST/GET /slo/objectives, GET /slo/objectives/{objective_id}, POST /slo/objectives/{objective_id}/evaluate, POST/GET /slo/drills, GET /slo/qualification
+
+**Tests**: 34 new tests
+**Suite**: 1799 passed CI-env (94.02% cov), 1 skipped
+**Gates**: ruff format+check clean (302 files), mypy clean (111 files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 105/105
+
+**Environment fixes**: compose stack had stopped (Postgres refused connections) and was restarted; a pytest run executed as root left /tmp/clipos-100-slo-audit.log root-owned, which made the next clipos-user run fail with PermissionError - the suite must always run as clipos.

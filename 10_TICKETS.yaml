@@ -2010,7 +2010,7 @@ tickets:
 - id: CLIP-100
   milestone: M24
   title: Validate SLOs/cost caps/kill switches and incident drills
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-099
