@@ -103,11 +103,10 @@ class EvaluationRunRecord(Base):
         sa.Index("ix_agent_evaluation_runs_lookup", "agent_id", "version", "evaluator", "at"),
     )
 
-    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(sa.String(128), primary_key=True)
     agent_id: Mapped[str] = mapped_column(sa.String(128), nullable=False)
     version: Mapped[str] = mapped_column(sa.String(128), nullable=False)
     evaluator: Mapped[str] = mapped_column(sa.String(255), nullable=False)
-    run_id: Mapped[str] = mapped_column(sa.String(128), nullable=False)
     score: Mapped[float] = mapped_column(sa.Float, nullable=False)
     passed: Mapped[bool] = mapped_column(sa.Boolean, nullable=False)
     at: Mapped[Any] = mapped_column(sa.DateTime(timezone=True), nullable=False)
@@ -254,7 +253,7 @@ class AgentEvaluationStore:
                     EvaluationRunRecord.version == version,
                     EvaluationRunRecord.evaluator == evaluator,
                 )
-                .order_by(EvaluationRunRecord.at.desc(), EvaluationRunRecord.id.desc())
+                .order_by(EvaluationRunRecord.at.desc(), EvaluationRunRecord.run_id.desc())
                 .limit(1)
             ).first()
             if latest is None or latest.at is None:
@@ -285,9 +284,9 @@ class AgentEvaluationStore:
             if version is not None:
                 query = query.where(EvaluationRunRecord.version == version)
             rows = session.scalars(
-                query.order_by(EvaluationRunRecord.at.desc(), EvaluationRunRecord.id.desc()).limit(
-                    limit
-                )
+                query.order_by(
+                    EvaluationRunRecord.at.desc(), EvaluationRunRecord.run_id.desc()
+                ).limit(limit)
             ).all()
             return [_run_from_row(row) for row in rows]
 
