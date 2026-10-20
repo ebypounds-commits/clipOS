@@ -1,9 +1,9 @@
 {
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
-  "current_milestone": "M24",
-  "current_ticket": "CLIP-102",
-  "status": "M24_IN_PROGRESS",
+  "current_milestone": "NONE",
+  "current_ticket": "NONE",
+  "status": "M24_COMPLETE",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
   "auto_merge": false,
@@ -33,7 +33,8 @@
     "M20",
     "M21",
     "M22",
-    "M23"
+    "M23",
+    "M24"
   ],
   "completed_tickets": [
     "CLIP-P001",
@@ -142,7 +143,8 @@
     "CLIP-098",
     "CLIP-099",
     "CLIP-100",
-    "CLIP-101"
+    "CLIP-101",
+    "CLIP-102"
   ],
   "blocked": [],
   "human_gates": {
@@ -153,19 +155,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-101",
-    "at": "2026-10-20T11:46:19+00:00",
-    "facts": "Tickets 107/108 complete; M-1..M23 closed, M24 in progress. One ticket remains: CLIP-102 (freeze v1 release and create post-launch backlog). CLIP-101 delivered the autonomy evidence harness and the operations manual. The build's claims were previously recorded but never checked against each other; autonomy_evidence.py now verifies nine checks E1..E9 over the ledger (counter vs ids, duplicates, total), state_audit coverage, evidence-trail presence and currency, milestone coherence, operating-mode membership in the five PRD section-7 modes, publishing posture, human-gate declarations, the qualification-harness inventory, and the CI record versus HEAD. Honesty rules enforced by code: an uncheckable claim is reported UNKNOWN and flagged instead of silently healthy (mirroring CLIP-100's insufficient-data rule), and public_publishing=true while the first_public_post owner gate is closed is a contradiction that FAILS the report. Open gates are reported as facts without penalty. The harness failed on its first real run exactly as designed: tickets_completed=106 against tickets_total=102 — the six P001..P006 pre-tickets were folded into the ledger without updating the declared total (validate_handoff counts 108 ids and no script asserted the total). Corrected to 108; the evidence checks now pin the ledger to the declared total permanently. A parsing bug was also caught by the suite: state_audit prints audit: N/M covered, which a bare isdigit scan never matches. docs/OPERATIONS_MANUAL.md consolidates the operator surface: health and status endpoints, the nine verification commands, deployment lifecycle (bootstrap, canary, promote/rollback), publishing governance and the owner gate, incidents/remediation/drills, cost control, backups, secrets and rotation, the human gates, and an explicit list of what the automation does not do. Live posture on this run: operating_mode=DRAFT, public_publishing=false, production_deploy=false, all five human gates closed, 9 harnesses/commands verified present, CI record green on HEAD (run for a90bb9e pending at report time is the only WARN), verdict PASS. 23 new tests; ruff clean (API + script); mypy clean (112 files); CI-env 1825 passed / 1 skipped / 94.04% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 106/106 covered (pre-advance). Merge a90bb9e into main."
+    "ticket": "CLIP-102",
+    "at": "2026-10-20T12:35:31+00:00",
+    "facts": "Tickets 108/108 complete; every milestone M-1..M24 complete; the autonomous build has reached its terminal state (current_ticket=NONE, current_milestone=NONE, status=M24_COMPLETE). CLIP-102 froze the v1 release: release/v1.manifest.json pins release 1.0.0 with the clipos-api package version bumped 0.1.0 -> 1.0.0 (surfaced by GET /health), requires the complete 108-ticket ledger and every milestone M0..M24, requires the six qualification harnesses in the tree, documents all five human gates, and lists every one of them as deferred_to_post_launch so the freeze is honest about what v1 does not include. scripts/release_freeze.py validates the freeze (stdlib-only, per the CLIP-094/CLIP-101 dependency rule): manifest completeness, package-version agreement with pyproject, the complete ticket ledger, all milestones, harness presence, gate documentation and honest deferral, and the backlog document; versioned JSON report, exit 0 valid / 1 any FAIL / 2 unreadable. docs/BACKLOG.md turns the deferred work into ordered items: P0 real platform accounts and production secrets (human gates), provider credentials, CI wiring for schema_drift and autonomy_evidence; P1 registry digests, production bootstrap run, DR drill, real SLO measurements, alert routing, real adapter certification; P2 hardening including the vetted-AEAD backup envelope migration and multi-tenant tests. Terminal-state validator support: current_ticket=NONE and current_milestone=NONE required coordinated updates to validate_state.py (the NONE sentinel is exempt from the must-exist-in-YAML check) and validate_handoff.py (NONE is legal only while zero backlog tickets remain outside completed_tickets); the build_state schema already accepts both values and M24_COMPLETE matches the status pattern. 34 new tests (release freeze validator incl. red-team mutations); full suite 1858 passed / 94.05% cov; ruff clean; mypy clean; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; autonomy evidence PASS on the frozen record. The five human gates remain closed and are owner acts: production_secrets, youtube_real_account, tiktok_real_account, meta_real_account, first_public_post. The next commit after the merge records the audit append with the real merge SHA."
   },
-  "next_action": "Execute CLIP-102 per 10_TICKETS.yaml.",
+  "next_action": "Post-launch: execute docs/BACKLOG.md. The five human gates (production_secrets, real platform accounts, first_public_post) remain owner acts; the system operates in DRAFT with public publishing disabled.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M24",
-  "tickets_completed": 107,
-  "updated_at": "2026-10-20T11:46:19+00:00",
+  "tickets_completed": 108,
+  "updated_at": "2026-10-20T12:35:31+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -511,6 +513,11 @@
       "ticket": "CLIP-101",
       "merge_sha": "a90bb9e",
       "summary": "Autonomy evidence and operations manual (M24): a nine-check machine-verifiable evidence report over the build's own record with UNKNOWN-flagging and publishing-contradiction rules, a CLI emitting the versioned report, the consolidated operations manual, and the tickets_total ledger correction (102 to 108) the harness caught on its first real run; 23 tests; CI-env 1825 passed 94.04% cov"
+    },
+    {
+      "ticket": "CLIP-102",
+      "merge_sha": "PENDING",
+      "summary": "v1.0.0 release freeze (M24 closer, final ticket): release manifest pinning the complete 108-ticket ledger, all milestones M0..M24, the qualification harnesses and all five human gates as honestly deferred; stdlib-only freeze validator with red-team-tested failure modes; API version 1.0.0; post-launch backlog; terminal build state (M24_COMPLETE) with validator support"
     }
   ],
   "tickets_total": 108,
@@ -856,6 +863,12 @@
       "ticket": "CLIP-101",
       "action": "completed",
       "evidence_ref": "a90bb9e"
+    },
+    {
+      "at": "2026-10-20T12:35:31+00:00",
+      "ticket": "CLIP-102",
+      "action": "completed",
+      "evidence_ref": "v1.0.0"
     }
   ]
 }
