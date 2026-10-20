@@ -1,0 +1,41 @@
+{
+  "tool": "clipos-release-freeze",
+  "version": 1,
+  "release": "1.0.0",
+  "api_package": "clipos-api",
+  "api_package_version": "1.0.0",
+  "milestones_expected": [
+    "M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+    "M11", "M12", "M13", "M14", "M15", "M16", "M17", "M18", "M19", "M20",
+    "M21", "M22", "M23", "M24"
+  ],
+  "requires": {
+    "tickets_total": 108,
+    "qualification_harnesses": [
+      "scripts/security_qualification.py",
+      "scripts/private_mode_qualification.py",
+      "scripts/deploy_topology_check.py",
+      "scripts/schema_drift.py",
+      "scripts/autonomy_evidence.py",
+      "scripts/infrastructure_health.sh"
+    ],
+    "human_gates_documented": [
+      "production_secrets",
+      "youtube_real_account",
+      "tiktok_real_account",
+      "meta_real_account",
+      "first_public_post"
+    ]
+  },
+  "deferred_to_post_launch": {
+    "human_gates": [
+      "production_secrets",
+      "youtube_real_account",
+      "tiktok_real_account",
+      "meta_real_account",
+      "first_public_post"
+    ],
+    "notes": "v1.0.0 freezes the platform code and its qualification surface. Real platform accounts, production secret import, TLS issuance and the first public post remain owner-executed human gates; until then the system operates in DRAFT with public publishing disabled. See docs/BACKLOG.md."
+  },
+  "backlog": "docs/BACKLOG.md"
+}

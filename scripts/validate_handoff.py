@@ -17,6 +17,17 @@ by={t["id"]:t for t in backlog["tickets"]}
 for t in backlog["tickets"]:
     for d in t.get("depends_on",[]):
         if d not in by: raise SystemExit(f"unknown dependency {d} in {t['id']}")
-if state["current_ticket"] not in by: raise SystemExit("BUILD_STATE current_ticket missing from backlog")
+# Terminal build: once every ticket is completed, current_ticket is the
+# sentinel "NONE" and there is no next backlog entry to point at.
+if state.get("current_ticket") == "NONE":
+    done_ids = set(state.get("completed_tickets", []))
+    remaining = [t for t in backlog["tickets"] if t["id"] not in done_ids]
+    if remaining:
+        raise SystemExit(
+            "BUILD_STATE current_ticket is NONE but tickets remain: "
+            + ", ".join(t["id"] for t in remaining[:5])
+        )
+elif state["current_ticket"] not in by:
+    raise SystemExit("BUILD_STATE current_ticket missing from backlog")
 if by["CLIP-001"].get("depends_on") != ["CLIP-P006"]: raise SystemExit("CLIP-001 must depend on M-1 completion")
 print(f"OK: {len(ids)} tickets; current={state['current_ticket']}; spec={state['spec_version']}")

@@ -2046,7 +2046,7 @@ tickets:
 - id: CLIP-102
   milestone: M24
   title: Freeze v1 release and create post-launch backlog
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-101

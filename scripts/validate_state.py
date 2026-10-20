@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Validate BUILD_STATE.json against schemas/build_state.schema.json.
 
 Stdlib-only pragmatic subset checker (no external jsonschema dependency).
@@ -95,7 +95,15 @@ def validate_state(
         errors.append(
             "BUILD_STATE.current_ticket must not also be in completed_tickets"
         )
-    if isinstance(current, str) and tickets and current not in tickets:
+    # Terminal build: after the final ticket, current_ticket is the sentinel
+    # "NONE" (no next ticket exists), which is intentionally absent from
+    # 10_TICKETS.yaml.
+    if (
+        isinstance(current, str)
+        and current != "NONE"
+        and tickets
+        and current not in tickets
+    ):
         errors.append(
             f"BUILD_STATE.current_ticket {current!r} missing from 10_TICKETS.yaml"
         )

@@ -2230,3 +2230,37 @@ explicit list of what the automation does not do.
 
 No migration and no new API routes: the evidence derives from state the
 build already records.
+
+## v1.0.0 release freeze (M24 closer, CLIP-102)
+
+release/v1.manifest.json pins the v1.0.0 release: the clipos-api package
+version (bumped 0.1.0 -> 1.0.0 and surfaced by GET /health), the complete
+108-ticket ledger, every milestone M0..M24, the six qualification harness
+scripts, the five documented human gates, and -- critically -- every one of
+those gates listed under deferred_to_post_launch, so the freeze is explicit
+that v1 does not include real platform accounts, production secret import,
+TLS issuance or the first public post.
+
+scripts/release_freeze.py validates the freeze (stdlib-only, following the
+CLIP-094/CLIP-101 dependency rule): F1 manifest completeness, F2 package
+version agreement with pyproject.toml, F3 the ticket ledger (completed ==
+ids == declared total), F4 every milestone complete, F5 harness presence,
+F6 human gates documented AND honestly deferred (the deferred list must
+equal the documented list), F7 the post-launch backlog exists. Versioned
+JSON report; exit 0 valid / 1 any FAIL / 2 unreadable. The manifest is read
+from the repo under validation (the --repo root), never from the script's
+own checkout -- the mutation tests caught exactly that shortcut.
+
+The freeze commits the terminal build state, which required coordinated
+validator support: current_ticket and current_milestone become the sentinel
+NONE once there is no next ticket, validate_state.py exempts NONE from the
+must-exist-in-10_TICKETS check, and validate_handoff.py accepts NONE only
+while zero backlog tickets remain outside completed_tickets. status becomes
+M24_COMPLETE, matching the existing status pattern.
+
+docs/BACKLOG.md is the post-launch backlog the manifest points at: P0 items
+(real platform accounts, production secrets, provider credentials, CI
+wiring for schema_drift and autonomy_evidence), P1 (registry digests,
+production bootstrap run, DR drill, real SLO measurements, alert routing,
+real adapter certification), P2 hardening (vetted-AEAD backup envelope,
+multi-tenant tests, performance passes).
