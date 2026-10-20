@@ -48,17 +48,17 @@ def repo(tmp_path: Path) -> Path:
     (tmp_path / "docs").mkdir()
     (tmp_path / "scripts").mkdir()
     (tmp_path / "services" / "api").mkdir(parents=True)
-    for rel in ("scripts/security_qualification.py",
-                "scripts/private_mode_qualification.py",
-                "scripts/deploy_topology_check.py",
-                "scripts/schema_drift.py",
-                "scripts/autonomy_evidence.py",
-                "scripts/infrastructure_health.sh"):
+    for rel in (
+        "scripts/security_qualification.py",
+        "scripts/private_mode_qualification.py",
+        "scripts/deploy_topology_check.py",
+        "scripts/schema_drift.py",
+        "scripts/autonomy_evidence.py",
+        "scripts/infrastructure_health.sh",
+    ):
         (tmp_path / rel).write_text("#\n", encoding="utf-8")
     (tmp_path / "docs" / "BACKLOG.md").write_text("# backlog\n", encoding="utf-8")
-    manifest = json.loads(
-        (REPO_ROOT / "release" / "v1.manifest.json").read_text(encoding="utf-8")
-    )
+    manifest = json.loads((REPO_ROOT / "release" / "v1.manifest.json").read_text(encoding="utf-8"))
     (tmp_path / "release" / "v1.manifest.json").write_text(
         json.dumps(manifest, indent=2), encoding="utf-8"
     )
@@ -70,10 +70,16 @@ def repo(tmp_path: Path) -> Path:
         "tickets_completed": 108,
         "tickets_total": 108,
         "completed_milestones": [f"M{i}" for i in range(0, 25)],
-        "human_gates": {g: False for g in
-                        ("production_secrets", "youtube_real_account",
-                         "tiktok_real_account", "meta_real_account",
-                         "first_public_post")},
+        "human_gates": {
+            g: False
+            for g in (
+                "production_secrets",
+                "youtube_real_account",
+                "tiktok_real_account",
+                "meta_real_account",
+                "first_public_post",
+            )
+        },
     }
     (tmp_path / "BUILD_STATE.json").write_text(json.dumps(state), encoding="utf-8")
     return tmp_path
@@ -93,9 +99,7 @@ def test_real_repository_freezes_pass() -> None:
 
 
 def test_real_manifest_declares_every_gate_as_deferred() -> None:
-    manifest = json.loads(
-        (REPO_ROOT / "release" / "v1.manifest.json").read_text(encoding="utf-8")
-    )
+    manifest = json.loads((REPO_ROOT / "release" / "v1.manifest.json").read_text(encoding="utf-8"))
     deferred = set(manifest["deferred_to_post_launch"]["human_gates"])
     assert deferred == set(manifest["requires"]["human_gates_documented"])
 
