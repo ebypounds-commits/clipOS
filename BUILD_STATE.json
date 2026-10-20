@@ -507,7 +507,7 @@
       "summary": "SLOs/cost caps/kill switches/incident drills (M24): SLO objectives with basis-point targets, a three-status evaluation where insufficient data is never a pass, a two-direction cost-cap verification over the real budgets authorizer, append-only drill records, and an aggregate verdict that fails any control nobody exercised; migration 0073; 6 routes; 34 tests; CI-env 1799 passed 94.02% cov"
     }
   ],
-  "tickets_total": 102,
+  "tickets_total": 108,
   "history": [
     {
       "ts": "2026-10-11T22:10:35.761953+00:00",

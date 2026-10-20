@@ -2182,3 +2182,51 @@ Routes (CLIP-033 pattern): POST/GET /slo/objectives, GET
 /slo/objectives/{objective_id}, POST /slo/objectives/{objective_id}/evaluate,
 POST/GET /slo/drills, GET /slo/qualification. No LLM, no network -- callers
 supply measurements and drill observations from their own runners.
+
+## Autonomy evidence and operations manual (M24, CLIP-101)
+
+autonomy_evidence.py checks the autonomous build's claims against each other
+and issues a PASS/FAIL verdict. The pure assembler takes typed inputs --
+BuildLedgerInput (completed ticket ids, the tickets_completed counter, the
+declared total, state_audit coverage, last evidence ticket, evidence count,
+completed milestones, current milestone and ticket), OperatingPostureInput
+(operating mode, public_publishing, production_deploy, the human-gate map)
+and HarnessInput (which qualification harness scripts exist) -- and returns
+AutonomyEvidenceReport with per-check findings over nine checks E1..E9:
+ledger integrity (counter matches ids, no duplicates, total not exceeded),
+audit coverage, evidence-trail presence and currency, milestone coherence,
+operating mode membership in the PRD section 7 modes, publishing posture,
+human-gate declarations, harness inventory, and the CI record.
+
+Two honesty rules are enforced rather than assumed. First, an uncheckable
+claim is reported as UNKNOWN and flagged (state_audit failing to run yields
+a WARN with coverage UNKNOWN instead of a silent pass), mirroring
+CLIP-100's insufficient-data rule. Second, public_publishing=true while the
+first_public_post human gate is still closed is a contradiction and FAILS
+the report, because PRD section 7 ties autonomous public operation to
+evidence the owner has not given yet. Open human gates are facts rather
+than faults: they are listed, not penalised.
+
+scripts/autonomy_evidence.py gathers the real inputs: BUILD_STATE.json, a
+state_audit.py verify run (parsing the audit: N/M covered fraction), a
+walk of the qualification harness scripts, and a git probe of
+origin/ci-results:last_run.txt compared to HEAD. It emits the report as
+JSON and exits 0 pass / 1 any FAIL (or warning under --strict) / 2 the
+build record could not be read.
+
+On its first run against the real record it FAILED: tickets_completed=106
+against tickets_total=102. The six P001..P006 pre-tickets were folded into
+the ledger when the project started and the declared total was never
+updated (validate_handoff counts 108 ids in 10_TICKETS.yaml, and no script
+asserted the total). Corrected to 108. A parsing bug was also caught by the
+suite: state_audit prints audit: 106/106 covered, and a bare isdigit scan
+never matches the fraction, so coverage would have been UNKNOWN forever.
+
+docs/OPERATIONS_MANUAL.md consolidates the operator surface: health and
+status endpoints, the verification commands, the deployment lifecycle,
+publishing governance and the owner gate, incidents/remediation/drills,
+cost control, backups, secrets and rotation, the human gates, and an
+explicit list of what the automation does not do.
+
+No migration and no new API routes: the evidence derives from state the
+build already records.
