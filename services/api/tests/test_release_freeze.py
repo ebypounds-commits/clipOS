@@ -69,7 +69,7 @@ def repo(tmp_path: Path) -> Path:
         "completed_tickets": [f"T{i}" for i in range(1, 109)],
         "tickets_completed": 108,
         "tickets_total": 108,
-        "completed_milestones": [f"M{i}" for i in range(0, 25)],
+        "completed_milestones": [f"M{i}" for i in range(25)],
         "human_gates": {
             g: False
             for g in (
@@ -147,7 +147,7 @@ def test_incomplete_milestone_fails(repo: Path) -> None:
     mod = _load()
     path = repo / "BUILD_STATE.json"
     state = json.loads(path.read_text(encoding="utf-8"))
-    state["completed_milestones"] = [f"M{i}" for i in range(0, 24)]  # no M24
+    state["completed_milestones"] = [f"M{i}" for i in range(24)]  # no M24
     path.write_text(json.dumps(state), encoding="utf-8")
     report = mod.validate(repo)
     f4 = [f for f in report.findings if f.check_id == "F4"]
