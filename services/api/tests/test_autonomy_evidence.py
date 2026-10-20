@@ -237,7 +237,7 @@ def test_missing_harness_fails() -> None:
 
 def test_report_is_json_serializable() -> None:
     report = assemble_evidence(_ledger(), _posture(), _harnesses())
-    json.dumps(report.model_dump(mode="json"))
+    json.dumps(report.to_dict())
 
 
 def test_summary_counts_add_up() -> None:
@@ -284,7 +284,7 @@ def test_cli_gathers_the_real_build_record() -> None:
 def test_cli_report_is_json_serializable_and_schema_stable() -> None:
     cli = _load_cli()
     report, _state = cli.gather(REPO_ROOT)
-    payload = report.model_dump(mode="json")
+    payload = report.to_dict()
     json.dumps(payload)
     for key in ("tool", "version", "verdict", "findings", "summary"):
         assert key in payload

@@ -7,7 +7,7 @@ the claims against each other, inventories the qualification harnesses, and
 probes the CI record when the repository has one.
 
 The pure rules live in `clipos_api.autonomy_evidence`; this CLI gathers the
-inputs. Every check reports what it observed â€” an unreachable check is
+inputs. Every check reports what it observed Ã¢â‚¬â€ an unreachable check is
 reported as UNKNOWN and flagged, never silently treated as healthy.
 
 Usage:
@@ -27,6 +27,7 @@ import json
 import re
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 _API_ROOT = Path(__file__).resolve().parents[1] / "services" / "api"
@@ -148,7 +149,7 @@ def _ci_finding(root: Path) -> EvidenceFinding:
         title="latest CI run covers the current head",
         severity=Severity.WARN,
         detail=(
-            f"last recorded run sha={sha[:12]} status={status}; HEAD={head[:12]} â€” "
+            f"last recorded run sha={sha[:12]} status={status}; HEAD={head[:12]} Ã¢â‚¬â€ "
             "the run for the current head may still be pending"
         ),
     )
@@ -159,18 +160,17 @@ def _finalize(report, extra: list[EvidenceFinding]):
     failed = sum(1 for f in findings if f.severity is Severity.FAIL)
     warned = sum(1 for f in findings if f.severity is Severity.WARN)
     info = sum(1 for f in findings if f.severity is Severity.INFO)
-    return report.model_copy(
-        update={
-            "findings": findings,
-            "verdict": "FAIL" if failed else "PASS",
-            "summary": {
-                **report.summary,
-                "total": len(findings),
-                "failed": failed,
-                "warnings": warned,
-                "info": info,
-            },
-        }
+    return replace(
+        report,
+        findings=findings,
+        verdict="FAIL" if failed else "PASS",
+        summary={
+            **report.summary,
+            "total": len(findings),
+            "failed": failed,
+            "warnings": warned,
+            "info": info,
+        },
     )
 
 
@@ -245,8 +245,7 @@ def main(argv: list[str]) -> int:
         render(report)
     if args.json:
         Path(args.json).write_text(
-            json.dumps(report.model_dump(mode="json"), indent=2) + "\n",
-            encoding="utf-8",
+            json.dumps(report.to_dict(), indent=2) + "\n", encoding="utf-8"
         )
         print(f"\nreport written to {args.json}")
 

@@ -23,23 +23,20 @@ This module assembles one report from typed inputs and issues a verdict:
   may simply not have acted yet); an *open* public-posting gate alongside
   `public_publishing=true` is a contradiction and fails the report.
 - **Qualification inventory** — every qualification harness the build relies
-  on (security, private-mode, deployment topology, SLO/ops, schema drift,
-  agent FK ordering) must be present in the tree; a missing harness means a
-  claim with nothing backing it.
+  on must be present in the tree; a missing harness means a claim with
+  nothing backing it.
 
-The pure core takes typed inputs and has no I/O, so tests drive it with
-synthetic ledgers; the CLI (`scripts/autonomy_evidence.py`) gathers the real
-ones from the repository and can also probe a live instance. Honest
-reporting is the point: an unelectable check is reported as UNKNOWN with a
-finding, never silently as healthy.
+The pure core takes typed inputs and has no I/O. Like
+`deployment_topology` (CLIP-094), it is stdlib-only at import time — plain
+dataclasses rather than Pydantic — because the CLI runs in the
+dependency-light environment where only PyYAML is installed.
 """
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, Field
 
 # The qualification harnesses whose presence the evidence report requires.
 # Each maps to a concrete automated check of a runtime claim.
@@ -52,7 +49,13 @@ QUALIFICATION_HARNESSES = {
 }
 
 # PRD §7 operating modes, in escalation order.
-PRD_OPERATING_MODES = ("OBSERVE", "DRAFT", "PRIVATE_TEST", "GUARDED_PUBLIC", "AUTONOMOUS_PUBLIC")
+PRD_OPERATING_MODES = (
+    "OBSERVE",
+    "DRAFT",
+    "PRIVATE_TEST",
+    "GUARDED_PUBLIC",
+    "AUTONOMOUS_PUBLIC",
+)
 
 # The human gates 13_HUMAN_GATES_AND_SECRETS.md makes mandatory.
 EXPECTED_HUMAN_GATES = (
@@ -74,10 +77,9 @@ class Severity(str, Enum):
     INFO = "INFO"
 
 
-class EvidenceFinding(BaseModel):
+@dataclass(frozen=True)
+class EvidenceFinding:
     """One checked claim and what was observed."""
-
-    model_config = ConfigDict(frozen=True)
 
     check_id: str
     title: str
@@ -85,10 +87,9 @@ class EvidenceFinding(BaseModel):
     detail: str
 
 
-class BuildLedgerInput(BaseModel):
+@dataclass(frozen=True)
+class BuildLedgerInput:
     """Ticket/evidence/audit counters as recorded by the build."""
-
-    model_config = ConfigDict(frozen=True)
 
     completed_ticket_ids: list[str]
     tickets_completed: int
@@ -101,10 +102,9 @@ class BuildLedgerInput(BaseModel):
     current_ticket: str
 
 
-class OperatingPostureInput(BaseModel):
+@dataclass(frozen=True)
+class OperatingPostureInput:
     """Flags and gates exactly as BUILD_STATE.json records them."""
-
-    model_config = ConfigDict(frozen=True)
 
     operating_mode: str
     public_publishing: bool
@@ -113,25 +113,23 @@ class OperatingPostureInput(BaseModel):
     autonomous_build: bool = True
 
 
-class HarnessInput(BaseModel):
+@dataclass(frozen=True)
+class HarnessInput:
     """Which qualification harnesses were found in the tree."""
-
-    model_config = ConfigDict(frozen=True)
 
     present: list[str]
     missing: list[str]
 
 
-class AutonomyEvidenceReport(BaseModel):
+@dataclass(frozen=True)
+class AutonomyEvidenceReport:
     """The assembled report."""
 
-    model_config = ConfigDict(frozen=True)
-
+    verdict: Verdict
+    findings: list[EvidenceFinding] = field(default_factory=list)
     tool: str = "clipos-autonomy-evidence"
     version: int = 1
-    verdict: Verdict
-    findings: list[EvidenceFinding] = Field(default_factory=list)
-    summary: dict = Field(default_factory=dict)
+    summary: dict = field(default_factory=dict)
 
     @property
     def failed(self) -> int:
@@ -141,122 +139,126 @@ class AutonomyEvidenceReport(BaseModel):
     def warned(self) -> int:
         return sum(1 for f in self.findings if f.severity is Severity.WARN)
 
+    def to_dict(self) -> dict:
+        data = asdict(self)
+        # Enums are not JSON-serialisable by default; findings carry them.
+        for finding in data["findings"]:
+            finding["severity"] = str(finding["severity"])
+        return data
+
+
+def _finding(check_id: str, title: str, severity: Severity, detail: str) -> EvidenceFinding:
+    return EvidenceFinding(check_id=check_id, title=title, severity=severity, detail=detail)
+
 
 def _check_ledger(ledger: BuildLedgerInput) -> list[EvidenceFinding]:
     findings: list[EvidenceFinding] = []
     ids = ledger.completed_ticket_ids
     if ledger.tickets_completed != len(ids):
         findings.append(
-            EvidenceFinding(
-                check_id="E1",
-                title="completed-ticket counter matches the ledger",
-                severity=Severity.FAIL,
-                detail=(
-                    f"tickets_completed={ledger.tickets_completed} but the ledger "
-                    f"lists {len(ids)} ids"
-                ),
+            _finding(
+                "E1",
+                "completed-ticket counter matches the ledger",
+                Severity.FAIL,
+                f"tickets_completed={ledger.tickets_completed} but the ledger lists {len(ids)} ids",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E1",
-                title="completed-ticket counter matches the ledger",
-                severity=Severity.INFO,
-                detail=f"{len(ids)} completed tickets",
+            _finding(
+                "E1",
+                "completed-ticket counter matches the ledger",
+                Severity.INFO,
+                f"{len(ids)} completed tickets",
             )
         )
 
     duplicates = sorted({t for t in ids if ids.count(t) > 1})
     if duplicates:
         findings.append(
-            EvidenceFinding(
-                check_id="E1",
-                title="no duplicate ticket ids",
-                severity=Severity.FAIL,
-                detail=f"duplicated: {', '.join(duplicates)}",
+            _finding(
+                "E1",
+                "no duplicate ticket ids",
+                Severity.FAIL,
+                f"duplicated: {', '.join(duplicates)}",
             )
         )
     if ids and ledger.tickets_total and len(ids) > ledger.tickets_total:
         findings.append(
-            EvidenceFinding(
-                check_id="E1",
-                title="completed tickets fit inside the declared total",
-                severity=Severity.FAIL,
-                detail=f"{len(ids)} completed exceeds total {ledger.tickets_total}",
+            _finding(
+                "E1",
+                "completed tickets fit inside the declared total",
+                Severity.FAIL,
+                f"{len(ids)} completed exceeds total {ledger.tickets_total}",
             )
         )
 
     if ledger.audit_covered != len(ids):
         findings.append(
-            EvidenceFinding(
-                check_id="E2",
-                title="audit trail covers every completed ticket",
-                severity=Severity.FAIL,
-                detail=(f"audit covered {ledger.audit_covered} of {len(ids)} completed tickets"),
+            _finding(
+                "E2",
+                "audit trail covers every completed ticket",
+                Severity.FAIL,
+                f"audit covered {ledger.audit_covered} of {len(ids)} completed tickets",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E2",
-                title="audit trail covers every completed ticket",
-                severity=Severity.INFO,
-                detail=f"{ledger.audit_covered}/{len(ids)} covered",
+            _finding(
+                "E2",
+                "audit trail covers every completed ticket",
+                Severity.INFO,
+                f"{ledger.audit_covered}/{len(ids)} covered",
             )
         )
 
     last = ledger.last_evidence_ticket
     if last is not None and last not in ids:
         findings.append(
-            EvidenceFinding(
-                check_id="E3",
-                title="last evidence entry names a completed ticket",
-                severity=Severity.FAIL,
-                detail=f"last_evidence.ticket={last!r} is not in completed_tickets",
+            _finding(
+                "E3",
+                "last evidence entry names a completed ticket",
+                Severity.FAIL,
+                f"last_evidence.ticket={last!r} is not in completed_tickets",
             )
         )
     elif ledger.evidence_entry_count == 0:
         findings.append(
-            EvidenceFinding(
-                check_id="E3",
-                title="evidence trail is non-empty",
-                severity=Severity.FAIL,
-                detail="BUILD_STATE.evidence is empty",
+            _finding(
+                "E3",
+                "evidence trail is non-empty",
+                Severity.FAIL,
+                "BUILD_STATE.evidence is empty",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E3",
-                title="evidence trail is non-empty and current",
-                severity=Severity.INFO,
-                detail=(f"{ledger.evidence_entry_count} entries; latest ticket={last!r}"),
+            _finding(
+                "E3",
+                "evidence trail is non-empty and current",
+                Severity.INFO,
+                f"{ledger.evidence_entry_count} entries; latest ticket={last!r}",
             )
         )
 
     if ledger.completed_milestones and ledger.current_milestone in ledger.completed_milestones:
         findings.append(
-            EvidenceFinding(
-                check_id="E4",
-                title="current milestone is not already completed",
-                severity=Severity.FAIL,
-                detail=(
-                    f"current_milestone={ledger.current_milestone} appears in completed_milestones"
-                ),
+            _finding(
+                "E4",
+                "current milestone is not already completed",
+                Severity.FAIL,
+                f"current_milestone={ledger.current_milestone} appears in completed_milestones",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E4",
-                title="milestone ledger is coherent",
-                severity=Severity.INFO,
-                detail=(
-                    f"{len(ledger.completed_milestones)} milestones completed; "
-                    f"current={ledger.current_milestone}, next ticket="
-                    f"{ledger.current_ticket}"
-                ),
+            _finding(
+                "E4",
+                "milestone ledger is coherent",
+                Severity.INFO,
+                f"{len(ledger.completed_milestones)} milestones completed; "
+                f"current={ledger.current_milestone}, next ticket="
+                f"{ledger.current_ticket}",
             )
         )
     return findings
@@ -266,73 +268,65 @@ def _check_posture(posture: OperatingPostureInput) -> list[EvidenceFinding]:
     findings: list[EvidenceFinding] = []
     if posture.operating_mode in PRD_OPERATING_MODES:
         findings.append(
-            EvidenceFinding(
-                check_id="E5",
-                title="operating mode is a PRD §7 mode",
-                severity=Severity.INFO,
-                detail=f"operating_mode={posture.operating_mode}",
+            _finding(
+                "E5",
+                "operating mode is a PRD §7 mode",
+                Severity.INFO,
+                f"operating_mode={posture.operating_mode}",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E5",
-                title="operating mode is a PRD §7 mode",
-                severity=Severity.FAIL,
-                detail=(
-                    f"operating_mode={posture.operating_mode!r} is not one of "
-                    f"{', '.join(PRD_OPERATING_MODES)}"
-                ),
+            _finding(
+                "E5",
+                "operating mode is a PRD §7 mode",
+                Severity.FAIL,
+                f"operating_mode={posture.operating_mode!r} is not one of "
+                f"{', '.join(PRD_OPERATING_MODES)}",
             )
         )
 
     first_public = posture.human_gates.get("first_public_post")
     if posture.public_publishing and first_public is False:
         findings.append(
-            EvidenceFinding(
-                check_id="E6",
-                title="public publishing is backed by its owner gate",
-                severity=Severity.FAIL,
-                detail=(
-                    "public_publishing=true while the first_public_post human gate "
-                    "is still closed — autonomous public operation requires the "
-                    "owner approval PRD §7 ties it to"
-                ),
+            _finding(
+                "E6",
+                "public publishing is backed by its owner gate",
+                Severity.FAIL,
+                "public_publishing=true while the first_public_post human gate "
+                "is still closed — autonomous public operation requires the "
+                "owner approval PRD §7 ties it to",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E6",
-                title="public publishing is backed by its owner gate",
-                severity=Severity.INFO,
-                detail=(
-                    f"public_publishing={posture.public_publishing}, "
-                    f"first_public_post gate={first_public}"
-                ),
+            _finding(
+                "E6",
+                "public publishing is backed by its owner gate",
+                Severity.INFO,
+                f"public_publishing={posture.public_publishing}, "
+                f"first_public_post gate={first_public}",
             )
         )
 
     if posture.production_deploy:
         findings.append(
-            EvidenceFinding(
-                check_id="E6",
-                title="production deployment posture",
-                severity=Severity.WARN,
-                detail=(
-                    "production_deploy=true — confirm the production_secrets human "
-                    "gate has been executed before treating this as a production "
-                    "qualification"
-                ),
+            _finding(
+                "E6",
+                "production deployment posture",
+                Severity.WARN,
+                "production_deploy=true — confirm the production_secrets human "
+                "gate has been executed before treating this as a production "
+                "qualification",
             )
         )
     else:
         findings.append(
-            EvidenceFinding(
-                check_id="E6",
-                title="production deployment posture",
-                severity=Severity.INFO,
-                detail="production_deploy=false (staging/local qualification only)",
+            _finding(
+                "E6",
+                "production deployment posture",
+                Severity.INFO,
+                "production_deploy=false (staging/local qualification only)",
             )
         )
     return findings
@@ -342,11 +336,11 @@ def _check_gates(posture: OperatingPostureInput) -> list[EvidenceFinding]:
     missing = [g for g in EXPECTED_HUMAN_GATES if g not in posture.human_gates]
     if missing:
         return [
-            EvidenceFinding(
-                check_id="E7",
-                title="documented human gates are all declared",
-                severity=Severity.FAIL,
-                detail=f"missing gate declarations: {', '.join(missing)}",
+            _finding(
+                "E7",
+                "documented human gates are all declared",
+                Severity.FAIL,
+                f"missing gate declarations: {', '.join(missing)}",
             )
         ]
     closed = sorted(g for g, ok in posture.human_gates.items() if not ok)
@@ -354,32 +348,25 @@ def _check_gates(posture: OperatingPostureInput) -> list[EvidenceFinding]:
     detail = f"{len(closed)} closed"
     if open_gates:
         detail += f"; open: {', '.join(open_gates)}"
-    return [
-        EvidenceFinding(
-            check_id="E7",
-            title="documented human gates are all declared",
-            severity=Severity.INFO,
-            detail=detail,
-        )
-    ]
+    return [_finding("E7", "documented human gates are all declared", Severity.INFO, detail)]
 
 
 def _check_harnesses(harness: HarnessInput) -> list[EvidenceFinding]:
     if harness.missing:
         return [
-            EvidenceFinding(
-                check_id="E8",
-                title="qualification harnesses are all present",
-                severity=Severity.FAIL,
-                detail=f"missing: {', '.join(sorted(harness.missing))}",
+            _finding(
+                "E8",
+                "qualification harnesses are all present",
+                Severity.FAIL,
+                f"missing: {', '.join(sorted(harness.missing))}",
             )
         ]
     return [
-        EvidenceFinding(
-            check_id="E8",
-            title="qualification harnesses are all present",
-            severity=Severity.INFO,
-            detail=f"{len(harness.present)} harnesses found in the tree",
+        _finding(
+            "E8",
+            "qualification harnesses are all present",
+            Severity.INFO,
+            f"{len(harness.present)} harnesses found in the tree",
         )
     ]
 
