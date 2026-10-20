@@ -2,7 +2,7 @@
   "project": "ClipOS",
   "spec_version": "2.0-hermes-vps",
   "current_milestone": "M24",
-  "current_ticket": "CLIP-101",
+  "current_ticket": "CLIP-102",
   "status": "M24_IN_PROGRESS",
   "autonomous_build": true,
   "operating_mode": "DRAFT",
@@ -141,7 +141,8 @@
     "CLIP-097",
     "CLIP-098",
     "CLIP-099",
-    "CLIP-100"
+    "CLIP-100",
+    "CLIP-101"
   ],
   "blocked": [],
   "human_gates": {
@@ -152,19 +153,19 @@
     "first_public_post": false
   },
   "last_evidence": {
-    "ticket": "CLIP-100",
-    "at": "2026-10-19T11:59:53+00:00",
-    "facts": "Tickets 106/108 complete; M-1..M23 closed, M24 in progress. CLIP-100 closed the M24 exit-gate requirement for SLOs, which previously had NO implementation anywhere - the only occurrence of the term was the milestone sentence itself - while the other operational controls lived in separate modules with nothing asserting they actually work. slo_objectives rows are org-scoped and idempotent per (org, objective_id), declaring a generic service indicator, a target in BASIS POINTS as an integer never a float, a window in days and a minimum sample count, so an objective cannot be unsatisfiable or vacuous by typo; audited slo_objectives.registered. evaluate_slo is pure with THREE distinct statuses - MET, BREACHED, INSUFFICIENT_DATA - because reporting we-did-not-measure-enough as a pass is the dishonesty this gate exists to prevent: an objective below its min_samples returns INSUFFICIENT_DATA, fails the verdict, and is reported as SLO unmeasured rather than SLO met. verify_cost_cap takes the budgets authorizer as a parameter (no cross-module import ordering, stub-friendly) and fails in BOTH directions: an authorizer allowing over-cap spend is broken, and so is one refusing a within-cap request that would stall legitimate work. ops_drills is append-only and idempotent per (org, drill_id); qualify_operations folds objectives and drills into one PASS/FAIL verdict over REQUIRED_CONTROLS = (kill_switch_closed, cost_cap_refused, incident_drill). A control with no VERIFIED drill appears in controls_unverified and fails the verdict, so an untested control is never rendered as working. Migration 0073 (CREATE-only: slo_objectives, ops_drills) applied on Postgres 0072 -> 0073; routes POST/GET /slo/objectives, GET /slo/objectives/{id}, POST /slo/objectives/{id}/evaluate, POST/GET /slo/drills, GET /slo/qualification. 34 new tests; ruff format+check clean (302 files); mypy clean (111 files); CI-env 1799 passed / 1 skipped / 94.02% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 105/105. Environment fixes during the ticket: the compose stack had stopped (Postgres connection refused) and was restarted with docker compose up -d; running pytest as root had created /tmp/clipos-100-slo-audit.log root-owned, causing PermissionError for the clipos user on the next run - the suite must always run as clipos. Merge 46b24d8 into main."
+    "ticket": "CLIP-101",
+    "at": "2026-10-20T11:46:19+00:00",
+    "facts": "Tickets 107/108 complete; M-1..M23 closed, M24 in progress. One ticket remains: CLIP-102 (freeze v1 release and create post-launch backlog). CLIP-101 delivered the autonomy evidence harness and the operations manual. The build's claims were previously recorded but never checked against each other; autonomy_evidence.py now verifies nine checks E1..E9 over the ledger (counter vs ids, duplicates, total), state_audit coverage, evidence-trail presence and currency, milestone coherence, operating-mode membership in the five PRD section-7 modes, publishing posture, human-gate declarations, the qualification-harness inventory, and the CI record versus HEAD. Honesty rules enforced by code: an uncheckable claim is reported UNKNOWN and flagged instead of silently healthy (mirroring CLIP-100's insufficient-data rule), and public_publishing=true while the first_public_post owner gate is closed is a contradiction that FAILS the report. Open gates are reported as facts without penalty. The harness failed on its first real run exactly as designed: tickets_completed=106 against tickets_total=102 — the six P001..P006 pre-tickets were folded into the ledger without updating the declared total (validate_handoff counts 108 ids and no script asserted the total). Corrected to 108; the evidence checks now pin the ledger to the declared total permanently. A parsing bug was also caught by the suite: state_audit prints audit: N/M covered, which a bare isdigit scan never matches. docs/OPERATIONS_MANUAL.md consolidates the operator surface: health and status endpoints, the nine verification commands, deployment lifecycle (bootstrap, canary, promote/rollback), publishing governance and the owner gate, incidents/remediation/drills, cost control, backups, secrets and rotation, the human gates, and an explicit list of what the automation does not do. Live posture on this run: operating_mode=DRAFT, public_publishing=false, production_deploy=false, all five human gates closed, 9 harnesses/commands verified present, CI record green on HEAD (run for a90bb9e pending at report time is the only WARN), verdict PASS. 23 new tests; ruff clean (API + script); mypy clean (112 files); CI-env 1825 passed / 1 skipped / 94.04% cov; secret_scan clean; architecture_guard 6/6; deploy_topology_check PASS; state_audit 106/106 covered (pre-advance). Merge a90bb9e into main."
   },
-  "next_action": "Execute CLIP-101 per 10_TICKETS.yaml.",
+  "next_action": "Execute CLIP-102 per 10_TICKETS.yaml.",
   "orchestrator": "MiMo Desktop orchestrator (Hermes handoff 2026-10-12; operator chose direct implementation, no Codex worker dispatch)",
   "coding_engine": "MiMo direct implementation over VPS SSH; Codex-on-VPS workers dormant per operator decision",
   "repository_mode": "GitHub canonical repo + VPS worktrees",
   "single_orchestrator": true,
   "codex_subagents_default": false,
   "milestone": "M24",
-  "tickets_completed": 106,
-  "updated_at": "2026-10-19T11:59:53+00:00",
+  "tickets_completed": 107,
+  "updated_at": "2026-10-20T11:46:19+00:00",
   "evidence": [
     {
       "ticket": "CLIP-033",
@@ -505,6 +506,11 @@
       "ticket": "CLIP-100",
       "merge_sha": "46b24d8",
       "summary": "SLOs/cost caps/kill switches/incident drills (M24): SLO objectives with basis-point targets, a three-status evaluation where insufficient data is never a pass, a two-direction cost-cap verification over the real budgets authorizer, append-only drill records, and an aggregate verdict that fails any control nobody exercised; migration 0073; 6 routes; 34 tests; CI-env 1799 passed 94.02% cov"
+    },
+    {
+      "ticket": "CLIP-101",
+      "merge_sha": "a90bb9e",
+      "summary": "Autonomy evidence and operations manual (M24): a nine-check machine-verifiable evidence report over the build's own record with UNKNOWN-flagging and publishing-contradiction rules, a CLI emitting the versioned report, the consolidated operations manual, and the tickets_total ledger correction (102 to 108) the harness caught on its first real run; 23 tests; CI-env 1825 passed 94.04% cov"
     }
   ],
   "tickets_total": 108,
@@ -844,6 +850,12 @@
       "ticket": "CLIP-100",
       "action": "completed",
       "evidence_ref": "46b24d8"
+    },
+    {
+      "at": "2026-10-20T11:46:19+00:00",
+      "ticket": "CLIP-101",
+      "action": "completed",
+      "evidence_ref": "a90bb9e"
     }
   ]
 }

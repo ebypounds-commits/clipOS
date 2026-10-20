@@ -2028,7 +2028,7 @@ tickets:
 - id: CLIP-101
   milestone: M24
   title: Produce autonomy evidence and operations manual
-  status: TODO
+  status: DONE
   priority: HIGH
   depends_on:
   - CLIP-100

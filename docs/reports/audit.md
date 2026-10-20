@@ -980,3 +980,30 @@ remainder being ruff format reflow of pre-existing long lines.
 **Gates**: ruff format+check clean (302 files), mypy clean (111 files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS, state_audit verify 105/105
 
 **Environment fixes**: compose stack had stopped (Postgres refused connections) and was restarted; a pytest run executed as root left /tmp/clipos-100-slo-audit.log root-owned, which made the next clipos-user run fail with PermissionError - the suite must always run as clipos.
+
+
+## 2026-10-20 - CLIP-101 Autonomy evidence and operations manual
+
+**Ticket**: CLIP-101 (M24)
+**Merge SHA**: a90bb9e
+**Status**: COMPLETE (107/108)
+
+**What was built**:
+- services/api/clipos_api/autonomy_evidence.py: typed inputs + pure nine-check assembler (E1 ledger, E2 audit coverage, E3 evidence trail, E4 milestones, E5 operating mode, E6 publishing posture, E7 human-gate declarations, E8 harness inventory, E9 CI record)
+- scripts/autonomy_evidence.py: CLI gathering the real record; versioned JSON report; exit 0 pass / 1 FAIL (or warning under --strict) / 2 unreadable
+- docs/OPERATIONS_MANUAL.md: consolidated operator manual (health/status, verification commands, deployment lifecycle, publishing governance and the owner gate, incidents/remediation/drills, cost control, backups, secrets and rotation, human gates, what the automation does not do)
+
+**Honesty rules enforced by code**:
+- An uncheckable claim is UNKNOWN and flagged, never silently healthy (state_audit failing to run yields coverage UNKNOWN with a WARN)
+- public_publishing=true while the first_public_post owner gate is closed is a contradiction that FAILS the report (PRD section 7 ties autonomous public operation to owner evidence)
+- Open human gates are reported as facts without penalty
+
+**Found on its first real run** (the harness working as designed):
+- tickets_completed=106 vs tickets_total=102 — the six P001..P006 pre-tickets were folded into the ledger without updating the declared total (validate_handoff counts 108 ids; nothing asserted the total). Corrected to 108.
+- Parser bug: state_audit prints audit: N/M covered; a bare isdigit token scan never matches the fraction, so coverage would have been UNKNOWN forever. Now parses the fraction.
+
+**Migration**: none. **Routes**: none — evidence derives from state the build already records.
+
+**Tests**: 23 new tests
+**Suite**: 1825 passed CI-env (94.04% cov), 1 skipped
+**Gates**: ruff clean (API + script), mypy clean (112 files), secret_scan clean, arch_guard 6/6 OK, deploy_topology_check PASS
