@@ -57,6 +57,30 @@ never evidence. Anything not runnable in the worker's environment is reported as
 `SKIP` with the concrete reason (e.g. no network, no docker, no pytest); it is never
 reported as PASS.
 
+### Worktree test runs must bind the code under test
+
+The shared virtualenv on the build host maps `clipos_api` to the canonical
+checkout. A test run inside a worktree imports the canonical product code
+unless the tree under test is bound explicitly, so a reported result can
+describe a different checkout entirely. This has already happened once: a
+branch's "green" results were produced against `main`, and the branch was
+believed verified when it had never been executed.
+
+Before any test run in a worktree, bind the code under test and confirm the
+import path:
+
+```bash
+export PYTHONPATH=/srv/clipos/worktrees/<ticket>/services/api
+cd /srv/clipos/worktrees/<ticket>
+python -c "import clipos_api; print(clipos_api.__file__)"
+pytest -q services/api
+```
+
+`services/api/tests/conftest.py` enforces this: the session aborts when the
+imported package is not the one in the tree under test, naming both paths.
+Treat that abort as an environment fault to fix, never as a test result, and
+never re-run with the mismatch suppressed in order to obtain a result.
+
 ## Dispatch failure signatures and retry policy
 
 - Transient tool/provider failure: retry with backoff, keyed by the failure artifact

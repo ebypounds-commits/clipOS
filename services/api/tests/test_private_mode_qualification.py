@@ -215,14 +215,15 @@ def test_observe_invariant_fails_when_mode_check_is_broken(
 ) -> None:
     """A regression that lets OBSERVE publish must flip P1 to FAIL."""
     from clipos_api import publishing
+    from clipos_api.publishing import PublishDecision
 
-    original = publishing.evaluate_publish_policy
+    original = publishing.evaluate_publish_conditions
 
-    def leaky(policy, visibility, operating_mode, account_approved=False):
+    def leaky(policy, visibility, operating_mode, account_approved=False, rights_clear=False):
         # Simulate a regression: mode restrictions are ignored.
-        return True, "allowed"
+        return PublishDecision(allowed=True, reason="allowed", reasons=())
 
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", leaky)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", leaky)
     harness = _load_harness()
     report = harness.run_qualification(_TransportClient(live_client), "qual-org")
 
@@ -230,7 +231,7 @@ def test_observe_invariant_fails_when_mode_check_is_broken(
     assert "P1" in failing
     assert report["summary"]["verdict"] == "FAIL"
     # Restore for other tests in the process.
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", original)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", original)
 
 
 def test_public_default_invariant_fails_when_public_is_allowed(
@@ -238,22 +239,27 @@ def test_public_default_invariant_fails_when_public_is_allowed(
 ) -> None:
     """A regression that ignores public_enabled must flip P3 to FAIL."""
     from clipos_api import publishing
+    from clipos_api.publishing import PublishDecision
 
-    original = publishing.evaluate_publish_policy
+    original = publishing.evaluate_publish_conditions
 
-    def leaky(policy, visibility, operating_mode, account_approved=False):
+    def leaky(policy, visibility, operating_mode, account_approved=False, rights_clear=False):
         if str(getattr(operating_mode, "value", operating_mode)) in ("OBSERVE", "DRAFT"):
-            return False, f"mode_{operating_mode}_denies_publishing"
-        return True, "allowed"
+            return PublishDecision(
+                allowed=False,
+                reason=f"mode_{operating_mode}_denies_publishing",
+                reasons=(f"mode_{operating_mode}_denies_publishing",),
+            )
+        return PublishDecision(allowed=True, reason="allowed", reasons=())
 
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", leaky)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", leaky)
     harness = _load_harness()
     report = harness.run_qualification(_TransportClient(live_client), "qual-org")
 
     failing = {i["check_id"] for i in report["invariants"] if i["status"] == "FAIL"}
     assert "P3" in failing
     assert report["summary"]["verdict"] == "FAIL"
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", original)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", original)
 
 
 def test_kill_switch_invariant_fails_when_switch_is_ignored(
@@ -261,22 +267,23 @@ def test_kill_switch_invariant_fails_when_switch_is_ignored(
 ) -> None:
     """A regression that ignores the kill switch must flip P5 to FAIL."""
     from clipos_api import publishing
+    from clipos_api.publishing import PublishDecision
 
-    original = publishing.evaluate_publish_policy
+    original = publishing.evaluate_publish_conditions
 
-    def leaky(policy, visibility, operating_mode, account_approved=False):
-        allowed, reason = original(policy, visibility, operating_mode, account_approved)
-        if reason == "kill_switch_active":
-            return True, "allowed"
-        return allowed, reason
+    def leaky(policy, visibility, operating_mode, account_approved=False, rights_clear=False):
+        decision = original(policy, visibility, operating_mode, account_approved, rights_clear)
+        if decision.reason == "kill_switch_active":
+            return PublishDecision(allowed=True, reason="allowed", reasons=())
+        return decision
 
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", leaky)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", leaky)
     harness = _load_harness()
     report = harness.run_qualification(_TransportClient(live_client), "qual-org")
 
     failing = {i["check_id"] for i in report["invariants"] if i["status"] == "FAIL"}
     assert "P5" in failing
-    monkeypatch.setattr(publishing, "evaluate_publish_policy", original)
+    monkeypatch.setattr(publishing, "evaluate_publish_conditions", original)
 
 
 def test_a_required_step_failure_is_reported(

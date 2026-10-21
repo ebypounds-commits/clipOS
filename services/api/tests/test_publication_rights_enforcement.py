@@ -149,95 +149,6 @@ def _publish(client: TestClient, content_ref: str, key: str, rights_item_id: str
     return client.post("/publications", json=body)
 
 
-def _clear_rights(engine: Engine, item_id: str) -> str:
-    """Register *item_id* with a CLEAR rights record plus a provenance manifest.
-
-    Mirrors services/api/tests/test_rights_gate.py: the creator/source/item
-    entity rows must exist before the rights record or the manifest step can
-    be written, because both RightsLedgerStore.register_record and
-    ProvenanceStore.append_step look the source item up by item_id.
-
-    Returns the rights record_id so a caller can later revoke it.
-    """
-    from datetime import UTC, datetime
-
-    from clipos_api import rights_entities
-    from clipos_api.provenance import ProvenanceStep, ProvenanceStore, StepType
-    from clipos_api.rights_entities import ContentSource, Creator, SourceItem, SourceType
-    from clipos_api.rights_ledger import (
-        Basis,
-        RightsLedgerStore,
-        RightsRecord,
-        Status,
-    )
-
-    entities = rights_entities.RightsEntitiesStore.from_engine(engine)
-    entities.register_creator(
-        Creator.model_validate(
-            {
-                "creator_id": "creator-1",
-                "org_id": "org-1",
-                "display_name": "Ada Lovelace",
-                "contact_ref": "secrets://contacts/creator-1",
-            }
-        )
-    )
-    entities.register_source(
-        ContentSource.model_validate(
-            {
-                "source_id": "source-1",
-                "org_id": "org-1",
-                "creator_id": "creator-1",
-                "source_type": SourceType.FEED,
-                "canonical_url": "https://example.com/feed.xml",
-            }
-        )
-    )
-    entities.register_item(
-        SourceItem.model_validate(
-            {
-                "item_id": item_id,
-                "org_id": "org-1",
-                "source_id": "source-1",
-                "external_ref": f"ext:{item_id}",
-                "captured_at": datetime(2026, 1, 1, tzinfo=UTC),
-                "content_ref": f"storage://source-items/{item_id}",
-            }
-        )
-    )
-
-    ledger = RightsLedgerStore.from_engine(engine)
-    record_id = f"rr-{item_id}"
-    ledger.register_record(
-        RightsRecord.model_validate(
-            {
-                "record_id": record_id,
-                "item_id": item_id,
-                "org_id": "org-1",
-                "status": Status.REVIEW_REQUIRED,
-                "basis": Basis.OWNED,
-                "reviewed_by": "reviewer:audit",
-                "metadata": {"source": "p0-1 test"},
-            }
-        )
-    )
-    # Move it to CLEAR through the real transition path.
-    ledger.record_status_change(record_id, "org-1", Status.CLEAR, "reviewer:audit")
-
-    step = ProvenanceStep.model_validate(
-        {
-            "step_type": StepType.TRANSFORMED,
-            "actor_ref": "operator:audit",
-            "at": datetime(2026, 1, 2, tzinfo=UTC),
-            "inputs_refs": [f"storage://source-items/{item_id}"],
-            "outputs_ref": f"storage://renders/{item_id}",
-            "transform_note": "p0-1 test manifest step",
-        }
-    )
-    ProvenanceStore.from_engine(engine).append_step(item_id, "org-1", step)
-    return record_id
-
-
 def test_publication_denied_without_rights_record(client: TestClient) -> None:
     """The core fix: an uncleared item cannot be published at ANY visibility."""
     _register_policy(client)
@@ -257,20 +168,21 @@ def test_publication_denial_names_the_rights_reason(client: TestClient) -> None:
     assert "not_found" in reason or reason == "rights_not_clear"
 
 
-def test_publication_allowed_when_rights_clear(client: TestClient, engine: Engine) -> None:
+def test_publication_allowed_when_rights_clear(client: TestClient, clear_rights) -> None:
     """No false positive: a cleared item with provenance publishes."""
     _register_policy(client)
-    _clear_rights(engine, "storage://cleared-item")
+    clear_rights("storage://cleared-item")
     response = _publish(client, "storage://cleared-item", "p01-key-3")
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["status"] == "SUCCEEDED", body
+    assert body["denial_reasons"] == []
 
 
-def test_explicit_rights_item_id_is_honoured(client: TestClient, engine: Engine) -> None:
+def test_explicit_rights_item_id_is_honoured(client: TestClient, clear_rights) -> None:
     """A submission may name its rights item explicitly."""
     _register_policy(client)
-    _clear_rights(engine, "rights-item-xyz")
+    clear_rights("rights-item-xyz")
     response = _publish(
         client, "storage://opaque-ref", "p01-key-4", rights_item_id="rights-item-xyz"
     )
@@ -278,16 +190,16 @@ def test_explicit_rights_item_id_is_honoured(client: TestClient, engine: Engine)
     assert response.json()["status"] == "SUCCEEDED"
 
 
-def test_revocation_reblocks_publication(client: TestClient, engine: Engine) -> None:
+def test_revocation_reblocks_publication(client: TestClient, engine: Engine, clear_rights) -> None:
     """Revoking rights must close publication for that item again."""
     from clipos_api.rights_ledger import RightsLedgerStore, Status
 
     _register_policy(client)
-    _record_id = _clear_rights(engine, "storage://revocable")
+    record_id = clear_rights("storage://revocable")
     assert _publish(client, "storage://revocable", "p01-key-5").json()["status"] == "SUCCEEDED"
 
     RightsLedgerStore.from_engine(engine).record_status_change(
-        _record_id, "org-1", Status.REVOKED, "reviewer:audit"
+        record_id, "org-1", Status.REVOKED, "reviewer:audit"
     )
     after = _publish(client, "storage://revocable", "p01-key-6")
     assert after.json()["status"] == "DENIED"
@@ -327,3 +239,60 @@ def test_rights_gate_error_fails_closed(
     response = _publish(client, "storage://gate-broken", "p01-key-9")
     assert response.json()["status"] == "DENIED"
     assert "rights_gate_error" in response.json()["decision_reason"]
+
+
+# ---------------------------------------------------------------------------
+# Every failed precondition, not just the first
+# ---------------------------------------------------------------------------
+
+
+def test_conditions_collect_every_failed_precondition() -> None:
+    """The evaluator reports all failed preconditions, in precedence order."""
+    from clipos_api.publishing import evaluate_publish_conditions
+
+    decision = evaluate_publish_conditions(
+        _policy(kill_switch=True),
+        Visibility.PUBLIC,
+        OperatingMode.GUARDED_PUBLIC,
+        account_approved=False,
+        rights_clear=False,
+    )
+    assert decision.allowed is False
+    assert decision.reason == "rights_not_clear"
+    assert "rights_not_clear" in decision.reasons
+    assert "kill_switch_active" in decision.reasons
+    assert "owner_approval_required" in decision.reasons
+    # The primary reason is the first in precedence order.
+    assert decision.reasons[0] == decision.reason
+
+
+def test_denial_lists_every_failed_precondition(client: TestClient) -> None:
+    """A denied job carries the full set, not only the first failure."""
+    client.post(
+        "/publish-policies",
+        json={
+            "policy_id": "p01-kill",
+            "org_id": "org-1",
+            "platform": "youtube",
+            "allowed_visibilities": ["PRIVATE", "UNLISTED", "PUBLIC"],
+            "public_enabled": True,
+            "kill_switch": True,
+        },
+    )
+    body = _publish(client, "storage://multi-fail", "p01-key-10").json()
+    assert body["status"] == "DENIED"
+    reasons = body["denial_reasons"]
+    assert reasons, "the denial must carry at least one reason"
+    assert any("rights" in reason for reason in reasons)
+    assert "kill_switch_active" in reasons
+    assert body["decision_reason"] == reasons[0]
+
+
+def test_denial_reasons_are_persisted(client: TestClient) -> None:
+    """The stored job reports the same reasons as the submission did."""
+    _register_policy(client)
+    body = _publish(client, "storage://persisted", "p01-key-11").json()
+    fetched = client.get(f"/publications/{body['job_id']}", params={"org_id": "org-1"})
+    assert fetched.status_code == 200
+    assert fetched.json()["denial_reasons"] == body["denial_reasons"]
+    assert fetched.json()["decision_reason"] == body["decision_reason"]
