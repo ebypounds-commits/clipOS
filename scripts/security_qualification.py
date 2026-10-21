@@ -46,9 +46,29 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+# The rights-clearance helper is shared with the security qualification
+# harness; it is imported by path so the script works both when run
+# directly and when a test loads it by file location.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from rights_clearance import clear_rights
+
 FAIL = "FAIL"
 PASS = "PASS"
 WARN = "WARN"
+
+# Rights registry item id used by the publication probes. It appears in
+# request paths, so it must be URL-safe, and the registry keys records by a
+# globally unique id, so it is qualified by the organization.
+_ITEM_QUAL_CONTENT = "qual-content"
+
+
+def _scoped_item(item_id: str, org: str) -> str:
+    """Return the organization-qualified id of a rights registry item."""
+    return f"{item_id}-{org}"
+
 
 _SECRET_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9]{20,}"),
@@ -156,29 +176,39 @@ def check_operator_health(client: Client, org: str) -> Check:
 
 def check_kill_switch_observe(client: Client, org: str) -> Check:
     """An OBSERVE-mode submission must be DENIED regardless of policy."""
+    # The platform is unique per run: policies are keyed by (org, platform),
+    # so a fixed platform would 409 on a second run of the harness and the
+    # probe would then run against a stale policy.
+    platform = f"qual-observe-{_stamp()}"
     client.request(
         "POST",
         "/publish-policies",
         {
             "policy_id": f"qual-policy-{_stamp()}",
             "org_id": org,
-            "platform": "youtube",
+            "platform": platform,
             "allowed_visibilities": ["PRIVATE", "UNLISTED", "PUBLIC"],
             "public_enabled": True,
         },
     )
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Check(
+            "C3", "Kill switch / OBSERVE denies", FAIL, f"setup failed: {detail}"
+        )
     status, body = client.request(
         "POST",
         "/publications",
         {
             "org_id": org,
-            "platform": "youtube",
+            "platform": platform,
             "account_ref": "qual://account",
             "content_ref": "storage://qual-content",
             "title": "qualification probe",
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-observe-{_stamp()}",
             "operating_mode": "OBSERVE",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -191,6 +221,15 @@ def check_kill_switch_observe(client: Client, org: str) -> Check:
             f"OBSERVE-mode submission was {body.get('status')}, expected DENIED",
         )
     reason = str(body.get("decision_reason", ""))
+    if "mode_OBSERVE" not in reason:
+        # The rights precondition is cleared, so the refusal must be the
+        # operating-mode rule this check names.
+        return Check(
+            "C3",
+            "Kill switch / OBSERVE denies",
+            FAIL,
+            f"DENIED for the wrong reason: {reason}",
+        )
     return Check(
         "C3",
         "Kill switch / OBSERVE denies",
@@ -203,29 +242,36 @@ def check_kill_switch_observe(client: Client, org: str) -> Check:
 def check_public_refused_by_default(client: Client, org: str) -> Check:
     """With public disabled, a PUBLIC submission must be refused."""
     policy_id = f"qual-private-{_stamp()}"
+    platform = f"qual-private-{_stamp()}"
     client.request(
         "POST",
         "/publish-policies",
         {
             "policy_id": policy_id,
             "org_id": org,
-            "platform": "tiktok",
+            "platform": platform,
             "allowed_visibilities": ["PRIVATE", "UNLISTED"],
             "public_enabled": False,
         },
     )
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Check(
+            "C4", "PUBLIC disabled by default", FAIL, f"setup failed: {detail}"
+        )
     status, body = client.request(
         "POST",
         "/publications",
         {
             "org_id": org,
-            "platform": "tiktok",
+            "platform": platform,
             "account_ref": "qual://account",
             "content_ref": "storage://qual-content",
             "title": "qualification probe",
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-public-{_stamp()}",
             "operating_mode": "GUARDED_PUBLIC",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -237,45 +283,134 @@ def check_public_refused_by_default(client: Client, org: str) -> Check:
             FAIL,
             f"PUBLIC was {body.get('status')} under public_enabled=False",
         )
+    reason = str(body.get("decision_reason", ""))
+    if "visibility" not in reason:
+        # The rights precondition is cleared, so the refusal must be the
+        # visibility rule this check names.
+        return Check(
+            "C4",
+            "PUBLIC disabled by default",
+            FAIL,
+            f"DENIED for the wrong reason: {reason}",
+        )
     return Check(
         "C4",
         "PUBLIC disabled by default",
         PASS,
-        f"DENIED with reason={body.get('decision_reason')}",
+        f"DENIED with reason={reason}",
+        {"reason": reason},
     )
 
 
 def check_rights_gate_denies(client: Client, org: str) -> Check:
-    """A rights evaluation with no CLEAR record must deny publication."""
-    item_ref = f"qual-item-{_stamp()}"
-    status, body = client.request(
+    """The publication path must consult the rights gate, not just the gate.
+
+    Two independent assertions, reported as one control:
+
+    1. **Enforcement path** (the defect this control exists for): a
+       ``POST /publications`` for an item with NO rights record must come
+       back ``DENIED`` with a rights reason. The policy, operating mode and
+       visibility are all chosen so that rights is the *only* possible
+       reason for denial — a denial for any other reason means the probe is
+       misconfigured, and is reported as such rather than as a pass.
+    2. **Gate endpoint**: the original probe of
+       ``POST /rights-gate/{item}/evaluate``, kept standalone because it is
+       still a true statement about the gate itself.
+
+    Probing the gate alone is why the bug shipped: both the gate and the
+    old control were correct in isolation while publication ignored the
+    gate entirely.
+    """
+    title = "Rights gate denies uncleared content"
+    failures: list[str] = []
+
+    # --- Assertion 1: publication is denied when rights are not clear -----
+    #
+    # Every non-rights refusal in evaluate_publish_policy is neutralized:
+    # kill_switch is off; PRIVATE_TEST (not OBSERVE/DRAFT) is a publishing
+    # mode; PRIVATE is in allowed_visibilities and is never subject to the
+    # public_enabled / owner-approval branches. The item ref is fresh, so
+    # no rights record and no provenance manifest exist for it. The platform
+    # is one no other check claims: policies are keyed by (org, platform),
+    # so reusing another check's platform would 409 here.
+    policy_id = f"qual-rights-{_stamp()}"
+    platform = f"qual-rights-{_stamp()}"
+    policy_status, _ = client.request(
         "POST",
-        f"/rights-gate/{item_ref}/evaluate",
+        "/publish-policies",
+        {
+            "policy_id": policy_id,
+            "org_id": org,
+            "platform": platform,
+            "allowed_visibilities": ["PRIVATE", "UNLISTED"],
+            "public_enabled": False,
+            "kill_switch": False,
+        },
+    )
+    if policy_status not in (200, 409):
+        failures.append(f"setup: publish policy register -> {policy_status}")
+
+    item_ref = f"qual-item-{_stamp()}"
+    publish_status, published = client.request(
+        "POST",
+        "/publications",
+        {
+            "org_id": org,
+            "platform": platform,
+            "account_ref": "qual://account",
+            "content_ref": f"storage://{item_ref}",
+            "title": "qualification rights probe",
+            "visibility": "PRIVATE",
+            "idempotency_key": f"qual-rights-{_stamp()}",
+            "operating_mode": "PRIVATE_TEST",
+        },
+    )
+    publish_reason = ""
+    job_status = ""
+    if publish_status != 200 or not isinstance(published, dict):
+        failures.append(f"enforcement: POST /publications -> {publish_status}")
+    else:
+        job_status = str(published.get("status", ""))
+        publish_reason = str(published.get("decision_reason", ""))
+        if job_status != "DENIED":
+            failures.append(
+                f"enforcement: publication of an item with no rights record was "
+                f"{job_status} (reason={publish_reason}), expected DENIED"
+            )
+        elif "rights" not in publish_reason:
+            failures.append(
+                f"enforcement: DENIED, but reason={publish_reason} does not name "
+                f"rights (setup is wrong: rights is not the reason)"
+            )
+
+    # --- Assertion 2: the gate endpoint refuses the same item -------------
+    gate_item_ref = f"qual-item-{_stamp()}"
+    gate_status, gate_body = client.request(
+        "POST",
+        f"/rights-gate/{gate_item_ref}/evaluate",
         {"checked_at": None},
         params={"org_id": org},
     )
-    if status in (403, 404, 422):
-        return Check(
-            "C5",
-            "Rights gate denies uncleared content",
-            PASS,
-            f"refused with {status} (no rights record -> not publishable)",
-        )
-    if status != 200 or not isinstance(body, dict):
-        return Check("C5", "Rights gate denies uncleared content", FAIL, f"-> {status}")
-    if body.get("allowed") is True or body.get("permitted") is True:
-        return Check(
-            "C5",
-            "Rights gate denies uncleared content",
-            FAIL,
-            "gate allowed publication without a rights record",
-        )
-    return Check(
-        "C5",
-        "Rights gate denies uncleared content",
-        PASS,
-        f"denied, reason={body.get('reason')}",
+    if gate_status in (403, 404, 422):
+        gate_evidence = f"gate={gate_status} (no rights record -> not publishable)"
+    elif gate_status != 200 or not isinstance(gate_body, dict):
+        failures.append(f"gate: /rights-gate evaluate -> {gate_status}")
+        gate_evidence = f"gate={gate_status}"
+    elif gate_body.get("allowed") is True or gate_body.get("permitted") is True:
+        failures.append("gate: allowed publication without a rights record")
+        gate_evidence = "gate=200 allowed=True"
+    else:
+        gate_evidence = f"gate=denied reason={gate_body.get('reason')}"
+
+    enforcement_evidence = (
+        f"publication {job_status or 'NO_RESPONSE'} (reason={publish_reason or 'none'})"
     )
+    evidence = f"{enforcement_evidence}; {gate_evidence}"
+    if failures:
+        return Check(
+            "C5", title, FAIL, f"FAILED [{' | '.join(failures)}] -- {evidence}"
+        )
+    return Check("C5", title, PASS, evidence)
 
 
 def check_injection_quarantines(client: Client, org: str) -> Check:

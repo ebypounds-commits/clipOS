@@ -50,6 +50,15 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+# The rights-clearance helper is shared with the security qualification
+# harness; it is imported by path so the script works both when run
+# directly and when a test loads it by file location.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from rights_clearance import clear_rights
+
 PASS = "PASS"
 FAIL = "FAIL"
 SKIP = "SKIP"
@@ -63,6 +72,21 @@ _PLATFORM_PRIVATE_TEST = "tiktok"
 _PLATFORM_PUBLIC_DEFAULT = "instagram"
 _PLATFORM_RIGHTS = "facebook"
 _PLATFORM_KILL_SWITCH = "x"
+
+# Rights registry item ids. They appear in request paths (source items,
+# rights records), so they must be URL-safe; the publication therefore names
+# its rights item explicitly with rights_item_id instead of relying on the
+# content_ref fallback. The registry keys records by a globally unique id,
+# so the ids are qualified by the organization: two organizations
+# ingesting the same source item must not collide.
+_ITEM_QUAL_CONTENT = "qual-content"
+_ITEM_QUAL_VIDEO = "qual-video"
+
+
+def _scoped_item(item_id: str, org: str) -> str:
+    """Return the organization-qualified id of a rights registry item."""
+    return f"{item_id}-{org}"
+
 
 # Media-producing steps write inside the TARGET server's RENDER_WORKDIR and
 # are confined to it (CLIP-039 policy), so their paths must match that
@@ -200,11 +224,34 @@ def _required(steps: list[Step]) -> list[Step]:
 
 
 # ---------------------------------------------------------------------------
+# Rights clearance (the publication gate's precondition)
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
 # Private-mode invariants
 # ---------------------------------------------------------------------------
 
 
+def _denied_for(body: object, expected_fragment: str) -> str | None:
+    """Return an error text when the denial was not for the expected reason."""
+    if not isinstance(body, dict):
+        return "response was not an object"
+    status = body.get("status")
+    if status != "DENIED":
+        return f"expected DENIED, got {status}"
+    reason = str(body.get("decision_reason", ""))
+    if expected_fragment not in reason:
+        return f"DENIED for the wrong reason: {reason}"
+    return None
+
+
 def invariant_observe_denied(client: Client, org: str) -> Invariant:
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Invariant(
+            "P1", "OBSERVE mode denies all publishing", FAIL, f"setup failed: {detail}"
+        )
     client.request(
         "POST",
         "/publish-policies",
@@ -228,18 +275,20 @@ def invariant_observe_denied(client: Client, org: str) -> Invariant:
             "visibility": "PRIVATE",
             "idempotency_key": f"qual-observe-{int(time.time())}",
             "operating_mode": "OBSERVE",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
         return Invariant(
             "P1", "OBSERVE mode denies all publishing", FAIL, f"-> {status}"
         )
-    if body.get("status") != "DENIED":
+    problem = _denied_for(body, "mode_OBSERVE")
+    if problem:
         return Invariant(
             "P1",
             "OBSERVE mode denies all publishing",
             FAIL,
-            f"expected DENIED, got {body.get('status')}",
+            problem,
         )
     return Invariant(
         "P1",
@@ -251,6 +300,11 @@ def invariant_observe_denied(client: Client, org: str) -> Invariant:
 
 def invariant_private_test_cannot_publish_public(client: Client, org: str) -> Invariant:
     """PRIVATE_TEST may only reach PRIVATE/UNLISTED — PUBLIC must be refused."""
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Invariant(
+            "P2", "PRIVATE_TEST cannot publish PUBLIC", FAIL, f"setup failed: {detail}"
+        )
     client.request(
         "POST",
         "/publish-policies",
@@ -274,29 +328,36 @@ def invariant_private_test_cannot_publish_public(client: Client, org: str) -> In
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-privatetest-{int(time.time())}",
             "operating_mode": "PRIVATE_TEST",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
         return Invariant(
             "P2", "PRIVATE_TEST cannot publish PUBLIC", FAIL, f"-> {status}"
         )
-    if body.get("status") != "DENIED":
+    problem = _denied_for(body, "private_test_forbids_public")
+    if problem:
         return Invariant(
             "P2",
             "PRIVATE_TEST cannot publish PUBLIC",
             FAIL,
-            f"expected DENIED, got {body.get('status')}",
+            problem,
         )
     return Invariant(
         "P2",
         "PRIVATE_TEST cannot publish PUBLIC",
         PASS,
-        "PUBLIC denied under PRIVATE_TEST",
+        f"PUBLIC denied under PRIVATE_TEST ({body.get('decision_reason', '')})",
     )
 
 
 def invariant_public_refused_by_default(client: Client, org: str) -> Invariant:
     """PUBLIC is refused while the policy's public_enabled is false."""
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Invariant(
+            "P3", "PUBLIC refused by default", FAIL, f"setup failed: {detail}"
+        )
     client.request(
         "POST",
         "/publish-policies",
@@ -320,26 +381,37 @@ def invariant_public_refused_by_default(client: Client, org: str) -> Invariant:
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-default-{int(time.time())}",
             "operating_mode": "GUARDED_PUBLIC",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
         return Invariant("P3", "PUBLIC refused by default", FAIL, f"-> {status}")
-    if body.get("status") != "DENIED":
+    problem = _denied_for(body, "public_disabled_by_default")
+    if problem:
         return Invariant(
             "P3",
             "PUBLIC refused by default",
             FAIL,
-            f"expected DENIED, got {body.get('status')}",
+            problem,
         )
     return Invariant(
         "P3",
         "PUBLIC refused by default",
         PASS,
-        "PUBLIC denied while public_enabled is false",
+        f"PUBLIC denied while public_enabled is false "
+        f"({body.get('decision_reason', '')})",
     )
 
 
 def invariant_rights_gate_refuses_uncleared(client: Client, org: str) -> Invariant:
+    """An item with no rights record must be refused by the rights gate.
+
+    The probe item is deliberately NOT cleared, and the policy allows
+    PRIVATE — so the only reason the publication can be refused is the
+    rights gate. The check asserts the status AND that the reason names
+    rights: a refusal for any other reason would mean the gate was never
+    reached.
+    """
     client.request(
         "POST",
         "/publish-policies",
@@ -350,6 +422,7 @@ def invariant_rights_gate_refuses_uncleared(client: Client, org: str) -> Invaria
             "allowed_visibilities": ["PRIVATE", "UNLISTED"],
         },
     )
+    item_id = f"storage://uncleared-{int(time.time())}"
     status, body = client.request(
         "POST",
         "/publications",
@@ -357,26 +430,40 @@ def invariant_rights_gate_refuses_uncleared(client: Client, org: str) -> Invaria
             "org_id": org,
             "platform": _PLATFORM_RIGHTS,
             "account_ref": "qual://account",
-            "content_ref": f"storage://uncleared-{int(time.time())}",
+            "content_ref": item_id,
             "title": "private-mode qualification probe",
             "visibility": "PRIVATE",
             "idempotency_key": f"qual-rights-{int(time.time())}",
             "operating_mode": "PRIVATE_TEST",
         },
     )
-    # The rights gate must not let an unregistered item through.
-    if status == 200 and isinstance(body, dict) and body.get("status") == "PUBLISHED":
+    if status != 200 or not isinstance(body, dict):
         return Invariant(
             "P4",
             "Rights gate refuses uncleared content",
             FAIL,
-            "an uncleared item was published",
+            f"-> {status}",
+        )
+    if body.get("status") != "DENIED":
+        return Invariant(
+            "P4",
+            "Rights gate refuses uncleared content",
+            FAIL,
+            f"an uncleared item was published: {body.get('status')}",
+        )
+    reason = str(body.get("decision_reason", ""))
+    if "rights" not in reason:
+        return Invariant(
+            "P4",
+            "Rights gate refuses uncleared content",
+            FAIL,
+            f"DENIED for the wrong reason: {reason}",
         )
     return Invariant(
         "P4",
         "Rights gate refuses uncleared content",
         PASS,
-        f"uncleared item not published (-> {status})",
+        f"uncleared item denied by the rights gate ({reason})",
     )
 
 
@@ -385,8 +472,15 @@ def invariant_kill_switch_closes_publishing(client: Client, org: str) -> Invaria
 
     The kill switch is a policy field, not a standalone endpoint, so this
     probe exercises the real enforcement path: register a policy that would
-    otherwise allow PRIVATE, with the switch closed, and assert DENIED.
+    otherwise allow PRIVATE, with the switch closed, and assert DENIED. The
+    item is rights-cleared first, so the kill switch — not the rights gate —
+    is the reason under test.
     """
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Invariant(
+            "P5", "Kill switch closes publishing", FAIL, f"setup failed: {detail}"
+        )
     client.request(
         "POST",
         "/publish-policies",
@@ -411,6 +505,7 @@ def invariant_kill_switch_closes_publishing(client: Client, org: str) -> Invaria
             "visibility": "PRIVATE",
             "idempotency_key": f"qual-killswitch-{int(time.time())}",
             "operating_mode": "PRIVATE_TEST",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -715,6 +810,16 @@ def walk_pipeline(walk: _Walk) -> None:
         },
         expect=(200, 409),
     )
+    # The publication gate requires cleared rights for the published item.
+    # Clearing them here is what makes the private publication possible, and
+    # the recorded steps show it.
+    clear_rights(
+        walk.client,
+        org,
+        _scoped_item(_ITEM_QUAL_VIDEO, org),
+        walk=walk,
+        stage="rights",
+    )
     published = walk.step(
         "publish",
         "private publication",
@@ -729,11 +834,18 @@ def walk_pipeline(walk: _Walk) -> None:
             "visibility": "PRIVATE",
             "idempotency_key": "qual-pub-1",
             "operating_mode": "PRIVATE_TEST",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_VIDEO, org),
         },
         expect=(200,),
     )
-    if isinstance(published, dict):
-        walk.context["external_id"] = published.get("external_id")
+    if not isinstance(published, dict) or published.get("status") != "SUCCEEDED":
+        # A DENIED job is still HTTP 200, so the HTTP status alone cannot
+        # tell the operator that nothing was published.
+        detail = ""
+        if isinstance(published, dict):
+            detail = str(published.get("decision_reason", published.get("status", "")))
+        raise RuntimeError(f"private publication did not succeed: {detail}")
+    walk.context["external_id"] = published.get("external_id")
 
     # ------------------------------------------------------------ analytics
     walk.step(

@@ -151,7 +151,8 @@ class SourceItemRecord(Base):
             "external_ref",
             unique=True,
         ),
-        sa.Index("uq_source_items_item_id", "item_id", unique=True),
+        # Org-scoped: two organizations may register the same source item.
+        sa.Index("uq_source_items_item_org", "item_id", "org_id", unique=True),
         sa.Index("ix_source_items_org_captured", "org_id", "captured_at"),
     )
 
@@ -388,6 +389,20 @@ class RightsEntitiesStore:
                         f"{item.source_id}:{item.external_ref}"
                     )
                 return stored
+            # The same item id may exist in another organization, but not twice
+            # in this one: report the conflict instead of letting the unique
+            # index raise a 500.
+            clash = session.scalars(
+                sa.select(SourceItemRecord).where(
+                    SourceItemRecord.item_id == item.item_id,
+                    SourceItemRecord.org_id == item.org_id,
+                )
+            ).first()
+            if clash is not None:
+                raise ValueError(
+                    "source item already registered with different fields: "
+                    f"{item.item_id} ({item.org_id})"
+                )
             row = SourceItemRecord(
                 item_id=item.item_id,
                 org_id=item.org_id,

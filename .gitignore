@@ -48,6 +48,7 @@ Thumbs.db
 
 # generated package/audit state
 .agent/audit/
+services/api/.agent/
 .agent/dryrun/*.log
 
 # setuptools artifacts

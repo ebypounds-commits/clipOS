@@ -161,7 +161,10 @@ def test_publish_route_uses_tiktok_adapter(
     )
     from clipos_api.publishing import submit_publication
 
-    job = submit_publication(get_adapter("tiktok"), store, request)
+    # rights_clear: the rights gate is exercised in
+    # tests/test_publication_rights_enforcement.py; these tests are about
+    # which adapter the platform resolves to.
+    job = submit_publication(get_adapter("tiktok"), store, request, rights_clear=True)
     assert job.status == PublishStatus.SUCCEEDED
     assert job.external_id is not None
     assert job.external_id.startswith("tt-mock-")
@@ -192,7 +195,8 @@ def test_publish_route_uses_youtube_adapter_for_youtube_platform(
     )
     from clipos_api.publishing import submit_publication
 
-    job = submit_publication(get_adapter("youtube"), store, request)
+    # rights_clear: see the note in test_publish_route_uses_tiktok_adapter.
+    job = submit_publication(get_adapter("youtube"), store, request, rights_clear=True)
     assert job.status == PublishStatus.SUCCEEDED
     assert job.external_id is not None
     assert job.external_id.startswith("yt-mock-")
@@ -224,8 +228,9 @@ def client(engine: Engine, audit_log: Path, monkeypatch: pytest.MonkeyPatch):
     return TestClient(main_mod.app)
 
 
-def test_tiktok_publish_roundtrip_via_route(client) -> None:
+def test_tiktok_publish_roundtrip_via_route(client, clear_rights) -> None:
     """Full route roundtrip: register policy, submit publication via TikTok."""
+    clear_rights("storage://vid.mp4", org_id="org-1")
     pol = client.post(
         "/publish-policies",
         json={
@@ -260,8 +265,9 @@ def test_tiktok_publish_roundtrip_via_route(client) -> None:
     assert fetched.json()["external_id"] == body["external_id"]
 
 
-def test_tiktok_denied_returns_200_with_denied_status(client) -> None:
+def test_tiktok_denied_returns_200_with_denied_status(client, clear_rights) -> None:
     """TikTok submission denied by policy returns 200 with DENIED."""
+    clear_rights("storage://vid.mp4", org_id="org-2")
     client.post(
         "/publish-policies",
         json={
@@ -287,3 +293,6 @@ def test_tiktok_denied_returns_200_with_denied_status(client) -> None:
     assert resp.status_code == 200, resp.text
     assert resp.json()["status"] == "DENIED"
     assert resp.json()["external_id"] is None
+    # The rights precondition is cleared, so the refusal is the visibility
+    # rule under test — not an incidental rights denial.
+    assert "visibility" in resp.json()["decision_reason"]

@@ -30,6 +30,31 @@ The Python suite covers the health contract, provider alias rejection, absence o
 
 `mypy` runs pragmatically (`python_version = "3.12"`, `check_untyped_defs = true`, not strict). The only suppression currently in source is `# type: ignore[return-value]` in `services/api/clipos_api/infrastructure.py`, where Docker's real compose JSON may return `Health` as a bare string, a nested object, or omit it entirely; the ignore documents that runtime shape narrowing. Add future suppressions only with a concrete rule and a written reason, and keep this documentation in sync.
 
+## Running the suite against a worktree
+
+The build host keeps one shared virtualenv whose editable install of
+`clipos_api` is mapped to the canonical checkout. A test run inside a
+worktree therefore imports the canonical product code and reports a result
+about the wrong artifact. `services/api/tests/conftest.py` refuses to run in
+that situation: the session aborts and names both the expected and the
+imported path.
+
+Bind the code under test to the tree you are testing:
+
+```bash
+export REPO=/srv/clipos/worktrees/<ticket>
+export PYTHONPATH=$REPO/services/api
+cd $REPO
+pytest -q services/api
+```
+
+The alternative is a per-worktree virtualenv (`python -m venv
+/srv/clipos/venvs/<ticket>` then `pip install -e "services/api[dev]"`), which
+makes the mapping local to the worktree. The guard is required either way: it
+is the only thing that fails loudly instead of silently. Set
+`CLIPOS_ALLOW_FOREIGN_CODE=1` only to deliberately run against an installed
+package.
+
 ## Dependency and security audits
 
 `scripts/dependency_audit.sh` runs `pip-audit -r requirements-audit.txt` and fails on findings. `scripts/audit-ignores.txt` holds checked-in exceptions, one per line, formatted as `<CVE> # justification`; every entry needs a written reason, and findings without an entry fail CI. Never silence findings by editing tool flags or deleting checks. The Python SBOM is generated with `cyclonedx-py` into `sbom/api-python.cdx.json` (gitignored, uploaded as a CI artifact). `npm audit --audit-level=high` runs in `apps/web`.

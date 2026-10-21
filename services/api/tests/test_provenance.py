@@ -121,7 +121,10 @@ def _fingerprint(fingerprint_id: str = "fp-1", **changes: object) -> ContentFing
 def test_append_step_validates_item_and_org(store: ProvenanceStore) -> None:
     with pytest.raises(ValueError, match="not found"):
         store.append_step("missing", "org-1", _step())
-    with pytest.raises(ValueError, match="different organization"):
+    # The item lookup is org-scoped: an item of another organization does
+    # not exist for this caller, and the refusal must not confirm that the
+    # id exists elsewhere.
+    with pytest.raises(ValueError, match="not found"):
         store.append_step("item-1", "org-2", _step())
 
 

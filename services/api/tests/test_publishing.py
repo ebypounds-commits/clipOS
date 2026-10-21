@@ -85,8 +85,9 @@ def test_kill_switch_denies_everything() -> None:
         public_enabled=True,
         kill_switch=True,
     )
+    # rights_clear isolates the kill-switch rule from the rights gate (P0-1).
     allowed, reason = evaluate_publish_policy(
-        policy, Visibility.PRIVATE, OperatingMode.AUTONOMOUS_PUBLIC
+        policy, Visibility.PRIVATE, OperatingMode.AUTONOMOUS_PUBLIC, rights_clear=True
     )
     assert allowed is False
     assert "kill_switch" in reason
@@ -95,21 +96,34 @@ def test_kill_switch_denies_everything() -> None:
 def test_observe_and_draft_deny() -> None:
     policy = _policy()
     for mode in (OperatingMode.OBSERVE, OperatingMode.DRAFT):
-        allowed, reason = evaluate_publish_policy(policy, Visibility.PRIVATE, mode)
+        allowed, reason = evaluate_publish_policy(
+            policy, Visibility.PRIVATE, mode, rights_clear=True
+        )
         assert allowed is False
         assert mode.value in reason
 
 
 def test_private_test_forbids_public() -> None:
-    policy = _policy(public_enabled=True)
-    allowed, _ = evaluate_publish_policy(policy, Visibility.PUBLIC, OperatingMode.PRIVATE_TEST)
+    # PUBLIC must be inside the policy's allowed set, otherwise the visibility
+    # rule short-circuits before the PRIVATE_TEST branch is reached and this
+    # test would assert the wrong rule.
+    policy = _policy(
+        allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED, Visibility.PUBLIC],
+        public_enabled=True,
+    )
+    allowed, reason = evaluate_publish_policy(
+        policy, Visibility.PUBLIC, OperatingMode.PRIVATE_TEST, False, True
+    )
     assert allowed is False
+    assert reason == "private_test_forbids_public"
 
 
 def test_private_test_allows_private_unlisted() -> None:
     policy = _policy()
     for vis in (Visibility.PRIVATE, Visibility.UNLISTED):
-        allowed, _ = evaluate_publish_policy(policy, vis, OperatingMode.PRIVATE_TEST)
+        allowed, _ = evaluate_publish_policy(
+            policy, vis, OperatingMode.PRIVATE_TEST, rights_clear=True
+        )
         assert allowed is True
 
 
@@ -118,7 +132,9 @@ def test_public_requires_public_enabled() -> None:
         allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED, Visibility.PUBLIC],
         public_enabled=False,
     )
-    allowed, _ = evaluate_publish_policy(policy, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC)
+    allowed, _ = evaluate_publish_policy(
+        policy, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC, rights_clear=True
+    )
     assert allowed is False
     policy2 = _policy(
         allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED, Visibility.PUBLIC],
@@ -127,7 +143,11 @@ def test_public_requires_public_enabled() -> None:
     # account_approved isolates the public_enabled rule; the owner gate
     # (CLIP-099) is covered in test_public_publishing_gate.py.
     allowed2, _ = evaluate_publish_policy(
-        policy2, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC, account_approved=True
+        policy2,
+        Visibility.PUBLIC,
+        OperatingMode.GUARDED_PUBLIC,
+        account_approved=True,
+        rights_clear=True,
     )
     assert allowed2 is True
 
@@ -139,7 +159,7 @@ def test_public_denied_without_owner_approval() -> None:
         public_enabled=True,
     )
     allowed, reason = evaluate_publish_policy(
-        policy, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC
+        policy, Visibility.PUBLIC, OperatingMode.GUARDED_PUBLIC, rights_clear=True
     )
     assert allowed is False
     assert reason == "owner_approval_required"
@@ -149,7 +169,9 @@ def test_private_visibility_ignores_the_owner_gate() -> None:
     """A non-public visibility never consults the owner gate."""
     policy = _policy()
     for vis in (Visibility.PRIVATE, Visibility.UNLISTED):
-        allowed, _ = evaluate_publish_policy(policy, vis, OperatingMode.PRIVATE_TEST)
+        allowed, _ = evaluate_publish_policy(
+            policy, vis, OperatingMode.PRIVATE_TEST, rights_clear=True
+        )
         assert allowed is True
 
 
@@ -160,8 +182,11 @@ def test_visibility_not_in_allowed_denied() -> None:
         platform="youtube",
         allowed_visibilities=[Visibility.PRIVATE],
     )
-    allowed, _ = evaluate_publish_policy(policy, Visibility.UNLISTED, OperatingMode.PRIVATE_TEST)
+    allowed, reason = evaluate_publish_policy(
+        policy, Visibility.UNLISTED, OperatingMode.PRIVATE_TEST, False, True
+    )
     assert allowed is False
+    assert reason == "visibility_not_allowed"
 
 
 # ---------------------------------------------------------------------------
@@ -236,8 +261,11 @@ def test_submit_allowed_persists_succeeded(
         )
     )
     # account_approved models the owner gate (CLIP-099) having been satisfied;
-    # this test is about the submit/persist mechanics.
-    job = submit_publication(MockPublishingAdapter(), store, _submission(), account_approved=True)
+    # rights_clear models the rights gate (P0-1) having been satisfied. This
+    # test is about the submit/persist mechanics.
+    job = submit_publication(
+        MockPublishingAdapter(), store, _submission(), account_approved=True, rights_clear=True
+    )
     assert job.status is PublishStatus.SUCCEEDED
     assert job.external_id is not None
     assert job.decision_reason == "allowed"
@@ -250,7 +278,8 @@ def test_submit_denied_no_adapter_call(
 ) -> None:
     # PUBLIC not in allowed_visibilities -> visibility_not_allowed
     store.register_policy(_policy(allowed_visibilities=[Visibility.PRIVATE, Visibility.UNLISTED]))
-    job = submit_publication(MockPublishingAdapter(), store, _submission())
+    # rights_clear keeps the denial attributable to the visibility rule (P0-1).
+    job = submit_publication(MockPublishingAdapter(), store, _submission(), rights_clear=True)
     assert job.status is PublishStatus.DENIED
     assert "visibility_not_allowed" in job.decision_reason
     log = audit_log.read_text(encoding="utf-8")
@@ -297,8 +326,11 @@ def test_adapter_failure_persists_failed(store: PublishingStore, engine: Engine)
             return PublishStatus.FAILED
 
     # account_approved models the owner gate (CLIP-099) having been satisfied;
-    # this test is about adapter-failure persistence.
-    job = submit_publication(BrokenAdapter(), store, _submission(), account_approved=True)
+    # rights_clear models the rights gate (P0-1) having been satisfied. This
+    # test is about adapter-failure persistence.
+    job = submit_publication(
+        BrokenAdapter(), store, _submission(), account_approved=True, rights_clear=True
+    )
     assert job.status is PublishStatus.FAILED
     assert "provider timeout" in (job.error_ref or "")
 
@@ -331,7 +363,96 @@ def client(engine: Engine, audit_log: Path, monkeypatch: pytest.MonkeyPatch):
     return TestClient(app)
 
 
-def test_route_full_publish_roundtrip(client) -> None:
+def _clear_rights(engine: Engine, item_id: str) -> str:
+    """Register *item_id* with a CLEAR rights record plus a provenance manifest.
+
+    Mirrors test_publication_rights_enforcement.py::_clear_rights: the
+    creator/source/item entity rows must exist before the rights record or the
+    manifest step can be written, because both RightsLedgerStore.register_record
+    and ProvenanceStore.append_step look the source item up by item_id.
+
+    Returns the rights record_id so a caller can later revoke it.
+    """
+    from datetime import UTC, datetime
+
+    from clipos_api import rights_entities
+    from clipos_api.provenance import ProvenanceStep, ProvenanceStore, StepType
+    from clipos_api.rights_entities import ContentSource, Creator, SourceItem, SourceType
+    from clipos_api.rights_ledger import (
+        Basis,
+        RightsLedgerStore,
+        RightsRecord,
+        Status,
+    )
+
+    entities = rights_entities.RightsEntitiesStore.from_engine(engine)
+    entities.register_creator(
+        Creator.model_validate(
+            {
+                "creator_id": "creator-1",
+                "org_id": "org-1",
+                "display_name": "Ada Lovelace",
+                "contact_ref": "secrets://contacts/creator-1",
+            }
+        )
+    )
+    entities.register_source(
+        ContentSource.model_validate(
+            {
+                "source_id": "source-1",
+                "org_id": "org-1",
+                "creator_id": "creator-1",
+                "source_type": SourceType.FEED,
+                "canonical_url": "https://example.com/feed.xml",
+            }
+        )
+    )
+    entities.register_item(
+        SourceItem.model_validate(
+            {
+                "item_id": item_id,
+                "org_id": "org-1",
+                "source_id": "source-1",
+                "external_ref": f"ext:{item_id}",
+                "captured_at": datetime(2026, 1, 1, tzinfo=UTC),
+                "content_ref": f"storage://source-items/{item_id}",
+            }
+        )
+    )
+
+    ledger = RightsLedgerStore.from_engine(engine)
+    record_id = f"rr-{item_id}"
+    ledger.register_record(
+        RightsRecord.model_validate(
+            {
+                "record_id": record_id,
+                "item_id": item_id,
+                "org_id": "org-1",
+                "status": Status.REVIEW_REQUIRED,
+                "basis": Basis.OWNED,
+                "reviewed_by": "reviewer:audit",
+                "metadata": {"source": "p0-1 test"},
+            }
+        )
+    )
+    # Move it to CLEAR through the real transition path.
+    ledger.record_status_change(record_id, "org-1", Status.CLEAR, "reviewer:audit")
+
+    step = ProvenanceStep.model_validate(
+        {
+            "step_type": StepType.TRANSFORMED,
+            "actor_ref": "operator:audit",
+            "at": datetime(2026, 1, 2, tzinfo=UTC),
+            "inputs_refs": [f"storage://source-items/{item_id}"],
+            "outputs_ref": f"storage://renders/{item_id}",
+            "transform_note": "p0-1 test manifest step",
+        }
+    )
+    ProvenanceStore.from_engine(engine).append_step(item_id, "org-1", step)
+    return record_id
+
+
+def test_route_full_publish_roundtrip(client, engine: Engine) -> None:
     client.post(
         "/publish-policies",
         json={
@@ -366,6 +487,9 @@ def test_route_full_publish_roundtrip(client) -> None:
             "private_test_ref": "rt-pt",
         },
     )
+    # Satisfy the rights gate (P0-1) for the item being published: the route
+    # keys the gate on content_ref when rights_item_id is absent.
+    _clear_rights(engine, "storage://videos/clip-1.mp4")
     response = client.post(
         "/publications",
         json={
@@ -392,7 +516,7 @@ def test_route_full_publish_roundtrip(client) -> None:
     assert len(listing.json()) == 1
 
 
-def test_route_denied_returns_200_with_denied_status(client) -> None:
+def test_route_denied_returns_200_with_denied_status(client, engine) -> None:
     client.post(
         "/publish-policies",
         json={
@@ -402,6 +526,10 @@ def test_route_denied_returns_200_with_denied_status(client) -> None:
             "allowed_visibilities": ["PRIVATE", "UNLISTED"],
         },
     )
+    # Rights is cleared so the VISIBILITY rule is what denies here; without
+    # this the rights gate would deny first and the test would pass for the
+    # wrong reason.
+    _clear_rights(engine, "storage://vid.mp4")
     response = client.post(
         "/publications",
         json={
@@ -416,7 +544,9 @@ def test_route_denied_returns_200_with_denied_status(client) -> None:
         },
     )
     assert response.status_code == 200, response.text
-    assert response.json()["status"] == "DENIED"
+    body = response.json()
+    assert body["status"] == "DENIED"
+    assert body["decision_reason"] == "visibility_not_allowed", body
 
 
 def test_route_missing_policy_maps_to_404(client) -> None:

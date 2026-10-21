@@ -356,7 +356,20 @@ def _submit_public(client: TestClient, key: str = "gate-pub-1") -> object:
     )
 
 
-def test_public_denied_without_owner_approval(client: TestClient) -> None:
+@pytest.fixture()
+def cleared_content_rights(clear_rights) -> str:
+    """Put the published item in the CLEAR rights state (CLIP-033).
+
+    The publication path requires cleared rights for every visibility. These
+    tests are about the *owner* gate, so the rights precondition is
+    established first and the owner gate is the reason under test.
+    """
+    return clear_rights("storage://content", org_id="org-1")
+
+
+def test_public_denied_without_owner_approval(
+    client: TestClient, cleared_content_rights: str
+) -> None:
     """Even with public_enabled, PUBLIC must be refused with no approval."""
     _policy(client, public_enabled=True)
     response = _submit_public(client)
@@ -366,7 +379,9 @@ def test_public_denied_without_owner_approval(client: TestClient) -> None:
     assert body["decision_reason"] == "owner_approval_required"
 
 
-def test_public_denied_with_approval_but_no_private_test(client: TestClient) -> None:
+def test_public_denied_with_approval_but_no_private_test(
+    client: TestClient, cleared_content_rights: str
+) -> None:
     _policy(client, public_enabled=True)
     client.post(
         "/publishing/owner-approvals",
@@ -385,6 +400,7 @@ def test_public_denied_with_approval_but_no_private_test(client: TestClient) -> 
 
 def test_public_allowed_once_approved_after_a_passing_private_test(
     client: TestClient,
+    cleared_content_rights: str,
 ) -> None:
     _policy(client, public_enabled=True)
     client.post(
@@ -415,7 +431,9 @@ def test_public_allowed_once_approved_after_a_passing_private_test(
     assert body["visibility"] == "PUBLIC"
 
 
-def test_public_denied_again_after_revocation(client: TestClient) -> None:
+def test_public_denied_again_after_revocation(
+    client: TestClient, cleared_content_rights: str
+) -> None:
     """Revoking the approval must close public publishing for that account."""
     _policy(client, public_enabled=True)
     client.post(
@@ -453,7 +471,9 @@ def test_public_denied_again_after_revocation(client: TestClient) -> None:
     assert after.json()["decision_reason"] == "owner_approval_required"
 
 
-def test_private_visibility_does_not_consult_the_gate(client: TestClient) -> None:
+def test_private_visibility_does_not_consult_the_gate(
+    client: TestClient, cleared_content_rights: str
+) -> None:
     """A private post is unaffected by the absence of an owner approval."""
     _policy(client, public_enabled=False)
     response = client.post(

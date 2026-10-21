@@ -156,7 +156,8 @@ class ProvenanceManifestRecord(Base):
 
     __tablename__ = "provenance_manifests"
     __table_args__ = (
-        sa.Index("uq_provenance_manifests_manifest_id", "manifest_id", unique=True),
+        # Org-scoped: the manifest id is derived from the item id.
+        sa.Index("uq_provenance_manifests_manifest_org", "manifest_id", "org_id", unique=True),
         sa.Index("uq_provenance_manifests_item_org", "item_id", "org_id", unique=True),
         sa.Index("ix_provenance_manifests_org_generated", "org_id", "generated_at"),
         sa.Index("ix_provenance_manifests_item", "item_id"),
@@ -246,26 +247,33 @@ class ProvenanceStore:
         return cls(sessionmaker(bind=engine, expire_on_commit=False))
 
     @staticmethod
-    def _item(session: Session, item_id: str) -> Any | None:
+    def _item(session: Session, item_id: str, org_id: str) -> Any | None:
+        """Return the source item of *org_id* — never another org's item."""
         from clipos_api.rights_entities import SourceItemRecord
 
         return session.scalars(
-            sa.select(SourceItemRecord).where(SourceItemRecord.item_id == item_id)
+            sa.select(SourceItemRecord).where(
+                SourceItemRecord.item_id == item_id,
+                SourceItemRecord.org_id == org_id,
+            )
         ).first()
 
     @staticmethod
-    def _manifest(session: Session, manifest_id: str) -> ProvenanceManifestRecord | None:
-        return session.scalars(
-            sa.select(ProvenanceManifestRecord).where(
-                ProvenanceManifestRecord.manifest_id == manifest_id
-            )
-        ).first()
+    def _manifest(
+        session: Session, manifest_id: str, org_id: str | None = None
+    ) -> ProvenanceManifestRecord | None:
+        query = sa.select(ProvenanceManifestRecord).where(
+            ProvenanceManifestRecord.manifest_id == manifest_id
+        )
+        if org_id is not None:
+            query = query.where(ProvenanceManifestRecord.org_id == org_id)
+        return session.scalars(query).first()
 
     def get_manifest(self, manifest_id: str, org_id: str) -> ProvenanceManifest:
         """Return one org-scoped manifest with its steps and hash."""
         with self._sessions() as session:
-            row = self._manifest(session, manifest_id)
-            if row is None or row.org_id != org_id:
+            row = self._manifest(session, manifest_id, org_id)
+            if row is None:
                 raise ValueError(f"provenance manifest not found: {manifest_id}")
             return _manifest_from_row(row)
 
@@ -282,11 +290,9 @@ class ProvenanceStore:
     def append_step(self, item_id: str, org_id: str, step: ProvenanceStep) -> ProvenanceManifest:
         """Append one step to the item's manifest; updates are rejected by policy."""
         with self._sessions.begin() as session:
-            item = self._item(session, item_id)
+            item = self._item(session, item_id, org_id)
             if item is None:
                 raise ValueError(f"source item not found: {item_id}")
-            if item.org_id != org_id:
-                raise ValueError("source item belongs to a different organization")
             row = session.scalars(
                 sa.select(ProvenanceManifestRecord).where(
                     ProvenanceManifestRecord.item_id == item_id,
@@ -325,11 +331,9 @@ class ProvenanceStore:
     def generate_manifest(self, item_id: str, org_id: str) -> ProvenanceManifest:
         """Compute and record the canonical manifest hash (idempotent for same chain)."""
         with self._sessions.begin() as session:
-            item = self._item(session, item_id)
+            item = self._item(session, item_id, org_id)
             if item is None:
                 raise ValueError(f"source item not found: {item_id}")
-            if item.org_id != org_id:
-                raise ValueError("source item belongs to a different organization")
             row = session.scalars(
                 sa.select(ProvenanceManifestRecord).where(
                     ProvenanceManifestRecord.item_id == item_id,

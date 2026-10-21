@@ -38,6 +38,8 @@ LLM, no provider identifier anywhere.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from hashlib import sha1
@@ -185,6 +187,7 @@ class PublishSubmission(BaseModel):
     visibility: Visibility
     idempotency_key: str = Field(min_length=1, max_length=255)
     operating_mode: OperatingMode
+    rights_item_id: str | None = Field(default=None, max_length=128)
 
 
 class PublicationJob(BaseModel):
@@ -203,9 +206,75 @@ class PublicationJob(BaseModel):
     idempotency_key: str = Field(min_length=1, max_length=255)
     status: PublishStatus
     decision_reason: str = Field(min_length=1, max_length=255)
+    denial_reasons: list[str] = Field(default_factory=list)
     external_id: str | None = Field(default=None, max_length=255)
     error_ref: str | None = Field(default=None, max_length=512)
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class PublishDecision:
+    """One publication precondition evaluation.
+
+    ``reason`` is the primary (first failed) precondition — the one the
+    operator should act on. ``reasons`` holds *every* failed precondition, so
+    a submission that fails several checks is not hidden behind the first
+    one; an operator sees the whole set and can clear them in one pass.
+    """
+
+    allowed: bool
+    reason: str
+    reasons: tuple[str, ...] = ()
+
+
+def evaluate_publish_conditions(
+    policy: PublishPolicy,
+    visibility: Visibility,
+    operating_mode: OperatingMode,
+    account_approved: bool = False,
+    rights_clear: bool = False,
+) -> PublishDecision:
+    """Evaluate every publication precondition, fail-closed (PRD §7).
+
+    Returns the decision together with the full set of failed
+    preconditions. The order is fixed and is the precedence of the primary
+    reason:
+
+    1. ``rights_not_clear`` — CLIP-033 / 07_SECURITY_GOVERNANCE_RIGHTS:
+       "rights_status != CLEAR -> publication blocked". Checked first
+       because an unevaluable or uncleared rights state must never reach
+       an adapter.
+    2. ``kill_switch_active`` — the policy's global stop.
+    3. ``mode_<mode>_denies_publishing`` — OBSERVE and DRAFT never publish.
+    4. ``visibility_not_allowed`` — outside the policy's allowed set.
+    5. For PUBLIC: ``private_test_forbids_public``, then
+       ``public_disabled_by_default``, then ``owner_approval_required``
+       (CLIP-099: public mode requires explicit owner approval after a
+       successful private test).
+
+    ``account_approved`` and ``rights_clear`` both default to False, so a
+    caller that consults neither the owner gate nor the rights gate cannot
+    publish by omission.
+    """
+    reasons: list[str] = []
+    if not rights_clear:
+        reasons.append("rights_not_clear")
+    if policy.kill_switch:
+        reasons.append("kill_switch_active")
+    if operating_mode in (OperatingMode.OBSERVE, OperatingMode.DRAFT):
+        reasons.append(f"mode_{operating_mode.value}_denies_publishing")
+    if visibility not in policy.allowed_visibilities:
+        reasons.append("visibility_not_allowed")
+    if visibility is Visibility.PUBLIC:
+        if operating_mode is OperatingMode.PRIVATE_TEST:
+            reasons.append("private_test_forbids_public")
+        if not policy.public_enabled:
+            reasons.append("public_disabled_by_default")
+        if not account_approved:
+            reasons.append("owner_approval_required")
+    if reasons:
+        return PublishDecision(allowed=False, reason=reasons[0], reasons=tuple(reasons))
+    return PublishDecision(allowed=True, reason="allowed", reasons=())
 
 
 def evaluate_publish_policy(
@@ -213,33 +282,22 @@ def evaluate_publish_policy(
     visibility: Visibility,
     operating_mode: OperatingMode,
     account_approved: bool = False,
+    rights_clear: bool = False,
 ) -> tuple[bool, str]:
     """Pure fail-closed policy evaluation (PRD §7 + defaults).
 
-    Returns (allowed, reason). Kill switch denies everything; OBSERVE and
-    DRAFT never publish; PRIVATE_TEST allows only PRIVATE/UNLISTED; PUBLIC
-    requires public_enabled *and* a live owner approval for the account
-    (CLIP-099: "public mode requires explicit owner approval after
-    successful private test"); visibility must also be inside the policy's
-    allowed set.
-
-    ``account_approved`` defaults to False so a caller that does not consult
-    the owner gate cannot publish publicly by omission.
+    Returns (allowed, reason) — the primary failed precondition. Use
+    :func:`evaluate_publish_conditions` when the full set of failed
+    preconditions is needed.
     """
-    if policy.kill_switch:
-        return False, "kill_switch_active"
-    if operating_mode in (OperatingMode.OBSERVE, OperatingMode.DRAFT):
-        return False, f"mode_{operating_mode.value}_denies_publishing"
-    if visibility not in policy.allowed_visibilities:
-        return False, "visibility_not_allowed"
-    if visibility is Visibility.PUBLIC:
-        if operating_mode is OperatingMode.PRIVATE_TEST:
-            return False, "private_test_forbids_public"
-        if not policy.public_enabled:
-            return False, "public_disabled_by_default"
-        if not account_approved:
-            return False, "owner_approval_required"
-    return True, "allowed"
+    decision = evaluate_publish_conditions(
+        policy,
+        visibility,
+        operating_mode,
+        account_approved,
+        rights_clear,
+    )
+    return decision.allowed, decision.reason
 
 
 class PublishPolicyRecord(Base):
@@ -293,6 +351,28 @@ class PublicationJobRecord(Base):
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
 
 
+class PublicationDenialReasonRecord(Base):
+    """SQL row for one failed publication precondition of one job."""
+
+    __tablename__ = "publication_denial_reasons"
+    __table_args__ = (
+        sa.Index(
+            "uq_publication_denial_reasons_job_ordinal",
+            "job_id",
+            "ordinal",
+            unique=True,
+        ),
+        sa.Index("ix_publication_denial_reasons_org_job", "org_id", "job_id"),
+    )
+
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement=True)
+    job_id: Mapped[str] = mapped_column(sa.String(128), nullable=False)
+    org_id: Mapped[str] = mapped_column(sa.String(64), nullable=False)
+    reason: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    ordinal: Mapped[int] = mapped_column(sa.Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(sa.DateTime(timezone=True), nullable=False)
+
+
 def _aware(value: datetime) -> datetime:
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value
 
@@ -309,7 +389,7 @@ def _policy_from_row(row: PublishPolicyRecord) -> PublishPolicy:
     )
 
 
-def _job_from_row(row: PublicationJobRecord) -> PublicationJob:
+def _job_from_row(row: PublicationJobRecord, denial_reasons: Sequence[str] = ()) -> PublicationJob:
     return PublicationJob(
         job_id=row.job_id,
         org_id=row.org_id,
@@ -322,10 +402,24 @@ def _job_from_row(row: PublicationJobRecord) -> PublicationJob:
         idempotency_key=row.idempotency_key,
         status=PublishStatus(row.status),
         decision_reason=row.decision_reason,
+        denial_reasons=list(denial_reasons),
         external_id=row.external_id,
         error_ref=row.error_ref,
         created_at=_aware(row.created_at),
     )
+
+
+def _reasons_in_session(session: Session, row: PublicationJobRecord) -> list[str]:
+    """Return the persisted failed preconditions of one job, in order."""
+    rows = session.scalars(
+        sa.select(PublicationDenialReasonRecord)
+        .where(
+            PublicationDenialReasonRecord.job_id == row.job_id,
+            PublicationDenialReasonRecord.org_id == row.org_id,
+        )
+        .order_by(PublicationDenialReasonRecord.ordinal)
+    ).all()
+    return [reason_row.reason for reason_row in rows]
 
 
 class PublishingStore:
@@ -425,6 +519,19 @@ class PublishingStore:
             ).all()
             return [_policy_from_row(row) for row in rows]
 
+    def list_denial_reasons(self, job_id: str, org_id: str) -> list[str]:
+        """Return every failed precondition of one job, in precedence order."""
+        with self._sessions() as session:
+            rows = session.scalars(
+                sa.select(PublicationDenialReasonRecord)
+                .where(
+                    PublicationDenialReasonRecord.job_id == job_id,
+                    PublicationDenialReasonRecord.org_id == org_id,
+                )
+                .order_by(PublicationDenialReasonRecord.ordinal)
+            ).all()
+            return [row.reason for row in rows]
+
     def get_job(self, job_id: str, org_id: str) -> PublicationJob | None:
         with self._sessions() as session:
             row = session.scalars(
@@ -433,7 +540,41 @@ class PublishingStore:
                     PublicationJobRecord.org_id == org_id,
                 )
             ).first()
-            return _job_from_row(row) if row is not None else None
+            if row is None:
+                return None
+            reasons = session.scalars(
+                sa.select(PublicationDenialReasonRecord)
+                .where(
+                    PublicationDenialReasonRecord.job_id == job_id,
+                    PublicationDenialReasonRecord.org_id == org_id,
+                )
+                .order_by(PublicationDenialReasonRecord.ordinal)
+            ).all()
+            return _job_from_row(row, [reason_row.reason for reason_row in reasons])
+
+
+def _rights_cleared(request: PublishSubmission, engine: Engine) -> tuple[bool, str]:
+    """Consult the rights gate for one submission (CLIP-033 enforcement).
+
+    The gate is keyed by the rights registry item_id. A submission may name it
+    explicitly via rights_item_id; otherwise the content_ref is used. Returns
+    (cleared, reason) and never raises: any lookup problem is a refusal,
+    because an unevaluable rights state must not publish.
+    """
+    from clipos_api.provenance import ProvenanceStore
+    from clipos_api.rights_gate import RightsPublicationGate
+    from clipos_api.rights_ledger import RightsLedgerStore
+
+    item_id = request.rights_item_id or request.content_ref
+    try:
+        gate = RightsPublicationGate(
+            RightsLedgerStore.from_engine(engine),
+            ProvenanceStore.from_engine(engine),
+        )
+        decision = gate.evaluate(item_id=item_id, org_id=request.org_id)
+    except Exception as exc:  # noqa: BLE001 - fail closed on any rights doubt
+        return False, f"rights_gate_error:{type(exc).__name__}"
+    return bool(decision.allowed), str(decision.reason.value)
 
 
 def submit_publication(
@@ -441,15 +582,17 @@ def submit_publication(
     store: PublishingStore,
     request: PublishSubmission,
     account_approved: bool = False,
+    rights_clear: bool = False,
+    rights_reason: str = "",
 ) -> PublicationJob:
     """Evaluate policy then publish once (idempotent, fail-closed).
 
     Missing policy -> 404 (explicit opt-in required). DENIED submissions
-    persist an audited DENIED job with the decision reason and never call
-    the adapter. Repeat submissions on the same (org, idempotency_key)
-    return the stored job without re-publishing (the unique
-    (org, idempotency_key) index arbitrates races; network adapters wire
-    idempotency.execute_idempotent when they gain real side effects —
+    persist an audited DENIED job with the decision reason and every failed
+    precondition, and never call the adapter. Repeat submissions on the same
+    (org, idempotency_key) return the stored job without re-publishing (the
+    unique (org, idempotency_key) index arbitrates races; network adapters
+    wire idempotency.execute_idempotent when they gain real side effects —
     CLIP-059 follow-up). The adapter runs OUTSIDE any DB transaction so a
     SQLite test engine never nests write locks; the job insert re-checks
     idempotency at commit time. Adapter failures persist a FAILED job.
@@ -465,7 +608,7 @@ def submit_publication(
             )
         ).first()
         if existing is not None:
-            stored = _job_from_row(existing)
+            stored = _job_from_row(existing, _reasons_in_session(session, existing))
             if (
                 stored.platform != request.platform
                 or stored.content_ref != request.content_ref
@@ -485,9 +628,22 @@ def submit_publication(
             raise ValueError(f"publish policy not found: {request.org_id}/{request.platform}")
         policy = _policy_from_row(policy_row)
 
-    allowed, reason = evaluate_publish_policy(
-        policy, request.visibility, request.operating_mode, account_approved
+    decision = evaluate_publish_conditions(
+        policy,
+        request.visibility,
+        request.operating_mode,
+        account_approved,
+        rights_clear,
     )
+    allowed = decision.allowed
+    reasons = list(decision.reasons)
+    if not rights_clear and rights_reason:
+        # Name the gate verdict, not just the failed precondition.
+        reasons = [
+            f"rights_not_clear:{rights_reason}" if item == "rights_not_clear" else item
+            for item in reasons
+        ]
+    reason = reasons[0] if reasons else decision.reason
 
     job_id = str(uuid4())[:12]
     if not allowed:
@@ -525,7 +681,7 @@ def submit_publication(
             )
         ).first()
         if existing is not None:
-            return _job_from_row(existing)
+            return _job_from_row(existing, _reasons_in_session(session, existing))
         row = PublicationJobRecord(
             job_id=job_id,
             org_id=request.org_id,
@@ -544,6 +700,17 @@ def submit_publication(
         )
         session.add(row)
         session.flush()
+        for ordinal, denial_reason in enumerate(reasons):
+            session.add(
+                PublicationDenialReasonRecord(
+                    job_id=job_id,
+                    org_id=request.org_id,
+                    reason=denial_reason,
+                    ordinal=ordinal,
+                    created_at=now,
+                )
+            )
+        session.flush()
         audit.record(
             audit_action,
             "publication_jobs",
@@ -553,12 +720,13 @@ def submit_publication(
                 "platform": request.platform,
                 "status": status.value,
                 "reason": reason,
+                "reasons": reasons,
                 "visibility": request.visibility.value,
                 "operating_mode": request.operating_mode.value,
                 "external_id": external_id,
             },
         )
-        return _job_from_row(row)
+        return _job_from_row(row, reasons)
 
 
 # ---------------------------------------------------------------------------
@@ -661,8 +829,22 @@ def submit_publication_route(
 
         decision = PublicGateStore.from_engine(engine).decide(request.org_id, request.account_ref)
         account_approved = decision.decision.value == "ALLOWED"
+
+    # Rights gate: every publication needs a CLEAR rights status
+    # (07_SECURITY_GOVERNANCE_RIGHTS: "rights_status != CLEAR -> publication
+    # blocked"). Evaluated here rather than inside the pure policy function so
+    # the policy function stays free of persistence.
+    rights_clear, rights_reason = _rights_cleared(request, engine)
+
     try:
-        return submit_publication(get_adapter(request.platform), store, request, account_approved)
+        return submit_publication(
+            get_adapter(request.platform),
+            store,
+            request,
+            account_approved,
+            rights_clear,
+            rights_reason,
+        )
     except ValueError as exc:
         raise _map_error(exc) from exc
 
