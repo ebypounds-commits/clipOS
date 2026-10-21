@@ -185,6 +185,7 @@ class PublishSubmission(BaseModel):
     visibility: Visibility
     idempotency_key: str = Field(min_length=1, max_length=255)
     operating_mode: OperatingMode
+    rights_item_id: str | None = Field(default=None, max_length=128)
 
 
 class PublicationJob(BaseModel):
@@ -213,6 +214,7 @@ def evaluate_publish_policy(
     visibility: Visibility,
     operating_mode: OperatingMode,
     account_approved: bool = False,
+    rights_clear: bool = False,
 ) -> tuple[bool, str]:
     """Pure fail-closed policy evaluation (PRD §7 + defaults).
 
@@ -224,8 +226,13 @@ def evaluate_publish_policy(
     allowed set.
 
     ``account_approved`` defaults to False so a caller that does not consult
-    the owner gate cannot publish publicly by omission.
+    the owner gate cannot publish publicly by omission. Every publication
+    additionally requires the rights gate to have cleared the item (CLIP-033 /
+    07_SECURITY_GOVERNANCE_RIGHTS: "rights_status != CLEAR -> publication
+    blocked").
     """
+    if not rights_clear:
+        return False, "rights_not_clear"
     if policy.kill_switch:
         return False, "kill_switch_active"
     if operating_mode in (OperatingMode.OBSERVE, OperatingMode.DRAFT):
@@ -436,11 +443,37 @@ class PublishingStore:
             return _job_from_row(row) if row is not None else None
 
 
+def _rights_cleared(request: PublishSubmission, engine: Engine) -> tuple[bool, str]:
+    """Consult the rights gate for one submission (CLIP-033 enforcement).
+
+    The gate is keyed by the rights registry item_id. A submission may name it
+    explicitly via rights_item_id; otherwise the content_ref is used. Returns
+    (cleared, reason) and never raises: any lookup problem is a refusal,
+    because an unevaluable rights state must not publish.
+    """
+    from clipos_api.provenance import ProvenanceStore
+    from clipos_api.rights_gate import RightsPublicationGate
+    from clipos_api.rights_ledger import RightsLedgerStore
+
+    item_id = request.rights_item_id or request.content_ref
+    try:
+        gate = RightsPublicationGate(
+            RightsLedgerStore.from_engine(engine),
+            ProvenanceStore.from_engine(engine),
+        )
+        decision = gate.evaluate(item_id=item_id, org_id=request.org_id)
+    except Exception as exc:  # noqa: BLE001 - fail closed on any rights doubt
+        return False, f"rights_gate_error:{type(exc).__name__}"
+    return bool(decision.allowed), str(decision.reason.value)
+
+
 def submit_publication(
     adapter: PublishingAdapter,
     store: PublishingStore,
     request: PublishSubmission,
     account_approved: bool = False,
+    rights_clear: bool = False,
+    rights_reason: str = "",
 ) -> PublicationJob:
     """Evaluate policy then publish once (idempotent, fail-closed).
 
@@ -486,8 +519,14 @@ def submit_publication(
         policy = _policy_from_row(policy_row)
 
     allowed, reason = evaluate_publish_policy(
-        policy, request.visibility, request.operating_mode, account_approved
+        policy,
+        request.visibility,
+        request.operating_mode,
+        account_approved,
+        rights_clear,
     )
+    if not rights_clear and rights_reason:
+        reason = f"rights_not_clear:{rights_reason}"
 
     job_id = str(uuid4())[:12]
     if not allowed:
@@ -661,8 +700,22 @@ def submit_publication_route(
 
         decision = PublicGateStore.from_engine(engine).decide(request.org_id, request.account_ref)
         account_approved = decision.decision.value == "ALLOWED"
+
+    # Rights gate: every publication needs a CLEAR rights status
+    # (07_SECURITY_GOVERNANCE_RIGHTS: "rights_status != CLEAR -> publication
+    # blocked"). Evaluated here rather than inside the pure policy function so
+    # the policy function stays free of persistence.
+    rights_clear, rights_reason = _rights_cleared(request, engine)
+
     try:
-        return submit_publication(get_adapter(request.platform), store, request, account_approved)
+        return submit_publication(
+            get_adapter(request.platform),
+            store,
+            request,
+            account_approved,
+            rights_clear,
+            rights_reason,
+        )
     except ValueError as exc:
         raise _map_error(exc) from exc
 

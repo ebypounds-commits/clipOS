@@ -246,36 +246,113 @@ def check_public_refused_by_default(client: Client, org: str) -> Check:
 
 
 def check_rights_gate_denies(client: Client, org: str) -> Check:
-    """A rights evaluation with no CLEAR record must deny publication."""
-    item_ref = f"qual-item-{_stamp()}"
-    status, body = client.request(
+    """The publication path must consult the rights gate, not just the gate.
+
+    Two independent assertions, reported as one control:
+
+    1. **Enforcement path** (the defect this control exists for): a
+       ``POST /publications`` for an item with NO rights record must come
+       back ``DENIED`` with a rights reason. The policy, operating mode and
+       visibility are all chosen so that rights is the *only* possible
+       reason for denial — a denial for any other reason means the probe is
+       misconfigured, and is reported as such rather than as a pass.
+    2. **Gate endpoint**: the original probe of
+       ``POST /rights-gate/{item}/evaluate``, kept standalone because it is
+       still a true statement about the gate itself.
+
+    Probing the gate alone is why the bug shipped: both the gate and the
+    old control were correct in isolation while publication ignored the
+    gate entirely.
+    """
+    title = "Rights gate denies uncleared content"
+    failures: list[str] = []
+
+    # --- Assertion 1: publication is denied when rights are not clear -----
+    #
+    # Every non-rights refusal in evaluate_publish_policy is neutralized:
+    # kill_switch is off; PRIVATE_TEST (not OBSERVE/DRAFT) is a publishing
+    # mode; PRIVATE is in allowed_visibilities and is never subject to the
+    # public_enabled / owner-approval branches. The item ref is fresh, so
+    # no rights record and no provenance manifest exist for it. The platform
+    # is one no other check claims: policies are keyed by (org, platform),
+    # so reusing another check's platform would 409 here.
+    policy_id = f"qual-rights-{_stamp()}"
+    policy_status, _ = client.request(
         "POST",
-        f"/rights-gate/{item_ref}/evaluate",
+        "/publish-policies",
+        {
+            "policy_id": policy_id,
+            "org_id": org,
+            "platform": "instagram",
+            "allowed_visibilities": ["PRIVATE", "UNLISTED"],
+            "public_enabled": False,
+            "kill_switch": False,
+        },
+    )
+    if policy_status != 200:
+        failures.append(f"setup: publish policy register -> {policy_status}")
+
+    item_ref = f"qual-item-{_stamp()}"
+    publish_status, published = client.request(
+        "POST",
+        "/publications",
+        {
+            "org_id": org,
+            "platform": "instagram",
+            "account_ref": "qual://account",
+            "content_ref": f"storage://{item_ref}",
+            "title": "qualification rights probe",
+            "visibility": "PRIVATE",
+            "idempotency_key": f"qual-rights-{_stamp()}",
+            "operating_mode": "PRIVATE_TEST",
+        },
+    )
+    publish_reason = ""
+    job_status = ""
+    if publish_status != 200 or not isinstance(published, dict):
+        failures.append(f"enforcement: POST /publications -> {publish_status}")
+    else:
+        job_status = str(published.get("status", ""))
+        publish_reason = str(published.get("decision_reason", ""))
+        if job_status != "DENIED":
+            failures.append(
+                f"enforcement: publication of an item with no rights record was "
+                f"{job_status} (reason={publish_reason}), expected DENIED"
+            )
+        elif "rights" not in publish_reason:
+            failures.append(
+                f"enforcement: DENIED, but reason={publish_reason} does not name "
+                f"rights (setup is wrong: rights is not the reason)"
+            )
+
+    # --- Assertion 2: the gate endpoint refuses the same item -------------
+    gate_item_ref = f"qual-item-{_stamp()}"
+    gate_status, gate_body = client.request(
+        "POST",
+        f"/rights-gate/{gate_item_ref}/evaluate",
         {"checked_at": None},
         params={"org_id": org},
     )
-    if status in (403, 404, 422):
-        return Check(
-            "C5",
-            "Rights gate denies uncleared content",
-            PASS,
-            f"refused with {status} (no rights record -> not publishable)",
-        )
-    if status != 200 or not isinstance(body, dict):
-        return Check("C5", "Rights gate denies uncleared content", FAIL, f"-> {status}")
-    if body.get("allowed") is True or body.get("permitted") is True:
-        return Check(
-            "C5",
-            "Rights gate denies uncleared content",
-            FAIL,
-            "gate allowed publication without a rights record",
-        )
-    return Check(
-        "C5",
-        "Rights gate denies uncleared content",
-        PASS,
-        f"denied, reason={body.get('reason')}",
+    if gate_status in (403, 404, 422):
+        gate_evidence = f"gate={gate_status} (no rights record -> not publishable)"
+    elif gate_status != 200 or not isinstance(gate_body, dict):
+        failures.append(f"gate: /rights-gate evaluate -> {gate_status}")
+        gate_evidence = f"gate={gate_status}"
+    elif gate_body.get("allowed") is True or gate_body.get("permitted") is True:
+        failures.append("gate: allowed publication without a rights record")
+        gate_evidence = "gate=200 allowed=True"
+    else:
+        gate_evidence = f"gate=denied reason={gate_body.get('reason')}"
+
+    enforcement_evidence = (
+        f"publication {job_status or 'NO_RESPONSE'} (reason={publish_reason or 'none'})"
     )
+    evidence = f"{enforcement_evidence}; {gate_evidence}"
+    if failures:
+        return Check(
+            "C5", title, FAIL, f"FAILED [{' | '.join(failures)}] -- {evidence}"
+        )
+    return Check("C5", title, PASS, evidence)
 
 
 def check_injection_quarantines(client: Client, org: str) -> Check:
