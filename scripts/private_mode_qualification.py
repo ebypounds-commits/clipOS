@@ -45,11 +45,19 @@ import re
 import sys
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+
+# The rights-clearance helper is shared with the security qualification
+# harness; it is imported by path so the script works both when run
+# directly and when a test loads it by file location.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from rights_clearance import clear_rights
 
 PASS = "PASS"
 FAIL = "FAIL"
@@ -68,9 +76,17 @@ _PLATFORM_KILL_SWITCH = "x"
 # Rights registry item ids. They appear in request paths (source items,
 # rights records), so they must be URL-safe; the publication therefore names
 # its rights item explicitly with rights_item_id instead of relying on the
-# content_ref fallback.
+# content_ref fallback. The registry keys records by a globally unique id,
+# so the ids are qualified by the organization: two organizations
+# ingesting the same source item must not collide.
 _ITEM_QUAL_CONTENT = "qual-content"
 _ITEM_QUAL_VIDEO = "qual-video"
+
+
+def _scoped_item(item_id: str, org: str) -> str:
+    """Return the organization-qualified id of a rights registry item."""
+    return f"{item_id}-{org}"
+
 
 # Media-producing steps write inside the TARGET server's RENDER_WORKDIR and
 # are confined to it (CLIP-039 policy), so their paths must match that
@@ -212,131 +228,6 @@ def _required(steps: list[Step]) -> list[Step]:
 # ---------------------------------------------------------------------------
 
 
-def clear_rights(
-    client: Client,
-    org: str,
-    item_id: str,
-    *,
-    walk: _Walk | None = None,
-    stage: str = "rights",
-) -> tuple[bool, str]:
-    """Put one item in the CLEAR rights state, over the HTTP API.
-
-    The publication gate is keyed by the rights registry item id and needs
-    BOTH a CLEAR rights record and a provenance manifest for that item, so
-    the sequence is: creator -> source -> source item -> rights record ->
-    status transition to CLEAR -> provenance step.
-
-    Every publication probe in this harness clears rights first, so the
-    invariant under test is the rule it names (mode, visibility, public
-    default, kill switch) and not an incidental rights refusal.
-
-    When *walk* is given the calls are recorded as pipeline steps, so the
-    report shows the clearance that made the publication possible.
-    """
-    creator_id = f"qual-creator-{org}"
-    source_id = f"qual-source-{org}"
-    record_id = f"qual-record-{item_id}"
-    # The item and record ids are used in request paths, so they must be
-    # URL-safe: an id containing "/" is decoded before routing and would
-    # never match the route. The rights item id is therefore named
-    # explicitly on the publication (rights_item_id) instead of being
-    # derived from a "storage://" content ref.
-    record_path = urllib.parse.quote(record_id, safe="")
-    item_path = urllib.parse.quote(item_id, safe="")
-    calls: tuple[tuple[str, str, dict[str, object]], ...] = (
-        (
-            "POST",
-            "/creators",
-            {
-                "creator_id": creator_id,
-                "org_id": org,
-                "display_name": f"Qualification Creator {org}",
-                "contact_ref": f"secrets://contacts/{creator_id}",
-            },
-        ),
-        (
-            "POST",
-            "/sources",
-            {
-                "source_id": source_id,
-                "org_id": org,
-                "creator_id": creator_id,
-                "source_type": "feed",
-                "canonical_url": f"https://qualification.invalid/{source_id}.xml",
-            },
-        ),
-        (
-            "POST",
-            "/source-items",
-            {
-                "item_id": item_id,
-                "org_id": org,
-                "source_id": source_id,
-                "external_ref": f"qual-ext:{item_id}",
-                "captured_at": "2026-01-01T00:00:00+00:00",
-                "content_ref": f"storage://source-items/{item_id}",
-            },
-        ),
-        (
-            "POST",
-            "/rights-records",
-            {
-                "record_id": record_id,
-                "item_id": item_id,
-                "org_id": org,
-                "status": "REVIEW_REQUIRED",
-                "basis": "OWNED",
-                "reviewed_by": "reviewer:qualification",
-                "metadata": {"source": "private-mode qualification"},
-            },
-        ),
-        (
-            "POST",
-            f"/rights-records/{record_path}/status",
-            {
-                "org_id": org,
-                "to_status": "CLEAR",
-                "reason_ref": "reviewer:qualification",
-            },
-        ),
-        (
-            "POST",
-            f"/source-items/{item_path}/provenance/steps",
-            {
-                "org_id": org,
-                "step": {
-                    "step_type": "transformed",
-                    "actor_ref": "operator:qualification",
-                    "at": "2026-01-02T00:00:00+00:00",
-                    "inputs_refs": [f"storage://source-items/{item_id}"],
-                    "outputs_ref": f"storage://renders/{item_id}",
-                    "transform_note": "private-mode qualification clearance",
-                },
-            },
-        ),
-    )
-    for index, (method, path, body) in enumerate(calls):
-        name = path.strip("/").replace("/", " ")
-        if walk is not None:
-            walk.step(
-                stage,
-                f"rights {index + 1}/{len(calls)} {name}",
-                method,
-                path,
-                body,
-                expect=(200, 201, 409),
-            )
-            continue
-        status, payload = client.request(method, path, body)
-        if status not in (200, 201, 409):
-            detail = ""
-            if isinstance(payload, dict):
-                detail = str(payload.get("detail", ""))[:200]
-            return False, f"{method} {path} -> {status} {detail}"
-    return True, "rights cleared"
-
-
 # ---------------------------------------------------------------------------
 # Private-mode invariants
 # ---------------------------------------------------------------------------
@@ -356,7 +247,7 @@ def _denied_for(body: object, expected_fragment: str) -> str | None:
 
 
 def invariant_observe_denied(client: Client, org: str) -> Invariant:
-    cleared, detail = clear_rights(client, org, _ITEM_QUAL_CONTENT)
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
     if not cleared:
         return Invariant(
             "P1", "OBSERVE mode denies all publishing", FAIL, f"setup failed: {detail}"
@@ -384,7 +275,7 @@ def invariant_observe_denied(client: Client, org: str) -> Invariant:
             "visibility": "PRIVATE",
             "idempotency_key": f"qual-observe-{int(time.time())}",
             "operating_mode": "OBSERVE",
-            "rights_item_id": _ITEM_QUAL_CONTENT,
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -409,7 +300,7 @@ def invariant_observe_denied(client: Client, org: str) -> Invariant:
 
 def invariant_private_test_cannot_publish_public(client: Client, org: str) -> Invariant:
     """PRIVATE_TEST may only reach PRIVATE/UNLISTED — PUBLIC must be refused."""
-    cleared, detail = clear_rights(client, org, _ITEM_QUAL_CONTENT)
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
     if not cleared:
         return Invariant(
             "P2", "PRIVATE_TEST cannot publish PUBLIC", FAIL, f"setup failed: {detail}"
@@ -437,7 +328,7 @@ def invariant_private_test_cannot_publish_public(client: Client, org: str) -> In
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-privatetest-{int(time.time())}",
             "operating_mode": "PRIVATE_TEST",
-            "rights_item_id": _ITEM_QUAL_CONTENT,
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -462,7 +353,7 @@ def invariant_private_test_cannot_publish_public(client: Client, org: str) -> In
 
 def invariant_public_refused_by_default(client: Client, org: str) -> Invariant:
     """PUBLIC is refused while the policy's public_enabled is false."""
-    cleared, detail = clear_rights(client, org, _ITEM_QUAL_CONTENT)
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
     if not cleared:
         return Invariant(
             "P3", "PUBLIC refused by default", FAIL, f"setup failed: {detail}"
@@ -490,7 +381,7 @@ def invariant_public_refused_by_default(client: Client, org: str) -> Invariant:
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-default-{int(time.time())}",
             "operating_mode": "GUARDED_PUBLIC",
-            "rights_item_id": _ITEM_QUAL_CONTENT,
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -585,7 +476,7 @@ def invariant_kill_switch_closes_publishing(client: Client, org: str) -> Invaria
     item is rights-cleared first, so the kill switch — not the rights gate —
     is the reason under test.
     """
-    cleared, detail = clear_rights(client, org, _ITEM_QUAL_CONTENT)
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
     if not cleared:
         return Invariant(
             "P5", "Kill switch closes publishing", FAIL, f"setup failed: {detail}"
@@ -614,7 +505,7 @@ def invariant_kill_switch_closes_publishing(client: Client, org: str) -> Invaria
             "visibility": "PRIVATE",
             "idempotency_key": f"qual-killswitch-{int(time.time())}",
             "operating_mode": "PRIVATE_TEST",
-            "rights_item_id": _ITEM_QUAL_CONTENT,
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -922,7 +813,13 @@ def walk_pipeline(walk: _Walk) -> None:
     # The publication gate requires cleared rights for the published item.
     # Clearing them here is what makes the private publication possible, and
     # the recorded steps show it.
-    clear_rights(walk.client, org, _ITEM_QUAL_VIDEO, walk=walk, stage="rights")
+    clear_rights(
+        walk.client,
+        org,
+        _scoped_item(_ITEM_QUAL_VIDEO, org),
+        walk=walk,
+        stage="rights",
+    )
     published = walk.step(
         "publish",
         "private publication",
@@ -937,7 +834,7 @@ def walk_pipeline(walk: _Walk) -> None:
             "visibility": "PRIVATE",
             "idempotency_key": "qual-pub-1",
             "operating_mode": "PRIVATE_TEST",
-            "rights_item_id": _ITEM_QUAL_VIDEO,
+            "rights_item_id": _scoped_item(_ITEM_QUAL_VIDEO, org),
         },
         expect=(200,),
     )

@@ -46,9 +46,29 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+# The rights-clearance helper is shared with the security qualification
+# harness; it is imported by path so the script works both when run
+# directly and when a test loads it by file location.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from rights_clearance import clear_rights
+
 FAIL = "FAIL"
 PASS = "PASS"
 WARN = "WARN"
+
+# Rights registry item id used by the publication probes. It appears in
+# request paths, so it must be URL-safe, and the registry keys records by a
+# globally unique id, so it is qualified by the organization.
+_ITEM_QUAL_CONTENT = "qual-content"
+
+
+def _scoped_item(item_id: str, org: str) -> str:
+    """Return the organization-qualified id of a rights registry item."""
+    return f"{item_id}-{org}"
+
 
 _SECRET_PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9]{20,}"),
@@ -156,29 +176,39 @@ def check_operator_health(client: Client, org: str) -> Check:
 
 def check_kill_switch_observe(client: Client, org: str) -> Check:
     """An OBSERVE-mode submission must be DENIED regardless of policy."""
+    # The platform is unique per run: policies are keyed by (org, platform),
+    # so a fixed platform would 409 on a second run of the harness and the
+    # probe would then run against a stale policy.
+    platform = f"qual-observe-{_stamp()}"
     client.request(
         "POST",
         "/publish-policies",
         {
             "policy_id": f"qual-policy-{_stamp()}",
             "org_id": org,
-            "platform": "youtube",
+            "platform": platform,
             "allowed_visibilities": ["PRIVATE", "UNLISTED", "PUBLIC"],
             "public_enabled": True,
         },
     )
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Check(
+            "C3", "Kill switch / OBSERVE denies", FAIL, f"setup failed: {detail}"
+        )
     status, body = client.request(
         "POST",
         "/publications",
         {
             "org_id": org,
-            "platform": "youtube",
+            "platform": platform,
             "account_ref": "qual://account",
             "content_ref": "storage://qual-content",
             "title": "qualification probe",
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-observe-{_stamp()}",
             "operating_mode": "OBSERVE",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -191,6 +221,15 @@ def check_kill_switch_observe(client: Client, org: str) -> Check:
             f"OBSERVE-mode submission was {body.get('status')}, expected DENIED",
         )
     reason = str(body.get("decision_reason", ""))
+    if "mode_OBSERVE" not in reason:
+        # The rights precondition is cleared, so the refusal must be the
+        # operating-mode rule this check names.
+        return Check(
+            "C3",
+            "Kill switch / OBSERVE denies",
+            FAIL,
+            f"DENIED for the wrong reason: {reason}",
+        )
     return Check(
         "C3",
         "Kill switch / OBSERVE denies",
@@ -203,29 +242,36 @@ def check_kill_switch_observe(client: Client, org: str) -> Check:
 def check_public_refused_by_default(client: Client, org: str) -> Check:
     """With public disabled, a PUBLIC submission must be refused."""
     policy_id = f"qual-private-{_stamp()}"
+    platform = f"qual-private-{_stamp()}"
     client.request(
         "POST",
         "/publish-policies",
         {
             "policy_id": policy_id,
             "org_id": org,
-            "platform": "tiktok",
+            "platform": platform,
             "allowed_visibilities": ["PRIVATE", "UNLISTED"],
             "public_enabled": False,
         },
     )
+    cleared, detail = clear_rights(client, org, _scoped_item(_ITEM_QUAL_CONTENT, org))
+    if not cleared:
+        return Check(
+            "C4", "PUBLIC disabled by default", FAIL, f"setup failed: {detail}"
+        )
     status, body = client.request(
         "POST",
         "/publications",
         {
             "org_id": org,
-            "platform": "tiktok",
+            "platform": platform,
             "account_ref": "qual://account",
             "content_ref": "storage://qual-content",
             "title": "qualification probe",
             "visibility": "PUBLIC",
             "idempotency_key": f"qual-public-{_stamp()}",
             "operating_mode": "GUARDED_PUBLIC",
+            "rights_item_id": _scoped_item(_ITEM_QUAL_CONTENT, org),
         },
     )
     if status != 200 or not isinstance(body, dict):
@@ -237,11 +283,22 @@ def check_public_refused_by_default(client: Client, org: str) -> Check:
             FAIL,
             f"PUBLIC was {body.get('status')} under public_enabled=False",
         )
+    reason = str(body.get("decision_reason", ""))
+    if "visibility" not in reason:
+        # The rights precondition is cleared, so the refusal must be the
+        # visibility rule this check names.
+        return Check(
+            "C4",
+            "PUBLIC disabled by default",
+            FAIL,
+            f"DENIED for the wrong reason: {reason}",
+        )
     return Check(
         "C4",
         "PUBLIC disabled by default",
         PASS,
-        f"DENIED with reason={body.get('decision_reason')}",
+        f"DENIED with reason={reason}",
+        {"reason": reason},
     )
 
 
@@ -277,19 +334,20 @@ def check_rights_gate_denies(client: Client, org: str) -> Check:
     # is one no other check claims: policies are keyed by (org, platform),
     # so reusing another check's platform would 409 here.
     policy_id = f"qual-rights-{_stamp()}"
+    platform = f"qual-rights-{_stamp()}"
     policy_status, _ = client.request(
         "POST",
         "/publish-policies",
         {
             "policy_id": policy_id,
             "org_id": org,
-            "platform": "instagram",
+            "platform": platform,
             "allowed_visibilities": ["PRIVATE", "UNLISTED"],
             "public_enabled": False,
             "kill_switch": False,
         },
     )
-    if policy_status != 200:
+    if policy_status not in (200, 409):
         failures.append(f"setup: publish policy register -> {policy_status}")
 
     item_ref = f"qual-item-{_stamp()}"
@@ -298,7 +356,7 @@ def check_rights_gate_denies(client: Client, org: str) -> Check:
         "/publications",
         {
             "org_id": org,
-            "platform": "instagram",
+            "platform": platform,
             "account_ref": "qual://account",
             "content_ref": f"storage://{item_ref}",
             "title": "qualification rights probe",

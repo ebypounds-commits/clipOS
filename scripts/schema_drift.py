@@ -25,6 +25,7 @@ from __future__ import annotations
 import sys
 
 import clipos_api.main  # noqa: F401  # registers every model module
+import sqlalchemy as sa
 from clipos_api.repository import Base
 from sqlalchemy import create_engine, inspect, text
 
@@ -86,9 +87,37 @@ def main(argv: list[str]) -> int:
             # Harmless: the model simply does not map an extra column.
             print(f"  {name}: db-only (model never maps it): {db_only}")
 
+    print("=== autoincrement primary keys without a server default ===")
+    missing_defaults = 0
+    with engine.connect() as conn:
+        for name in sorted(set(expected) & actual):
+            for column in expected[name].primary_key.columns:
+                if not isinstance(column.type, sa.Integer):
+                    continue
+                if not column.autoincrement:
+                    continue
+                default = conn.execute(
+                    text(
+                        "SELECT column_default FROM information_schema.columns "
+                        "WHERE table_schema = 'public' AND table_name = :table "
+                        "AND column_name = :column"
+                    ),
+                    {"table": name, "column": column.name},
+                ).scalar()
+                if default is None:
+                    missing_defaults += 1
+                    problems += 1
+                    print(
+                        f"  {name}.{column.name}: no server default - the ORM omits "
+                        f"the column on insert and Postgres will refuse the write"
+                    )
+    if missing_defaults == 0:
+        print("  none")
+
     print(
         f"\ntables checked={len(set(expected) & actual)} "
-        f"missing_tables={len(missing_tables)} breaking_divergences={divergent}"
+        f"missing_tables={len(missing_tables)} breaking_divergences={divergent} "
+        f"missing_autoincrement_defaults={missing_defaults}"
     )
     return 1 if problems else 0
 

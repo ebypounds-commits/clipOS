@@ -170,7 +170,10 @@ def test_record_registration_is_idempotent_and_rejects_conflicts(
 def test_record_requires_existing_item_and_matching_org(store: RightsLedgerStore) -> None:
     with pytest.raises(ValueError, match="item not found"):
         _register_record(store, _record(item_id="missing"))
-    with pytest.raises(ValueError, match="different organization"):
+    # The item lookup is org-scoped: an item of another organization does
+    # not exist for this caller, and the refusal must not confirm that the
+    # id exists elsewhere.
+    with pytest.raises(ValueError, match="item not found"):
         _register_record(store, _record(org_id="org-2"))
 
 

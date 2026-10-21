@@ -364,11 +364,15 @@ class RightsLedgerStore:
         return cls(sessionmaker(bind=engine, expire_on_commit=False))
 
     @staticmethod
-    def _item(session: Session, item_id: str) -> Any | None:
+    def _item(session: Session, item_id: str, org_id: str) -> Any | None:
+        """Return the source item of *org_id* — never another org's item."""
         from clipos_api.rights_entities import SourceItemRecord
 
         return session.scalars(
-            sa.select(SourceItemRecord).where(SourceItemRecord.item_id == item_id)
+            sa.select(SourceItemRecord).where(
+                SourceItemRecord.item_id == item_id,
+                SourceItemRecord.org_id == org_id,
+            )
         ).first()
 
     @staticmethod
@@ -416,11 +420,9 @@ class RightsLedgerStore:
         """Register one rights record; a matching re-registration is a no-op."""
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            item = self._item(session, record.item_id)
+            item = self._item(session, record.item_id, record.org_id)
             if item is None:
                 raise ValueError(f"source item not found: {record.item_id}")
-            if item.org_id != record.org_id:
-                raise ValueError("source item belongs to a different organization")
             row = self._record(session, record.record_id)
             if row is not None:
                 stored = _record_from_row(row)
