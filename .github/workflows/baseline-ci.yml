@@ -41,6 +41,10 @@ jobs:
         run: |
           python3 scripts/validate_packet.py .agent/CODEX_TASK_PACKET_TEMPLATE.md
           python3 scripts/state_audit.py verify
+      - name: Assemble the autonomy evidence report
+        run: |
+          echo "step=autonomy_evidence" >> step_status.txt
+          python3 scripts/autonomy_evidence.py 2>&1 | tee autonomy_evidence_output.txt
 
   test:
     runs-on: ubuntu-latest
@@ -107,6 +111,13 @@ jobs:
           echo "step=confirm_health" >> step_status.txt
           set -o pipefail
           alembic -c services/api/alembic.ini upgrade head 2>&1 | tee migrations_output.txt
+      - name: Check the migrated schema against the models
+        env:
+          DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
+        run: |
+          echo "step=schema_drift" >> step_status.txt
+          set -o pipefail
+          PYTHONPATH=services/api python3 scripts/schema_drift.py 2>&1 | tee schema_drift_output.txt
       - name: Run API tests with coverage (lane 5 PostgreSQL DB tests)
         env:
           DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@localhost:5433/clipos_dev
@@ -125,6 +136,11 @@ jobs:
           echo "step=smoke" >> step_status.txt
           set -o pipefail
           bash scripts/integration_smoke.sh 2>&1 | tee smoke_output.txt
+      - name: Production qualification harnesses (live API)
+        run: |
+          echo "step=qualification" >> step_status.txt
+          set -o pipefail
+          bash scripts/qualification_ci.sh 2>&1 | tee qualification_output.txt
       - name: Upload step outputs
         if: always()
         uses: actions/upload-artifact@v4
@@ -134,6 +150,9 @@ jobs:
             pytest_output.txt
             migrations_output.txt
             smoke_output.txt
+            schema_drift_output.txt
+            qualification_output.txt
+            autonomy_evidence_output.txt
             infra_diagnostics.txt
             step_status.txt
           retention-days: 7
@@ -256,7 +275,7 @@ jobs:
               echo "steps_reached:" >> last_run.txt
               cat step_status.txt >> last_run.txt
             fi
-            for f in pytest_output.txt migrations_output.txt smoke_output.txt infra_diagnostics.txt; do
+            for f in pytest_output.txt migrations_output.txt smoke_output.txt schema_drift_output.txt qualification_output.txt autonomy_evidence_output.txt infra_diagnostics.txt; do
               if [ -f "$f" ]; then
                 echo "artifact_file=$f bytes=$(wc -c < "$f")" >> last_run.txt
                 grep -E "^(FAILED|ERROR) " "$f" 2>/dev/null | head -25 >> last_run.txt || true

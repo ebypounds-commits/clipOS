@@ -33,7 +33,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from enum import Enum
 from hashlib import sha1
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 from uuid import uuid4
 
 import sqlalchemy as sa
@@ -190,6 +190,7 @@ class CostSyncResult(BaseModel):
     imported: int = Field(ge=0)
     skipped: int = Field(ge=0)
     entries: list[CostEntry] = Field(default_factory=list)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class CostSourceRecord(Base):

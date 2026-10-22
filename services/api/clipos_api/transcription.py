@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
@@ -48,6 +48,7 @@ class TranscriptionResult(BaseModel):
     segments: list[Segment]
     provider_alias: str
     model_hint: str | None = Field(default=None, max_length=128)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class TranscriptionAdapter(Protocol):

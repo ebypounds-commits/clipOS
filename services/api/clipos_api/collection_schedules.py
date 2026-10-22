@@ -23,6 +23,7 @@ Routes: register, list, run-due. Migration: 0043 (CREATE-only).
 
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import uuid4
@@ -30,6 +31,7 @@ from uuid import uuid4
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Mapped, Session, mapped_column, sessionmaker
 
@@ -392,3 +394,66 @@ def run_due_collection_schedules_route(
 ) -> RunDueResult:
     """Execute enabled schedules whose next_run_at has arrived."""
     return store.run_due(request.org_id, adapter, analytics_store)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point
+# ---------------------------------------------------------------------------
+
+
+def _run_all_orgs(
+    engine: Engine,
+    adapter: AnalyticsAdapter,
+    analytics_store: AnalyticsStore,
+) -> RunDueResult:
+    """Run due schedules for all organizations."""
+    store = CollectionScheduleStore.from_engine(engine)
+    with sessionmaker(bind=engine, expire_on_commit=False)() as session:
+        org_rows = (
+            session.execute(sa.select(CollectionScheduleRecord.org_id).distinct()).scalars().all()
+        )
+    combined = RunDueResult(ran=0, outcomes=[])
+    for org_id in org_rows:
+        result = store.run_due(org_id, adapter, analytics_store)
+        combined.ran += result.ran
+        combined.outcomes.extend(result.outcomes)
+    return combined
+
+
+def main() -> None:
+    """CLI entry point: run due schedules for one org or all orgs."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run due collection schedules")
+    parser.add_argument(
+        "--org-id",
+        default="all",
+        help="Organization ID to run schedules for, or 'all' for all orgs",
+    )
+    args = parser.parse_args()
+
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        raise SystemExit("DATABASE_URL not set")
+    engine = create_engine(url)
+    adapter = MockAnalyticsAdapter()
+    analytics_store = AnalyticsStore.from_engine(engine)
+
+    if args.org_id == "all":
+        result = _run_all_orgs(engine, adapter, analytics_store)
+    else:
+        store = CollectionScheduleStore.from_engine(engine)
+        result = store.run_due(args.org_id, adapter, analytics_store)
+
+    for outcome in result.outcomes:
+        status = outcome.status.upper()
+        print(
+            f"[{status}] {outcome.schedule_id} {outcome.content_ref} metrics={outcome.metric_count}"
+        )
+        if outcome.error:
+            print(f"  ERROR: {outcome.error}")
+    print(f"Ran {result.ran} schedule(s)")
+
+
+if __name__ == "__main__":
+    main()

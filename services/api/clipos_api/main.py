@@ -195,6 +195,41 @@ def health() -> dict[str, str]:
     return {"status": "ok", "version": APP_VERSION}
 
 
+@app.get("/metrics")
+def metrics() -> str:
+    """Return basic Prometheus-style metrics."""
+    import time
+
+    from prometheus_client import Counter, Gauge, Histogram, generate_latest
+
+    # Use module-level registry to avoid re-creation on each call
+    if not hasattr(metrics, "_registry"):
+        from prometheus_client import CollectorRegistry
+
+        metrics._registry = CollectorRegistry()
+        metrics._requests_total = Counter(
+            "http_requests_total",
+            "Total HTTP requests",
+            ["method", "endpoint", "status"],
+            registry=metrics._registry,
+        )
+        metrics._request_duration = Histogram(
+            "http_request_duration_seconds",
+            "HTTP request duration",
+            ["method", "endpoint"],
+            registry=metrics._registry,
+        )
+        metrics._db_connections = Gauge(
+            "db_connections_active", "Active database connections", registry=metrics._registry
+        )
+        metrics._start_time = time.time()
+
+    # Record this request
+    metrics._requests_total.labels(method="GET", endpoint="/metrics", status="200").inc()
+
+    return generate_latest(metrics._registry).decode("utf-8")
+
+
 def database_engine() -> sa.Engine:
     """Return the process-cached engine configured by ``DATABASE_URL``."""
     url = os.environ.get("DATABASE_URL", "")

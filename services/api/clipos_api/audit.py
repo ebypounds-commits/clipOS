@@ -1,11 +1,16 @@
 """Append-only structured audit logging for material state changes."""
 
 import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-AUDIT_DIR = Path(".agent/audit")
+# The audit log lives under the working directory by default. A container
+# image must own that directory: the API runs as an unprivileged user, and
+# an unwritable log would turn every audited action into a 500. AUDIT_DIR
+# lets a deployment point the log at a location it owns.
+AUDIT_DIR = Path(os.environ.get("AUDIT_DIR", ".agent/audit"))
 AUDIT_PATH = AUDIT_DIR / "audit.log"
 
 
@@ -19,8 +24,9 @@ def record(action: str, actor: str, subject: str, details: dict[str, Any]) -> di
         "subject": subject,
         "details": details,
     }
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    with AUDIT_PATH.open("a", encoding="utf-8") as output:
+    path = AUDIT_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as output:
         output.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
     return event
 
