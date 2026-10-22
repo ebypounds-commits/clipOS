@@ -105,6 +105,13 @@ services:
       context: ./services/api
     environment:
       ENVIRONMENT: development
+      DATABASE_URL: postgresql+psycopg://clipos_dev:clipos_dev_local_only@postgres:5432/clipos_dev
+      CACHE_REDIS_URL: redis://redis:6379/0
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_ACCESS_KEY: clipos_dev
+      STORAGE_SECRET_KEY: clipos_dev_local_only
+      STORAGE_BUCKET: clipos-test
+      TEMPORAL_ADDRESS: temporal:7233
     depends_on:
       postgres:
         condition: service_healthy

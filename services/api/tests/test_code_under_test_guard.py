@@ -40,7 +40,7 @@ def test_guard_refuses_a_foreign_checkout() -> None:
     """A package imported from elsewhere must be reported, not tolerated."""
     module = _load_conftest()
     expected = Path(__file__).resolve().parents[1] / "clipos_api"
-    foreign = Path("/srv/clipos/clipOS/services/api/clipos_api")
+    foreign = Path("/nonexistent/foreign/clipos_api")
     message = module.check_code_under_test(expected, foreign)
     assert message is not None
     assert "different checkout" in message
