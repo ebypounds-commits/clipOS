@@ -43,7 +43,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from hashlib import sha1
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 from uuid import uuid4
 
 import sqlalchemy as sa
@@ -172,6 +172,7 @@ class PublishPolicy(BaseModel):
     public_enabled: bool = False
     kill_switch: bool = False
     created_at: datetime | None = None
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class PublishSubmission(BaseModel):

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 from uuid import uuid4
 
 import sqlalchemy as sa
@@ -86,6 +86,7 @@ class AdapterHealth(BaseModel):
     ok: bool
     capabilities: list[str] = Field(default_factory=list)
     detail: str | None = Field(default=None, max_length=255)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class AnalyticsAdapter(Protocol):
@@ -109,6 +110,7 @@ class MockAnalyticsAdapter:
             ok=True,
             capabilities=["collect", "query", "snapshot"],
             detail="mock",
+            adapter_kind="mock",
         )
 
     def collect_metrics(

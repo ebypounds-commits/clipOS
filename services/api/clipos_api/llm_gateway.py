@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
 
 from clipos_api import audit
 from clipos_api.model_registry import HealthState, ModelRegistryStore, ModelRoute
@@ -71,6 +72,7 @@ class LLMResponse(BaseModel):
     usage: Usage = Field(default_factory=Usage)
     latency_ms: int = 0
     execution_id: str = ""
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class ProviderAdapter(ABC):

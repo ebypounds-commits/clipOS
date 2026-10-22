@@ -24,7 +24,7 @@ from __future__ import annotations
 import io
 import wave
 from datetime import UTC, datetime
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -120,6 +120,7 @@ class VoiceSynthesisResult(BaseModel):
     output_path: str = Field(min_length=1, max_length=1024)
     bytes_written: int = Field(ge=0)
     duration_ms: int = Field(ge=0)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class VoiceAssetRecord(Base):

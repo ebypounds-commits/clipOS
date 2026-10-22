@@ -31,7 +31,7 @@ from __future__ import annotations
 import os
 from enum import Enum
 from hashlib import sha1
-from typing import Annotated, Protocol
+from typing import Annotated, Literal, Protocol
 from uuid import uuid4
 
 import httpx
@@ -79,6 +79,7 @@ class JevAnswer(BaseModel):
     probabilities: dict[str, float] = Field(default_factory=dict)
     value: str | None = Field(default=None, max_length=64)
     latency_ms: float | None = Field(default=None, ge=0)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class JevResult(BaseModel):
