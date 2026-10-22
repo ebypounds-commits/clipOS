@@ -1,0 +1,17 @@
+status=failure
+run=39765675266
+sha=53d7c1228ef88c792f10a1af0b6cbb36c03aca82
+jobs=validate:success,test:failure,quality:success,build:success
+failure_log_begin
+steps_reached:
+step=job_start
+step=pip_install
+step=ruff_format
+artifact_file=pytest_output.txt MISSING
+artifact_file=migrations_output.txt MISSING
+artifact_file=smoke_output.txt MISSING
+artifact_file=schema_drift_output.txt MISSING
+artifact_file=qualification_output.txt MISSING
+artifact_file=autonomy_evidence_output.txt MISSING
+artifact_file=infra_diagnostics.txt MISSING
+failure_log_end
