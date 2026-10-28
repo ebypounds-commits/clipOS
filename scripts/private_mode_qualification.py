@@ -738,15 +738,38 @@ def walk_pipeline(walk: _Walk) -> None:
                 candidates = extracted[key]
                 break
     if not candidates:
-        walk.steps.append(
-            Step(
-                "render",
-                "render project",
-                SKIP,
-                None,
-                "skipped: no clip candidate available in this environment",
-            )
+        # A cold environment (e.g. a freshly migrated dev database) may not
+        # yield any candidate from extraction. Register one directly so the
+        # render stage can still be exercised instead of skipped; the
+        # private-mode invariants are what this harness exists to prove.
+        created = walk.step(
+            "render",
+            "register qualification candidate",
+            "POST",
+            "/clip-candidates",
+            {
+                "media_asset_id": "qual-vid",
+                "org_id": org,
+                "start_ms": 0,
+                "end_ms": 6000,
+                "source": "MANUAL",
+                "reason": "qualification fallback candidate",
+            },
+            expect=(200, 409),
+            required=False,
         )
+        if isinstance(created, dict) and created.get("candidate_id"):
+            candidates = [created]
+        if not candidates:
+            walk.steps.append(
+                Step(
+                    "render",
+                    "render project",
+                    SKIP,
+                    None,
+                    "skipped: no clip candidate available in this environment",
+                )
+            )
     else:
         candidate_id = candidates[0].get("candidate_id")
         if not candidate_id:
