@@ -305,4 +305,3 @@ def test_get_transcript_route_is_org_scoped(store: TranscriptionStore) -> None:
     with pytest.raises(HTTPException) as excinfo:
         get_transcript_route(transcript["transcript_id"], store, "org-2")
     assert excinfo.value.status_code == 404
-

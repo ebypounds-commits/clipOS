@@ -540,4 +540,3 @@ def test_extract_and_register_route_registers_candidates(store) -> None:
     views = extract_and_register_clip_candidates_route(request, store)
     assert len(views) == 2
     assert all(view.org_id == "org-1" for view in views)
-

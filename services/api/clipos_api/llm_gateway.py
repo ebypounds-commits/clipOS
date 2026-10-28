@@ -14,10 +14,9 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
 
 from clipos_api import audit
 from clipos_api.model_registry import HealthState, ModelRegistryStore, ModelRoute

@@ -163,7 +163,5 @@ def test_parse_uses_name_when_service_field_missing() -> None:
 
 
 def test_from_services_requires_every_service_healthy() -> None:
-    health = InfrastructureHealth.from_services(
-        [ServiceHealth(name="postgres", status="healthy")]
-    )
+    health = InfrastructureHealth.from_services([ServiceHealth(name="postgres", status="healthy")])
     assert health.overall == "healthy"

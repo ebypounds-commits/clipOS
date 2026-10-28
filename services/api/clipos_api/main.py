@@ -200,34 +200,36 @@ def metrics() -> str:
     """Return basic Prometheus-style metrics."""
     import time
 
-    from prometheus_client import Counter, Gauge, Histogram, generate_latest
+    from prometheus_client import Counter, Gauge, Histogram, generate_latest  # type: ignore[import-not-found]
 
     # Use module-level registry to avoid re-creation on each call
     if not hasattr(metrics, "_registry"):
-        from prometheus_client import CollectorRegistry
+        from prometheus_client import CollectorRegistry  # type: ignore[import-not-found]
 
-        metrics._registry = CollectorRegistry()
-        metrics._requests_total = Counter(
+        metrics._registry = CollectorRegistry()  # type: ignore[attr-defined]
+        metrics._requests_total = Counter(  # type: ignore[attr-defined]
             "http_requests_total",
             "Total HTTP requests",
             ["method", "endpoint", "status"],
-            registry=metrics._registry,
+            registry=metrics._registry,  # type: ignore[attr-defined]
         )
-        metrics._request_duration = Histogram(
+        metrics._request_duration = Histogram(  # type: ignore[attr-defined]
             "http_request_duration_seconds",
             "HTTP request duration",
             ["method", "endpoint"],
-            registry=metrics._registry,
+            registry=metrics._registry,  # type: ignore[attr-defined]
         )
-        metrics._db_connections = Gauge(
-            "db_connections_active", "Active database connections", registry=metrics._registry
+        metrics._db_connections = Gauge(  # type: ignore[attr-defined]
+            "db_connections_active",
+            "Active database connections",
+            registry=metrics._registry,  # type: ignore[attr-defined]
         )
-        metrics._start_time = time.time()
+        metrics._start_time = time.time()  # type: ignore[attr-defined]
 
     # Record this request
-    metrics._requests_total.labels(method="GET", endpoint="/metrics", status="200").inc()
+    metrics._requests_total.labels(method="GET", endpoint="/metrics", status="200").inc()  # type: ignore[attr-defined]
 
-    return generate_latest(metrics._registry).decode("utf-8")
+    return generate_latest(metrics._registry).decode("utf-8")  # type: ignore[attr-defined]
 
 
 def database_engine() -> sa.Engine:

@@ -368,4 +368,3 @@ def test_storage_session_yields_storage_and_closes_cleanly(
     with storage.StorageSession(store) as session:
         assert session is store
     assert store is not None
-

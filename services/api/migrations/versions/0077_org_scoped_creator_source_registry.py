@@ -38,7 +38,7 @@ def _drop_unique(table_name: str, name: str) -> None:
         # Offline mode: try both, let the DB report if neither exists.
         try:
             op.drop_constraint(name, table_name, type_="unique")
-        except Exception:
+        except Exception:  # noqa: BLE001 - offline mode: fall back to the index form
             op.drop_index(name, table_name=table_name)
 
 

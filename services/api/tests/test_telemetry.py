@@ -71,7 +71,6 @@ def test_counter_and_histogram_return_instruments_after_init() -> None:
     assert histogram("latency", unit="ms") is not None
 
 
-
 def test_init_is_idempotent_in_none_mode() -> None:
     config = TelemetryConfig.from_env({"OTEL_MODE": "none"})
     first = init_telemetry(config)

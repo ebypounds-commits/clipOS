@@ -11,6 +11,7 @@ These tests pin both properties for every protocol in the module.
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -32,8 +33,16 @@ _PROTOCOL_CALLS: tuple[tuple[Any, str, dict[str, Any]], ...] = (
         "synthesize",
         {"alias": "a", "text": "hello", "options": {}},
     ),
-    (providers.ImageGenerationProvider, "generate_image", {"alias": "a", "prompt": "p", "options": {}}),
-    (providers.VideoGenerationProvider, "generate_video", {"alias": "a", "prompt": "p", "options": {}}),
+    (
+        providers.ImageGenerationProvider,
+        "generate_image",
+        {"alias": "a", "prompt": "p", "options": {}},
+    ),
+    (
+        providers.VideoGenerationProvider,
+        "generate_video",
+        {"alias": "a", "prompt": "p", "options": {}},
+    ),
     (providers.SearchProvider, "search", {"alias": "a", "query": "q", "options": {}}),
     (
         providers.PublishingProvider,
@@ -56,8 +65,12 @@ def test_protocol_default_implementation_refuses_to_fabricate(
     protocol: Any, method_name: str, kwargs: dict[str, Any]
 ) -> None:
     """The protocol body must raise instead of returning a placeholder value."""
+
+    def _invoke() -> Any:
+        return getattr(protocol, method_name)(None, **kwargs)
+
     with pytest.raises(NotImplementedError):
-        getattr(protocol, method_name)(None, **kwargs)
+        asyncio.run(_invoke())
 
 
 class _ConformingLLM:
@@ -66,9 +79,7 @@ class _ConformingLLM:
 
 
 class _ConformingStorage:
-    async def put_object(
-        self, *, alias: str, key: str, data: bytes, content_type: str
-    ) -> Any:
+    async def put_object(self, *, alias: str, key: str, data: bytes, content_type: str) -> Any:
         return {"key": key}
 
     async def get_object(self, *, alias: str, key: str) -> bytes:
