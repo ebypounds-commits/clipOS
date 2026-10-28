@@ -5,16 +5,24 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 from fastapi.routing import APIRoute
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import IntegrityError
 
 from clipos_api import audit
 from clipos_api.main import app
 from clipos_api.transcription import (
     MockTranscriptionAdapter,
+    RecordSegmentsRequest,
+    RegisterTranscriptRequest,
     Segment,
     TranscriptionResult,
+    get_transcript_route,
+    list_segments_route,
+    record_segments_route,
+    register_transcript_route,
     transcribe_and_store,
 )
 from clipos_api.transcription_store import TranscriptionStore
@@ -212,3 +220,89 @@ def test_routes_registered_on_app() -> None:
     paths = {r.path for r in app.routes if isinstance(r, APIRoute)}
     assert "/transcripts" in paths
     assert "/transcripts/{transcript_id}/segments" in paths
+
+
+# ----------------------------------------------------------------------
+# Segment validation
+# ----------------------------------------------------------------------
+
+
+def test_segment_rejects_end_before_start() -> None:
+    with pytest.raises(ValueError, match="end_ms must be >= start_ms"):
+        Segment(seq=0, start_ms=1000, end_ms=500, text="bad")
+
+
+def test_segment_accepts_equal_start_and_end() -> None:
+    segment = Segment(seq=0, start_ms=1000, end_ms=1000, text="ok")
+    assert segment.end_ms == 1000
+
+
+# ----------------------------------------------------------------------
+# Route behaviour
+# ----------------------------------------------------------------------
+
+
+def test_register_transcript_route_returns_record(store: TranscriptionStore) -> None:
+    request = RegisterTranscriptRequest(
+        media_asset_id="m1",
+        org_id="org-1",
+        language="en",
+        provider_alias="mock",
+    )
+    registered = register_transcript_route(request, store)
+    assert registered["org_id"] == "org-1"
+    assert registered["provider_alias"] == "mock"
+
+
+def test_register_transcript_route_conflicts_are_409() -> None:
+    class _ConflictingStore:
+        def register_transcript(self, **kwargs: object) -> dict[str, object]:
+            raise IntegrityError("statement", {}, Exception("duplicate"))
+
+    request = RegisterTranscriptRequest(
+        media_asset_id="m1",
+        org_id="org-1",
+        language="en",
+        provider_alias="mock",
+    )
+    with pytest.raises(HTTPException) as excinfo:
+        register_transcript_route(request, _ConflictingStore())  # type: ignore[arg-type]
+    assert excinfo.value.status_code == 409
+    assert excinfo.value.detail == "transcript conflict"
+
+
+def test_record_segments_route_appends_and_lists(store: TranscriptionStore) -> None:
+    transcript = store.register_transcript("m1", "org-1", "en", "mock")
+    request = RecordSegmentsRequest(org_id="org-1", segments=[_segment(0), _segment(1)])
+    recorded = record_segments_route(transcript["transcript_id"], request, store)
+    assert [row["seq"] for row in recorded] == [0, 1]
+    listed = list_segments_route(transcript["transcript_id"], store, "org-1")
+    assert [row["seq"] for row in listed] == [0, 1]
+
+
+def test_record_segments_route_conflict_is_409(store: TranscriptionStore) -> None:
+    transcript = store.register_transcript("m1", "org-1", "en", "mock")
+    store.record_segments(transcript["transcript_id"], "org-1", [_segment(0)])
+    conflicting = Segment(seq=0, start_ms=9999, end_ms=10999, text="changed")
+    request = RecordSegmentsRequest(org_id="org-1", segments=[conflicting])
+    with pytest.raises(HTTPException) as excinfo:
+        record_segments_route(transcript["transcript_id"], request, store)
+    assert excinfo.value.status_code == 409
+
+
+def test_get_transcript_route_returns_record_and_404(store: TranscriptionStore) -> None:
+    transcript = store.register_transcript("m1", "org-1", "en", "mock")
+    fetched = get_transcript_route(transcript["transcript_id"], store, "org-1")
+    assert fetched["transcript_id"] == transcript["transcript_id"]
+    with pytest.raises(HTTPException) as excinfo:
+        get_transcript_route("missing-transcript", store, "org-1")
+    assert excinfo.value.status_code == 404
+    assert excinfo.value.detail == "transcript not found"
+
+
+def test_get_transcript_route_is_org_scoped(store: TranscriptionStore) -> None:
+    transcript = store.register_transcript("m1", "org-1", "en", "mock")
+    with pytest.raises(HTTPException) as excinfo:
+        get_transcript_route(transcript["transcript_id"], store, "org-2")
+    assert excinfo.value.status_code == 404
+

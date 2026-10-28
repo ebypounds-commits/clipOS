@@ -96,3 +96,74 @@ def test_invalid_record_raises() -> None:
 def test_no_service_all_healthy_is_degraded() -> None:
     health = InfrastructureHealth.model_validate_services([])
     assert health.overall == "degraded"
+
+
+def test_parse_string_health_field() -> None:
+    """Newer engines report ``Health`` as a plain string."""
+    entry = json.dumps({"Service": "postgres", "State": "running", "Health": "healthy"})
+    result = parse_compose_json(entry)
+    assert result.services[0].status == "healthy"
+    assert result.overall == "healthy"
+
+
+def test_parse_unknown_health_state_is_unhealthy() -> None:
+    entry = json.dumps({"Service": "postgres", "State": "running", "Health": "degraded-ish"})
+    result = parse_compose_json(entry)
+    assert result.services[0].status == "unhealthy"
+    assert result.overall == "degraded"
+
+
+def test_parse_exited_service_is_unhealthy() -> None:
+    entry = json.dumps({"Service": "worker", "State": "exited"})
+    result = parse_compose_json(entry)
+    assert result.services[0].status == "unhealthy"
+
+
+def test_parse_empty_state_without_service_name_is_absent() -> None:
+    """A record identified only by ``Name`` and without engine state is absent."""
+    entry = json.dumps({"Name": "orphan", "State": ""})
+    result = parse_compose_json(entry)
+    assert result.services[0].name == "orphan"
+    assert result.services[0].status == "absent"
+
+
+def test_parse_json_array_form() -> None:
+    """``docker compose ps --format json`` may emit a JSON array."""
+    payload = json.dumps([json.loads(compose_line("postgres", health="healthy"))])
+    result = parse_compose_json(payload)
+    assert [service.name for service in result.services] == ["postgres"]
+    assert result.services[0].status == "healthy"
+
+
+def test_parse_json_array_with_encoded_strings() -> None:
+    """Array entries may themselves be JSON strings."""
+    payload = json.dumps([compose_line("redis")])
+    result = parse_compose_json(payload)
+    assert [service.name for service in result.services] == ["redis"]
+
+
+def test_parse_ndjson_skips_blank_lines() -> None:
+    raw = "\n\n" + compose_line("postgres") + "\n   \n"
+    result = parse_compose_json(raw)
+    assert [service.name for service in result.services] == ["postgres"]
+
+
+def test_parse_ndjson_with_encoded_entry_string() -> None:
+    """A line may be a JSON string that itself encodes the record."""
+    raw = json.dumps(compose_line("redis"))
+    result = parse_compose_json(raw)
+    assert [service.name for service in result.services] == ["redis"]
+
+
+def test_parse_uses_name_when_service_field_missing() -> None:
+    entry = json.dumps({"Name": "minio", "State": "running"})
+    result = parse_compose_json(entry)
+    assert result.services[0].name == "minio"
+    assert result.services[0].status == "starting"
+
+
+def test_from_services_requires_every_service_healthy() -> None:
+    health = InfrastructureHealth.from_services(
+        [ServiceHealth(name="postgres", status="healthy")]
+    )
+    assert health.overall == "healthy"

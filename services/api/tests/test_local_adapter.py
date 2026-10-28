@@ -21,6 +21,7 @@ from clipos_api.local_adapter import (
     LocalProviderAdapter,
     LocalProviderDispatchError,
     build_local_adapter,
+    local_adapter_provider_name,
 )
 from clipos_api.model_registry import HealthState, ModelRegistryStore, ModelRoute
 
@@ -178,6 +179,41 @@ def test_build_local_adapter_requires_env(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("LOCAL_ADAPTER_BASE_URL", "http://127.0.0.1:9999")
     adapter = build_local_adapter(_route())
     assert adapter._model_ref == "route-model-ref"
+
+
+def test_build_local_adapter_reads_timeout_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_ADAPTER_BASE_URL", "http://127.0.0.1:9999")
+    monkeypatch.setenv("LOCAL_ADAPTER_TIMEOUT_SECONDS", "12.5")
+    adapter = build_local_adapter(_route())
+    assert adapter._timeout_seconds == 12.5
+
+
+def test_local_adapter_provider_name_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LOCAL_ADAPTER_PROVIDER", raising=False)
+    assert local_adapter_provider_name() == "local"
+    monkeypatch.setenv("LOCAL_ADAPTER_PROVIDER", "local-mirror")
+    assert local_adapter_provider_name() == "local-mirror"
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"base_url": "", "model_ref": "ref"}, "base_url must be non-empty"),
+        ({"base_url": "http://x", "model_ref": ""}, "model_ref must be non-empty"),
+        (
+            {"base_url": "http://x", "model_ref": "ref", "timeout_seconds": 0},
+            "timeout_seconds must be positive",
+        ),
+    ],
+)
+def test_adapter_rejects_invalid_configuration(kwargs: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        LocalProviderAdapter(**kwargs)
+
+
+def test_adapter_strips_trailing_slash_from_base_url() -> None:
+    adapter = LocalProviderAdapter("http://127.0.0.1:9999/", "ref")
+    assert adapter._base_url == "http://127.0.0.1:9999"
 
 
 def test_gateway_falls_back_when_local_fails(stub_server: str) -> None:

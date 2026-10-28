@@ -11,6 +11,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from clipos_api.telemetry import (
     SecretRedactionFilter,
     TelemetryConfig,
+    TelemetryHandle,
     counter,
     get_handle,
     histogram,
@@ -33,6 +34,42 @@ def test_from_env_defaults_and_validation() -> None:
     assert config.mode == "none"
     with pytest.raises(ValueError, match="OTEL_MODE"):
         TelemetryConfig.from_env({"OTEL_MODE": "collector"})
+
+
+def test_from_env_rejects_unknown_log_level() -> None:
+    with pytest.raises(ValueError, match="OTEL_LOG_LEVEL"):
+        TelemetryConfig.from_env({"OTEL_LOG_LEVEL": "VERBOSE"})
+
+
+def test_from_env_accepts_known_log_level() -> None:
+    config = TelemetryConfig.from_env({"OTEL_LOG_LEVEL": "debug"})
+    assert config.log_level == logging.DEBUG
+
+
+def test_shutdown_is_idempotent_and_calls_provider_shutdown() -> None:
+    calls: list[int] = []
+
+    class _Provider:
+        def shutdown(self) -> None:
+            calls.append(1)
+
+    handle = TelemetryHandle(TelemetryConfig.from_env({}), _Provider())  # type: ignore[arg-type]
+    handle.shutdown()
+    handle.shutdown()
+    assert calls == [1]
+
+
+def test_shutdown_tolerates_provider_without_shutdown() -> None:
+    handle = TelemetryHandle(TelemetryConfig.from_env({}), object())  # type: ignore[arg-type]
+    handle.shutdown()
+
+
+def test_counter_and_histogram_return_instruments_after_init() -> None:
+    handle = init_telemetry(TelemetryConfig.from_env({"OTEL_MODE": "none"}))
+    assert handle is get_handle()
+    assert counter("requests") is not None
+    assert histogram("latency", unit="ms") is not None
+
 
 
 def test_init_is_idempotent_in_none_mode() -> None:

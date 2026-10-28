@@ -195,3 +195,177 @@ def test_put_delete_audit_events(
     assert put_event["details"]["content_type"] == "image/png"
     assert "payload" not in str(events)
     assert "test-secret" not in str(events)
+
+
+# ----------------------------------------------------------------------
+# Configuration errors
+# ----------------------------------------------------------------------
+
+
+def test_from_env_rejects_non_integer_ttl() -> None:
+    env = {
+        "STORAGE_ENDPOINT": "http://localhost:9002",
+        "STORAGE_ACCESS_KEY": "access",
+        "STORAGE_SECRET_KEY": "secret",
+        "STORAGE_BUCKET": "bucket",
+        "STORAGE_PRESIGN_TTL_SECONDS": "not-a-number",
+    }
+    with pytest.raises(storage.StorageConfigurationError, match="must be an integer"):
+        storage.StorageConfig.from_env(env)
+
+
+# ----------------------------------------------------------------------
+# Policy rejections
+# ----------------------------------------------------------------------
+
+
+def test_policy_requires_object_key() -> None:
+    with pytest.raises(storage.PolicyViolation, match="object key is required"):
+        storage.PutPolicy().validate("", "image/png", 10)
+
+
+def test_policy_rejects_negative_size() -> None:
+    with pytest.raises(storage.PolicyViolation, match="non-negative"):
+        storage.PutPolicy().validate("a.png", "image/png", -1)
+
+
+def test_put_rejects_non_seekable_stream(
+    store: storage.S3ObjectStorage, fake_client: FakeS3Client
+) -> None:
+    class _NotSeekable:
+        def read(self) -> bytes:
+            return b""
+
+    with pytest.raises(storage.PolicyViolation, match="non-seekable"):
+        store.put("media/a.png", _NotSeekable(), "image/png")  # type: ignore[arg-type]
+    assert fake_client.calls == []
+
+
+def test_put_accepts_seekable_stream(
+    store: storage.S3ObjectStorage, fake_client: FakeS3Client
+) -> None:
+    stream = io.BytesIO(b"0123456789")
+    store.put("media/a.png", stream, "image/png")
+    method, params = fake_client.calls[-1]
+    assert method == "put_object"
+    assert params["Body"] is stream
+
+
+# ----------------------------------------------------------------------
+# Client error mapping
+# ----------------------------------------------------------------------
+
+
+class _FailingS3Client(FakeS3Client):
+    """Raises a non-404 ClientError for every mutating call."""
+
+    def __init__(self, code: str = "AccessDenied", status: int = 403) -> None:
+        super().__init__()
+        self.code = code
+        self.status = status
+
+    def _error(self, operation: str) -> ClientError:
+        return ClientError(
+            {
+                "Error": {"Code": self.code},
+                "ResponseMetadata": {"HTTPStatusCode": self.status},
+            },
+            operation,
+        )
+
+    def put_object(self, **kwargs: Any) -> dict[str, Any]:
+        raise self._error("PutObject")
+
+    def delete_object(self, **kwargs: Any) -> dict[str, Any]:
+        raise self._error("DeleteObject")
+
+    def head_object(self, **kwargs: Any) -> dict[str, Any]:
+        raise self._error("HeadObject")
+
+    def create_bucket(self, **kwargs: Any) -> dict[str, Any]:
+        raise self._error("CreateBucket")
+
+
+@pytest.fixture()
+def failing_store(config: storage.StorageConfig) -> storage.S3ObjectStorage:
+    return storage.S3ObjectStorage(config, client=_FailingS3Client())
+
+
+def test_put_client_error_is_wrapped(failing_store: storage.S3ObjectStorage) -> None:
+    with pytest.raises(storage.StorageClientError, match="S3 client error"):
+        failing_store.put("media/a.png", b"data", "image/png")
+
+
+def test_delete_client_error_is_wrapped(failing_store: storage.S3ObjectStorage) -> None:
+    with pytest.raises(storage.StorageClientError, match="S3 client error"):
+        failing_store.delete("media/a.png")
+
+
+def test_exists_client_error_is_wrapped(failing_store: storage.S3ObjectStorage) -> None:
+    with pytest.raises(storage.StorageClientError, match="S3 client error"):
+        failing_store.exists("media/a.png")
+
+
+def test_ensure_bucket_client_error_is_wrapped(
+    failing_store: storage.S3ObjectStorage,
+) -> None:
+    with pytest.raises(storage.StorageClientError, match="S3 client error"):
+        failing_store.ensure_bucket()
+
+
+def test_ensure_bucket_tolerates_already_owned_bucket(
+    config: storage.StorageConfig,
+) -> None:
+    class _OwnedClient(FakeS3Client):
+        def create_bucket(self, **kwargs: Any) -> dict[str, Any]:
+            raise ClientError(
+                {
+                    "Error": {"Code": "BucketAlreadyOwnedByYou"},
+                    "ResponseMetadata": {"HTTPStatusCode": 409},
+                },
+                "CreateBucket",
+            )
+
+    owned = storage.S3ObjectStorage(config, client=_OwnedClient())
+    owned.ensure_bucket()
+
+
+def test_wrap_without_key_reports_missing_object() -> None:
+    error = ClientError(
+        {
+            "Error": {"Code": "NoSuchKey"},
+            "ResponseMetadata": {"HTTPStatusCode": 404},
+        },
+        "HeadBucket",
+    )
+    wrapped = storage.S3ObjectStorage._wrap(error)
+    assert isinstance(wrapped, storage.StorageClientError)
+    assert "object not found" in str(wrapped)
+
+
+def test_client_error_message_never_leaks_credentials() -> None:
+    error = ClientError(
+        {
+            "Error": {"Code": "InvalidAccessKeyId"},
+            "ResponseMetadata": {"HTTPStatusCode": 403},
+        },
+        "PutObject",
+    )
+    wrapped = storage.S3ObjectStorage._wrap(error, "media/a.png")
+    assert isinstance(wrapped, storage.StorageClientError)
+    assert "test-secret" not in str(wrapped)
+    assert "media/a.png" not in str(wrapped)
+
+
+# ----------------------------------------------------------------------
+# Session adapter
+# ----------------------------------------------------------------------
+
+
+def test_storage_session_yields_storage_and_closes_cleanly(
+    store: storage.S3ObjectStorage,
+) -> None:
+    with storage.StorageSession(store) as session:
+        assert session is store
+    assert store is not None
+

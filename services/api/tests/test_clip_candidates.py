@@ -9,6 +9,7 @@ import pytest
 
 if TYPE_CHECKING:
     from clipos_api.clip_candidates import ClipCandidateStore
+from fastapi import HTTPException
 from fastapi.routing import APIRoute
 from sqlalchemy import StaticPool, create_engine
 from sqlalchemy.engine import Engine
@@ -402,3 +403,141 @@ def test_register_candidate_reason_too_long(engine: Engine, audit_log: Path, sto
             source=ClipCandidateSource.SEMANTIC.value,
             reason=long_reason,
         )
+
+
+# ------------------------------------------------------------------
+# Route behaviour
+# ------------------------------------------------------------------
+
+
+def test_create_clip_candidate_route_registers(store) -> None:
+    from clipos_api.clip_candidates_router import ClipCandidateCreate, create_clip_candidate_route
+
+    request = ClipCandidateCreate(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        start_ms=0,
+        end_ms=5000,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="route test",
+    )
+    view = create_clip_candidate_route(request, store)
+    assert view.org_id == "org-1"
+    assert view.media_asset_id == "asset-1"
+    assert view.status == ClipCandidateStatus.NEW
+
+
+def test_create_clip_candidate_route_conflict_is_409(store) -> None:
+    from clipos_api.clip_candidates_router import ClipCandidateCreate, create_clip_candidate_route
+
+    request = ClipCandidateCreate(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        start_ms=1000,
+        end_ms=1000,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="conflicting",
+    )
+    with pytest.raises(HTTPException) as excinfo:
+        create_clip_candidate_route(request, store)
+    assert excinfo.value.status_code == 409
+
+
+def test_get_clip_candidate_route_returns_record(store) -> None:
+    from clipos_api.clip_candidates_router import (
+        ClipCandidateCreate,
+        create_clip_candidate_route,
+        get_clip_candidate_route,
+    )
+
+    request = ClipCandidateCreate(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        start_ms=0,
+        end_ms=5000,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="route test",
+    )
+    created = create_clip_candidate_route(request, store)
+    fetched = get_clip_candidate_route(store, created.candidate_id, "org-1")
+    assert fetched.candidate_id == created.candidate_id
+
+
+def test_get_clip_candidate_route_missing_is_404(store) -> None:
+    from clipos_api.clip_candidates_router import get_clip_candidate_route
+
+    with pytest.raises(HTTPException) as excinfo:
+        get_clip_candidate_route(store, "missing-candidate", "org-1")
+    assert excinfo.value.status_code == 404
+    assert "missing-candidate" in str(excinfo.value.detail)
+
+
+def test_get_clip_candidate_route_is_org_scoped(store) -> None:
+    from clipos_api.clip_candidates_router import (
+        ClipCandidateCreate,
+        create_clip_candidate_route,
+        get_clip_candidate_route,
+    )
+
+    request = ClipCandidateCreate(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        start_ms=0,
+        end_ms=5000,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="route test",
+    )
+    created = create_clip_candidate_route(request, store)
+    with pytest.raises(HTTPException) as excinfo:
+        get_clip_candidate_route(store, created.candidate_id, "org-2")
+    assert excinfo.value.status_code == 404
+
+
+def test_list_clip_candidates_route_filters_by_status(store) -> None:
+    from clipos_api.clip_candidates_router import (
+        ClipCandidateCreate,
+        create_clip_candidate_route,
+        list_clip_candidates_route,
+    )
+
+    request = ClipCandidateCreate(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        start_ms=0,
+        end_ms=5000,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="route test",
+    )
+    create_clip_candidate_route(request, store)
+
+    listed = list_clip_candidates_route(store, "org-1", None)
+    assert len(listed) == 1
+    assert listed[0].org_id == "org-1"
+
+    filtered = list_clip_candidates_route(store, "org-1", ClipCandidateStatus.NEW.value)
+    assert len(filtered) == 1
+
+    empty = list_clip_candidates_route(store, "org-1", ClipCandidateStatus.APPROVED.value)
+    assert empty == []
+
+
+def test_extract_and_register_route_registers_candidates(store) -> None:
+    from clipos_api.clip_candidates_router import (
+        ExtractAndRegisterRequest,
+        extract_and_register_clip_candidates_route,
+    )
+
+    request = ExtractAndRegisterRequest(
+        media_asset_id="asset-1",
+        org_id="org-1",
+        boundaries=[(0, 5000), (6000, 11000)],
+        min_len_ms=1000,
+        max_len_ms=60000,
+        min_gap_ms=0,
+        source=ClipCandidateSource.SEMANTIC,
+        reason="route extraction",
+    )
+    views = extract_and_register_clip_candidates_route(request, store)
+    assert len(views) == 2
+    assert all(view.org_id == "org-1" for view in views)
+
