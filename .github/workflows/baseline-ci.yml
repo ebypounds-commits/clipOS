@@ -45,6 +45,11 @@ jobs:
         run: |
           echo "step=autonomy_evidence" >> step_status.txt
           python3 scripts/autonomy_evidence.py 2>&1 | tee autonomy_evidence_output.txt
+          echo "autonomy_evidence_exit=${PIPESTATUS[0]}" >> step_status.txt
+      - name: Fail if autonomy evidence failed
+        if: always()
+        run: |
+          grep -q 'autonomy_evidence_exit=0' step_status.txt || (echo "autonomy evidence failed" && exit 1)
 
   test:
     runs-on: ubuntu-latest
