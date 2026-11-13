@@ -5,6 +5,11 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY clipos_api ./clipos_api
 
+# Migrations ship with the image so a deployment runs its schema step from
+# inside the container: docker exec <api> python -m alembic upgrade head
+COPY alembic.ini ./
+COPY migrations ./migrations
+
 RUN pip install --no-cache-dir -e .
 
 # ffmpeg is required by the mock video/adapters for media rendering; keep the
