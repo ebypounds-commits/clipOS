@@ -234,9 +234,7 @@ def test_identifiers_are_scoped_to_the_organization(
     assert second is not None and second.display_name == "Grace Hopper"
 
     # A source may reuse the identifier too, and each org keeps its own.
-    store.register_source(
-        _source(source_id="shared-src", org_id="org-1", creator_id="shared-id")
-    )
+    store.register_source(_source(source_id="shared-src", org_id="org-1", creator_id="shared-id"))
     store.register_source(
         _source(
             source_id="shared-src",

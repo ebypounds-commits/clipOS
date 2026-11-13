@@ -184,9 +184,7 @@ def _business_id_column(table: sa.Table) -> sa.Column[Any] | None:
     candidates = [
         c
         for c in table.columns
-        if c.name.endswith("_id")
-        and c.name != "org_id"
-        and not (c.primary_key and c.name == "id")
+        if c.name.endswith("_id") and c.name != "org_id" and not (c.primary_key and c.name == "id")
     ]
     if not candidates:
         return None
@@ -293,7 +291,7 @@ def seed_organization_a(engine: Engine, spec: dict[str, Any]) -> dict[str, dict[
                 obj = model_cls(**values)
                 session.add(obj)
                 session.flush()
-            except Exception:
+            except sa.exc.SQLAlchemyError:
                 session.rollback()
                 continue
             session.commit()
@@ -362,10 +360,7 @@ def discloses(response: Any, seeded: dict[str, dict[str, Any]]) -> bool:
     if DATA_MARKER in response.text:
         return True
     identifiers = {
-        str(value)
-        for values in seeded.values()
-        for key, value in values.items()
-        if key != "org_id"
+        str(value) for values in seeded.values() for key, value in values.items() if key != "org_id"
     }
     try:
         payload = response.json()
