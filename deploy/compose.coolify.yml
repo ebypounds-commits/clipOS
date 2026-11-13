@@ -1,0 +1,50 @@
+# Coolify adaptation of the hardened topologies (additive).
+#
+# Apply as the SECOND compose file:
+#   docker compose -f deploy/compose.production.yml -f deploy/compose.coolify.yml \
+#     --env-file deploy/.env.production up -d
+# or set it as an additional compose file on a Coolify Compose resource.
+# The base topology and its H1..H8 invariants are unchanged; this file only
+# swaps the edge implementation, because the Coolify host already runs
+# `coolify-proxy` (Traefik) on 80/443 and the stack's own Caddy `edge`
+# cannot bind those ports.
+#
+# Routing below mirrors deploy/Caddyfile exactly:
+#   /api/*   -> api:8000, prefix stripped
+#   /health  -> api:8000, unstripped
+#   everything else -> web:3000
+# coolify-proxy runs with --providers.docker.exposedbydefault=false, so the
+# labels are what opt these containers in, and it carries an ACME resolver
+# named `letsencrypt` (HTTP-01 on the http entrypoint), which the routers
+# below use for certificates.
+#
+# One host-side step per stack: the proxy must be attached to the stack edge
+# network before it can route to these containers:
+#   docker network connect clipos-production_clipos_edge coolify-proxy
+# (re-run after `docker compose down`, which recreates the network)
+
+services:
+  edge:
+    # coolify-proxy owns 80/443; keep the service defined (the plain
+    # compose flow still uses it) but never start it under Coolify.
+    profiles: ["edge-disabled"]
+
+  api:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.clipos-api.rule=Host(`${CLIPOS_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/health`))
+      - traefik.http.routers.clipos-api.entrypoints=websecure
+      - traefik.http.routers.clipos-api.tls=true
+      - traefik.http.routers.clipos-api.tls.certresolver=letsencrypt
+      - traefik.http.services.clipos-api.loadbalancer.server.port=8000
+      - traefik.http.middlewares.clipos-strip.stripprefix.prefixes=/api
+      - traefik.http.routers.clipos-api.middlewares=clipos-strip@docker
+
+  web:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.clipos-web.rule=Host(`${CLIPOS_DOMAIN}`) && !PathPrefix(`/api`) && !PathPrefix(`/health`)
+      - traefik.http.routers.clipos-web.entrypoints=websecure
+      - traefik.http.routers.clipos-web.tls=true
+      - traefik.http.routers.clipos-web.tls.certresolver=letsencrypt
+      - traefik.http.services.clipos-web.loadbalancer.server.port=3000
