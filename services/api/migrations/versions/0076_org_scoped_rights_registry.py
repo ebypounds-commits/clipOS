@@ -19,18 +19,30 @@ def _drop_unique(table: str, name: str) -> None:
 
     ``provenance_manifests`` carries its uniqueness as a UNIQUE CONSTRAINT
     (Postgres refuses to drop its index directly), while ``source_items``
-    carries a plain unique index. The offline SQL renderer may run against
-    the SQLite dialect, whose operations implementation refuses ALTER of
-    constraints before any SQL can be produced, so the dialect decides
-    which form is emitted.
+    carries a plain unique index. The form differs per table, so it is
+    inspected rather than assumed: assuming the wrong one fails with
+    UndefinedObject on a fresh database, which is exactly how this
+    migration broke CI after the dev database had already been upgraded
+    by an index-based version of it. During offline SQL generation the
+    bind is a mock connection that cannot inspect, so both forms are
+    attempted and the database reports the error if neither exists - the
+    pattern migration 0077 already uses.
     """
-    if op.get_bind().dialect.name == "postgresql":
-        op.drop_constraint(name, table, type_="unique")
-    else:
-        # DROP INDEX covers the plain index; for a constraint-owned index
-        # the SQLite DDL would be a no-op, and SQLite is never the target
-        # of these migrations.
-        op.execute(sa.text(f"DROP INDEX IF EXISTS {name}"))
+    try:
+        inspector = sa.inspect(op.get_bind())
+        constraints = {c["name"] for c in inspector.get_unique_constraints(table)}
+        indexes = {i["name"] for i in inspector.get_indexes(table)}
+        if name in constraints:
+            op.drop_constraint(name, table, type_="unique")
+        elif name in indexes:
+            op.drop_index(name, table_name=table)
+        else:
+            raise RuntimeError(f"{table}.{name} is not present; refusing to guess")
+    except sa.exc.NoInspectionAvailable:
+        try:
+            op.drop_constraint(name, table, type_="unique")
+        except Exception:  # noqa: BLE001 - offline: fall back to the index form
+            op.execute(sa.text(f"DROP INDEX IF EXISTS {name}"))
 
 
 def upgrade() -> None:
