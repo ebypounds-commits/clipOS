@@ -10,6 +10,7 @@
   "production_deploy": false,
   "public_publishing": false,
   "completed_milestones": [
+    "M-1",
     "M0",
     "M1",
     "M2",
@@ -227,7 +228,7 @@
     {
       "ticket": "CLIP-044",
       "merge_sha": "49084c0",
-      "summary": "Duplicate/content fingerprint checks: candidate_fingerprints (org-scoped unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256), pure normalize_text/overlap_over_shorter/window_fingerprint/transcript_fingerprint (None on empty), ClipDedupStore idempotent persist (identical no-op, different value conflict), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when text present, derives window dups (same asset, overlap >= caller threshold) and content dups (on-the-fly transcript hash of every other org candidate — corpus not pre-fingerprinted), audited (candidate_fingerprints.persisted + clip_candidates.duplicate_check); migration 0025 CREATE-only (0024->0025 PG-verified idempotent); 2 routes Depends-before-decorator 404/409/422; 24 tests; suite 637 passed CI-env (89.68% cov); ruff/mypy/secret_scan/arch_guard green; land 1fbf1bb, merge 49084c0"
+      "summary": "Duplicate/content fingerprint checks: candidate_fingerprints (org-scoped unique (org_id, candidate_id, kind), lookup index (org_id, kind, value), algorithm Literal sha256), pure normalize_text/overlap_over_shorter/window_fingerprint/transcript_fingerprint (None on empty), ClipDedupStore idempotent persist (identical no-op, different value conflict), check_candidate_duplicates persists WINDOW always + TRANSCRIPT when text present, derives window dups (same asset, overlap >= caller threshold) and content dups (on-the-fly transcript hash of every other org candidate \u2014 corpus not pre-fingerprinted), audited (candidate_fingerprints.persisted + clip_candidates.duplicate_check); migration 0025 CREATE-only (0024->0025 PG-verified idempotent); 2 routes Depends-before-decorator 404/409/422; 24 tests; suite 637 passed CI-env (89.68% cov); ruff/mypy/secret_scan/arch_guard green; land 1fbf1bb, merge 49084c0"
     },
     {
       "ticket": "CLIP-045",
