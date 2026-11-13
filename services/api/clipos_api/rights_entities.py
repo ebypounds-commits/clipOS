@@ -106,7 +106,8 @@ class CreatorRecord(Base):
 
     __tablename__ = "creators"
     __table_args__ = (
-        sa.Index("uq_creators_creator_id", "creator_id", unique=True),
+        # Org-scoped: two organizations may register the same creator id.
+        sa.Index("uq_creators_creator_org", "creator_id", "org_id", unique=True),
         sa.Index("ix_creators_org_created", "org_id", "created_at"),
     )
 
@@ -124,7 +125,8 @@ class ContentSourceRecord(Base):
 
     __tablename__ = "content_sources"
     __table_args__ = (
-        sa.Index("uq_content_sources_source_id", "source_id", unique=True),
+        # Org-scoped: two organizations may register the same source id.
+        sa.Index("uq_content_sources_source_org", "source_id", "org_id", unique=True),
         sa.Index("ix_content_sources_org_created", "org_id", "created_at"),
         sa.Index("ix_content_sources_creator", "creator_id"),
     )
@@ -145,10 +147,12 @@ class SourceItemRecord(Base):
 
     __tablename__ = "source_items"
     __table_args__ = (
+        # Org-scoped: the same external ref may exist in another organization.
         sa.Index(
-            "uq_source_items_source_external_ref",
+            "uq_source_items_source_external_org",
             "source_id",
             "external_ref",
+            "org_id",
             unique=True,
         ),
         # Org-scoped: two organizations may register the same source item.
@@ -224,22 +228,30 @@ class RightsEntitiesStore:
         return cls(sessionmaker(bind=engine, expire_on_commit=False))
 
     @staticmethod
-    def _creator(session: Session, creator_id: str) -> CreatorRecord | None:
+    def _creator(session: Session, creator_id: str, org_id: str) -> CreatorRecord | None:
+        """Return one creator of *org_id* — never another org's creator."""
         return session.scalars(
-            sa.select(CreatorRecord).where(CreatorRecord.creator_id == creator_id)
+            sa.select(CreatorRecord).where(
+                CreatorRecord.creator_id == creator_id,
+                CreatorRecord.org_id == org_id,
+            )
         ).first()
 
     @staticmethod
-    def _source(session: Session, source_id: str) -> ContentSourceRecord | None:
+    def _source(session: Session, source_id: str, org_id: str) -> ContentSourceRecord | None:
+        """Return one source of *org_id* — never another org's source."""
         return session.scalars(
-            sa.select(ContentSourceRecord).where(ContentSourceRecord.source_id == source_id)
+            sa.select(ContentSourceRecord).where(
+                ContentSourceRecord.source_id == source_id,
+                ContentSourceRecord.org_id == org_id,
+            )
         ).first()
 
     def register_creator(self, creator: Creator) -> Creator:
         """Register one creator; a matching re-registration is a no-op."""
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            row = self._creator(session, creator.creator_id)
+            row = self._creator(session, creator.creator_id, creator.org_id)
             if row is not None:
                 stored = _creator_from_row(row)
                 if (
@@ -269,10 +281,10 @@ class RightsEntitiesStore:
             )
             return _creator_from_row(row)
 
-    def get_creator(self, creator_id: str) -> Creator | None:
-        """Return one creator, or None when it is not registered."""
+    def get_creator(self, creator_id: str, org_id: str) -> Creator | None:
+        """Return one creator of *org_id*, or None when it is not registered."""
         with self._sessions() as session:
-            row = self._creator(session, creator_id)
+            row = self._creator(session, creator_id, org_id)
             return _creator_from_row(row) if row is not None else None
 
     def list_creators(self, org_id: str) -> list[Creator]:
@@ -289,12 +301,10 @@ class RightsEntitiesStore:
         """Register one source; creator must exist and re-registration must match."""
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            creator = self._creator(session, source.creator_id)
+            creator = self._creator(session, source.creator_id, source.org_id)
             if creator is None:
                 raise ValueError(f"creator not found: {source.creator_id}")
-            if creator.org_id != source.org_id:
-                raise ValueError("creator belongs to a different organization")
-            row = self._source(session, source.source_id)
+            row = self._source(session, source.source_id, source.org_id)
             if row is not None:
                 stored = _source_from_row(row)
                 if (
@@ -331,10 +341,10 @@ class RightsEntitiesStore:
             )
             return _source_from_row(row)
 
-    def get_source(self, source_id: str) -> ContentSource | None:
-        """Return one source, or None when it is not registered."""
+    def get_source(self, source_id: str, org_id: str) -> ContentSource | None:
+        """Return one source of *org_id*, or None when it is not registered."""
         with self._sessions() as session:
-            row = self._source(session, source_id)
+            row = self._source(session, source_id, org_id)
             return _source_from_row(row) if row is not None else None
 
     def list_sources(self, org_id: str, active_only: bool = False) -> list[ContentSource]:
@@ -349,8 +359,8 @@ class RightsEntitiesStore:
     def deactivate_source(self, source_id: str, org_id: str) -> ContentSource:
         """Deactivate one org-scoped source; deactivating twice is a no-op."""
         with self._sessions.begin() as session:
-            row = self._source(session, source_id)
-            if row is None or row.org_id != org_id:
+            row = self._source(session, source_id, org_id)
+            if row is None:
                 raise ValueError(f"source not found: {source_id}")
             row.active = False
             session.flush()
@@ -366,15 +376,14 @@ class RightsEntitiesStore:
         """Register one source item; duplicates on (source_id, external_ref) return existing."""
         now = datetime.now(UTC)
         with self._sessions.begin() as session:
-            source = self._source(session, item.source_id)
+            source = self._source(session, item.source_id, item.org_id)
             if source is None:
                 raise ValueError(f"source not found: {item.source_id}")
-            if source.org_id != item.org_id:
-                raise ValueError("source belongs to a different organization")
             existing = session.scalars(
                 sa.select(SourceItemRecord).where(
                     SourceItemRecord.source_id == item.source_id,
                     SourceItemRecord.external_ref == item.external_ref,
+                    SourceItemRecord.org_id == item.org_id,
                 )
             ).first()
             if existing is not None:
@@ -425,8 +434,8 @@ class RightsEntitiesStore:
     def list_items(self, source_id: str, org_id: str) -> list[SourceItem]:
         """Return org-scoped items for one source ordered by external_ref."""
         with self._sessions() as session:
-            source = self._source(session, source_id)
-            if source is None or source.org_id != org_id:
+            source = self._source(session, source_id, org_id)
+            if source is None:
                 raise ValueError(f"source not found: {source_id}")
             rows = session.scalars(
                 sa.select(SourceItemRecord)
@@ -463,8 +472,8 @@ def get_creator_route(
     store: Annotated[RightsEntitiesStore, Depends(_store)],
 ) -> Creator:
     """Return one creator, or 404."""
-    creator = store.get_creator(creator_id)
-    if creator is None or creator.org_id != org_id:
+    creator = store.get_creator(creator_id, org_id)
+    if creator is None:
         raise HTTPException(status_code=404, detail=f"creator not found: {creator_id}")
     return creator
 

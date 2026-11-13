@@ -129,11 +129,20 @@ class FingerprintRecord(Base):
 
     __tablename__ = "content_fingerprints"
     __table_args__ = (
-        sa.Index("uq_content_fingerprints_fingerprint_id", "fingerprint_id", unique=True),
+        # Org-scoped: two organizations may register the same fingerprint id.
         sa.Index(
-            "uq_content_fingerprints_manifest_algorithm",
+            "uq_content_fingerprints_fingerprint_org",
+            "fingerprint_id",
+            "org_id",
+            unique=True,
+        ),
+        # Org-scoped: the manifest id is derived from the item id, so the
+        # same manifest id can exist in two organizations.
+        sa.Index(
+            "uq_content_fingerprints_manifest_algorithm_org",
             "manifest_id",
             "algorithm",
+            "org_id",
             unique=True,
         ),
         sa.Index("ix_content_fingerprints_org_created", "org_id", "created_at"),
@@ -369,6 +378,7 @@ class ProvenanceStore:
                 sa.select(FingerprintRecord).where(
                     FingerprintRecord.manifest_id == fingerprint.manifest_id,
                     FingerprintRecord.algorithm == fingerprint.algorithm.value,
+                    FingerprintRecord.org_id == fingerprint.org_id,
                 )
             ).first()
             if existing is not None:

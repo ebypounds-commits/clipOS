@@ -114,7 +114,10 @@ def test_source_registration_requires_existing_creator_and_matches_org(
     with pytest.raises(ValueError, match="creator not found"):
         store.register_source(_source())
     store.register_creator(_creator())
-    with pytest.raises(ValueError, match="different organization"):
+    # Another organization cannot borrow a creator that exists elsewhere. The
+    # lookup is org-scoped, so the attempt is refused as "not found" — the
+    # refusal must not disclose that the creator exists in another org.
+    with pytest.raises(ValueError, match="creator not found"):
         store.register_source(_source(org_id="org-2"))
     registered = store.register_source(_source())
     assert registered.active is True
@@ -155,7 +158,9 @@ def test_source_item_requires_existing_source_and_matching_org(
         store.register_item(_item())
     store.register_creator(_creator())
     store.register_source(_source())
-    with pytest.raises(ValueError, match="different organization"):
+    # Same rule for the source: a cross-org attempt is refused without
+    # disclosing that the source exists in the other organization.
+    with pytest.raises(ValueError, match="source not found"):
         store.register_item(_item(org_id="org-2"))
 
 
@@ -199,12 +204,49 @@ def test_listings_are_org_scoped(store: rights_entities.RightsEntitiesStore) -> 
 def test_getters_return_registered_entities(
     store: rights_entities.RightsEntitiesStore,
 ) -> None:
-    assert store.get_creator("missing") is None
-    assert store.get_source("missing") is None
+    assert store.get_creator("missing", "org-1") is None
+    assert store.get_source("missing", "org-1") is None
     store.register_creator(_creator())
     store.register_source(_source())
-    assert store.get_creator("creator-1") is not None
-    assert store.get_source("source-1") is not None
+    assert store.get_creator("creator-1", "org-1") is not None
+    assert store.get_source("source-1", "org-1") is not None
+    # Another organization cannot see them, even by identifier.
+    assert store.get_creator("creator-1", "org-2") is None
+    assert store.get_source("source-1", "org-2") is None
+
+
+def test_identifiers_are_scoped_to_the_organization(
+    store: rights_entities.RightsEntitiesStore,
+) -> None:
+    """The same identifier in another organization is a separate record."""
+    store.register_creator(_creator(creator_id="shared-id", org_id="org-1"))
+    store.register_creator(
+        _creator(
+            creator_id="shared-id",
+            org_id="org-2",
+            display_name="Grace Hopper",
+            contact_ref="secrets://contacts/grace",
+        )
+    )
+    first = store.get_creator("shared-id", "org-1")
+    second = store.get_creator("shared-id", "org-2")
+    assert first is not None and first.display_name == "Ada Lovelace"
+    assert second is not None and second.display_name == "Grace Hopper"
+
+    # A source may reuse the identifier too, and each org keeps its own.
+    store.register_source(
+        _source(source_id="shared-src", org_id="org-1", creator_id="shared-id")
+    )
+    store.register_source(
+        _source(
+            source_id="shared-src",
+            org_id="org-2",
+            creator_id="shared-id",
+            canonical_url="https://example.org/feed.xml",
+        )
+    )
+    assert store.get_source("shared-src", "org-1") is not None
+    assert store.get_source("shared-src", "org-2") is not None
 
 
 def test_routes_are_wired() -> None:

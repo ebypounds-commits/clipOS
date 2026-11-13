@@ -114,10 +114,10 @@ def test_search_registers_creator_and_source(rights: RightsEntitiesStore) -> Non
     search_stock(MockStockClipAdapter(), rights, _request())
     creator_id = stock_creator_id("org-1", "stock-provider-v1")
     source_id = stock_source_id("org-1", "stock-provider-v1")
-    creator = rights.get_creator(creator_id)
+    creator = rights.get_creator(creator_id, "org-1")
     assert creator is not None
     assert creator.org_id == "org-1"
-    source = rights.get_source(source_id)
+    source = rights.get_source(source_id, "org-1")
     assert source is not None
     assert source.creator_id == creator_id
     assert source.source_type.value == "partner_feed"
