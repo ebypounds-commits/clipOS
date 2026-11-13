@@ -143,11 +143,14 @@ Retry/backoff paths are never exercised. **Recommendation**: a single
 `CLIPOS_MOCK_FAULT=timeout|429|5xx` env read by the mock adapters, plus
 tests proving the retry wrapper handles each.
 
-### R9 — `ruff>=0.6` is unpinned (W6)
-The tree is formatted with ruff 0.17.1 but the constraint allows any
-newer release; format drift between local and CI is exactly how `ed3bdb8`
-went red. **Recommendation**: pin `ruff==0.17.1` in `services/api`
-dev extras (the pinning pass covered other packages, not the linter).
+### R9 — `ruff` is now pinned (was unpinned) — **APPLIED**
+The pinning pass had covered other packages but not the linter: the tree
+was formatted with ruff 0.17.1 while the constraint allowed any newer
+release, which is exactly how format drift can turn CI red (`E1`).
+`services/api` dev extras now pin `ruff==0.17.1`, so local and CI lint
+the tree with the same binary. Applied in this session; format and lint
+re-verified after the change. The other recommendations (R1–R8, R10)
+remain open for review.
 
 ### R10 — Repository hygiene leftovers (Low)
 - `stash@{0}`: the discarded broken W2 attempt; `stash@{1}`: a stale
