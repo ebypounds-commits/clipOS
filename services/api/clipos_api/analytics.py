@@ -105,6 +105,8 @@ class AnalyticsAdapter(Protocol):
 class MockAnalyticsAdapter:
     """Deterministic CI stand-in: no network; metrics derive from the ref."""
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> AdapterHealth:
         return AdapterHealth(
             ok=True,

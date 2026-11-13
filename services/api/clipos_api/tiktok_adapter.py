@@ -42,12 +42,15 @@ class TikTokPublishingAdapter:
     adapter replaces this when OAuth credentials are provisioned.
     """
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> AdapterHealth:
         """Mock: always ok with generic TikTok capabilities."""
         return AdapterHealth(
             ok=True,
             capabilities=["upload", "privacy", "status", "creator_info"],
             detail="mock TikTok adapter — replace with real Content Posting API adapter",
+            adapter_kind="mock",
         )
 
     def publish(self, request: PublishRequest) -> PublishResult:

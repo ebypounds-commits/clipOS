@@ -91,6 +91,7 @@ class AdapterHealth(BaseModel):
     ok: bool
     capabilities: list[str] = Field(default_factory=list)
     detail: str | None = Field(default=None, max_length=255)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class PublishRequest(BaseModel):
@@ -127,8 +128,12 @@ class PublishingAdapter(Protocol):
 class MockPublishingAdapter:
     """Deterministic CI stand-in: no network; ids derive from the key."""
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> AdapterHealth:
-        return AdapterHealth(ok=True, capabilities=["upload", "status"], detail="mock")
+        return AdapterHealth(
+            ok=True, capabilities=["upload", "status"], detail="mock", adapter_kind="mock"
+        )
 
     def publish(self, request: PublishRequest) -> PublishResult:
         digest = sha1(request.idempotency_key.encode()).hexdigest()[:12]
@@ -208,6 +213,7 @@ class PublicationJob(BaseModel):
     status: PublishStatus
     decision_reason: str = Field(min_length=1, max_length=255)
     denial_reasons: list[str] = Field(default_factory=list)
+    adapter_kind: Literal["mock", "real"] = "real"
     external_id: str | None = Field(default=None, max_length=255)
     error_ref: str | None = Field(default=None, max_length=512)
     created_at: datetime | None = None
@@ -387,7 +393,19 @@ def _policy_from_row(row: PublishPolicyRecord) -> PublishPolicy:
         public_enabled=row.public_enabled,
         kill_switch=row.kill_switch,
         created_at=_aware(row.created_at),
+        adapter_kind=_adapter_kind_for(row.platform),
     )
+
+
+def _adapter_kind_for(platform: str) -> Literal["mock", "real"]:
+    """The kind of the adapter a platform resolves to.
+
+    platform -> adapter is code (the in-process registry), not data, so the
+    kind is derived at read time instead of stored: a job a mock adapter
+    produced must never be reported as a real publication, and there is no
+    column that could drift out of sync.
+    """
+    return getattr(get_adapter(platform), "adapter_kind", "real")
 
 
 def _job_from_row(row: PublicationJobRecord, denial_reasons: Sequence[str] = ()) -> PublicationJob:
@@ -404,6 +422,7 @@ def _job_from_row(row: PublicationJobRecord, denial_reasons: Sequence[str] = ())
         status=PublishStatus(row.status),
         decision_reason=row.decision_reason,
         denial_reasons=list(denial_reasons),
+        adapter_kind=_adapter_kind_for(row.platform),
         external_id=row.external_id,
         error_ref=row.error_ref,
         created_at=_aware(row.created_at),

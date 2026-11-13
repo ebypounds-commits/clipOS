@@ -132,6 +132,7 @@ def test_get_list_org_scoped(store: RevenueLedgerStore) -> None:
 def test_sync_imports_then_skips(store: RevenueLedgerStore, audit_log: Path) -> None:
     store.register_source(_source())
     first = store.sync(MockRevenueAdapter(), _sync())
+    assert first.adapter_kind == "mock"
     assert first.imported == 2
     assert first.skipped == 0
     assert len(first.entries) == 2

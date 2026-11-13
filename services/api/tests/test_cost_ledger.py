@@ -125,6 +125,7 @@ def test_get_list_org_scoped(store: CostLedgerStore) -> None:
 def test_sync_imports_then_skips(store: CostLedgerStore, audit_log: Path) -> None:
     store.register_source(_source())
     first = store.sync(MockCostAdapter(), _sync())
+    assert first.adapter_kind == "mock"
     assert first.imported == 2
     assert first.skipped == 0
     assert "cost_entries.recorded" in audit_log.read_text(encoding="utf-8")

@@ -113,6 +113,8 @@ class CostAdapter(Protocol):
 class MockCostAdapter:
     """Deterministic stand-in: no network; refs/amounts derive from sha1."""
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> CostHealth:
         return CostHealth(
             ok=True,
@@ -424,6 +426,7 @@ class CostLedgerStore:
             imported=imported,
             skipped=skipped,
             entries=entries,
+            adapter_kind=getattr(adapter, "adapter_kind", "real"),
         )
 
 

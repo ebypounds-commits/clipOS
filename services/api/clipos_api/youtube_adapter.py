@@ -42,12 +42,15 @@ class YouTubePublishingAdapter:
     adapter replaces this when OAuth credentials are provisioned.
     """
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> AdapterHealth:
         """Mock: always ok with generic YouTube capabilities."""
         return AdapterHealth(
             ok=True,
             capabilities=["upload", "metadata", "status", "resumable"],
             detail="mock YouTube adapter — replace with real Data API adapter",
+            adapter_kind="mock",
         )
 
     def publish(self, request: PublishRequest) -> PublishResult:

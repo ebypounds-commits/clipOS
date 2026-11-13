@@ -79,6 +79,7 @@ def test_mock_adapter_deterministic() -> None:
 def test_transcription_result_shape() -> None:
     result = _adapter(1).transcribe("ref", "de")
     assert isinstance(result, TranscriptionResult)
+    assert result.adapter_kind == "mock"
     assert result.language == "de"
     assert result.model_hint is None
 

@@ -74,6 +74,8 @@ class MockTranscriptionAdapter:
     provided canned text. No external calls are made.
     """
 
+    adapter_kind = "mock"
+
     def __init__(
         self,
         canned_text: str = "This is a test segment.",
@@ -103,6 +105,7 @@ class MockTranscriptionAdapter:
             segments=segments,
             provider_alias="mock",
             model_hint=None,
+            adapter_kind="mock",
         )
 
 

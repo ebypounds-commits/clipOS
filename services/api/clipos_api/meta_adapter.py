@@ -46,12 +46,15 @@ class MetaPublishingAdapter:
     adapter replaces this when App credentials are provisioned.
     """
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> AdapterHealth:
         """Mock: always ok with generic Meta capabilities."""
         return AdapterHealth(
             ok=True,
             capabilities=["upload", "page_publish", "status", "privacy"],
             detail="mock Meta adapter — replace with real Graph API adapter",
+            adapter_kind="mock",
         )
 
     def publish(self, request: PublishRequest) -> PublishResult:

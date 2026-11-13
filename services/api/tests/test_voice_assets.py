@@ -167,6 +167,7 @@ def test_synthesize_writes_wav_and_audits(
         "voice-1",
         _request(output_path=str(output)),
     )
+    assert result.adapter_kind == "mock"
     assert result.bytes_written > 0
     assert result.duration_ms == synthesis_duration_ms("Hello ClipOS")
     assert result.model_alias == "tts-neutral-v1"

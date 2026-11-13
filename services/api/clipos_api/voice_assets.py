@@ -81,6 +81,8 @@ class TTSAdapter(Protocol):
 class MockTTSAdapter:
     """Deterministic stand-in: valid silence WAV sized from the text."""
 
+    adapter_kind = "mock"
+
     def synthesize(self, text: str, voice_ref: str, model_alias: str) -> bytes:
         # voice_ref/model_alias accepted for Protocol parity; the mock
         # performs no dispatch — real adapters resolve them later.
@@ -272,6 +274,7 @@ def synthesize_speech(
         output_path=str(output),
         bytes_written=len(payload),
         duration_ms=duration,
+        adapter_kind=getattr(adapter, "adapter_kind", "real"),
     )
 
 

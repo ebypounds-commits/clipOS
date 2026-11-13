@@ -91,6 +91,7 @@ class JevResult(BaseModel):
     model_alias: str = Field(min_length=1, max_length=128)
     mode: str = Field(min_length=1, max_length=16)
     latency_ms: float | None = Field(default=None, ge=0)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class JevHealth(BaseModel):
@@ -101,6 +102,7 @@ class JevHealth(BaseModel):
     ok: bool
     capabilities: list[str] = Field(default_factory=list)
     detail: str | None = Field(default=None, max_length=255)
+    adapter_kind: Literal["mock", "real"] = "real"
 
 
 class JevAdapter(Protocol):
@@ -125,11 +127,14 @@ def _weights(basis: str, labels: list[str]) -> dict[str, float]:
 class MockJevAdapter:
     """Deterministic stand-in: probabilities derive from sha1 of the input."""
 
+    adapter_kind = "mock"
+
     def health_check(self) -> JevHealth:
         return JevHealth(
             ok=True,
             capabilities=["answer", "choice", "noul", "score", "triage"],
             detail="mock Jev adapter — set JEV_BASE_URL and JEV_API_KEY for remote",
+            adapter_kind="mock",
         )
 
     def answer(self, request: JevRequest) -> JevResult:
@@ -151,6 +156,7 @@ class MockJevAdapter:
                     probabilities=probabilities,
                     value=value,
                     latency_ms=float(_seed(f"latency|{key}") % 4 + 1),
+                    adapter_kind="mock",
                 )
             )
         return JevResult(
@@ -158,6 +164,7 @@ class MockJevAdapter:
             model_alias=request.model_alias,
             mode="mock",
             latency_ms=max((a.latency_ms or 0.0) for a in answers),
+            adapter_kind="mock",
         )
 
 

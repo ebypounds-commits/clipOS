@@ -116,6 +116,8 @@ class RevenueAdapter(Protocol):
 class MockRevenueAdapter:
     """Deterministic stand-in: no network; refs/amounts derive from sha1."""
 
+    adapter_kind = "mock"
+
     def health_check(self, account_ref: str) -> RevenueHealth:
         return RevenueHealth(
             ok=True,
@@ -432,6 +434,7 @@ class RevenueLedgerStore:
             imported=imported,
             skipped=skipped,
             entries=entries,
+            adapter_kind=getattr(adapter, "adapter_kind", "real"),
         )
 
 
